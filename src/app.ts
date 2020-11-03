@@ -162,7 +162,7 @@ class App {
   private async status(txid: string) {
     try {
       const status = await this.arweave.transactions.getStatus(txid);
-      console.log(`Confirmed: ${ status.confirmed? true : false } | Status: ${status.status}`);
+      console.log(`Confirmed: ${status.confirmed ? true : false} | Status: ${status.status}`);
     } catch (e) {
       console.log(chalk.red('Invalid transaction ID.'));
       if (this.debug) console.log(e);

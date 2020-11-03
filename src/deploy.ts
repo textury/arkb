@@ -45,7 +45,7 @@ export default class Deploy {
             const type = mime.getType(f);
             const tx = await this.buildTransaction(f, hash, data, type);
             this.txs.push({ path: f, hash, tx, type });
-            
+
             countdown.message(`Preparing ${--leftToPrepare} files...`);
             resolve();
           });
