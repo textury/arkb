@@ -1,6 +1,6 @@
 {
   "name": "arkb",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "main": "./bin/app.js",
   "repository": "https://github.com/cedriking/arkb.git",
   "author": "Cedrik <cedrik.git@tryninja.io>",
@@ -15,7 +15,12 @@
     "start": "ts-node src/app.ts",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "tslint -p tslint.json"
+    "lint": "tslint -p tslint.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "dependencies": {
     "arweave": "^1.9.1",
