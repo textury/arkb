@@ -1,5 +1,23 @@
 # arkb
-Arweave Deploy that saves you some data costs.
+Arweave Deploy that saves you data costs.
+
+## Features
+- No file size limit.
+- No amount of files limit.
+- Doesn't upload files that you have already uploaded.
+
+## How to use
+arkb runs using NodeJS and NPM. You must have both installed on your machine for it to work.
+
+Install arkb:
+```
+npm install -g arkb
+```
+
+And run:
+```
+arkb --help
+```
 
 ```
                     ?88        ?88      

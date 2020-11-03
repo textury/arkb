@@ -287,7 +287,7 @@ class App {
   }
 
   private setArweaveInstance(argv: minimist.ParsedArgs) {
-    const host = argv.host || 'arweave.dev';
+    const host = argv.host || 'arweave.net';
     const protocol = argv.protocol || 'https';
     const port = argv.port || 443;
     const timeout = argv.timeout || 20000;

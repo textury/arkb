@@ -4,7 +4,7 @@
   "main": "./bin/app.js",
   "repository": "https://github.com/cedriking/arkb.git",
   "author": "Cedrik <cedrik.git@tryninja.io>",
-  "license": "GPLv3",
+  "license": "MIT",
   "files": [
     "bin/**/*"
   ],
@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "ts-node src/app.ts",
-    "build": "tsc -p .",
+    "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tslint.json"
   },
@@ -39,7 +39,7 @@
     "@types/minimist": "^1.2.0",
     "@types/node": "^14.10.2",
     "concat-stream": "^2.0.0",
-    "esbuild": "^0.7.1",
+    "esbuild": "^0.8.2",
     "prettier": "^2.1.2",
     "ts-node": "^9.0.0",
     "tslint": "^6.1.3",
