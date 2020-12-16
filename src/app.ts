@@ -132,7 +132,7 @@ class App {
     const entries = await fg([`${dir}/**/*`], { dot: false });
     const deploy = new Deploy(wallet, this.arweave, this.debug);
 
-    if(!index) {
+    if (!index) {
       index = 'index.html';
     }
 
