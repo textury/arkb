@@ -33,7 +33,7 @@ export default class Deploy {
 
     let leftToPrepare = files.length;
     let countdown: clui.Spinner;
-    if(this.logs) {
+    if (this.logs) {
       countdown = new clui.Spinner(`Preparing ${leftToPrepare} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
       countdown.start();
     }
@@ -56,7 +56,7 @@ export default class Deploy {
             const tx = await this.buildTransaction(f, hash, data, type);
             this.txs.push({ path: f, hash, tx, type });
 
-            if(this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
+            if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
             resolve(true);
           });
         });
@@ -64,7 +64,7 @@ export default class Deploy {
     );
 
     await this.buildManifest(dir, index, tags);
-    if(this.logs) countdown.stop();
+    if (this.logs) countdown.stop();
 
     return this.txs;
   }
@@ -74,7 +74,7 @@ export default class Deploy {
     let cTotal = this.txs.length;
 
     let countdown: clui.Spinner;
-    if(this.logs) {
+    if (this.logs) {
       countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
       countdown.start();
     }
@@ -90,7 +90,7 @@ export default class Deploy {
         await uploader.uploadChunk();
       }
 
-      if(this.logs) countdown.message(`Deploying ${--cTotal} files...`);
+      if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
       go(++current);
     };
 
@@ -100,7 +100,7 @@ export default class Deploy {
     }
 
     await Promise.all(gos);
-    if(this.logs) countdown.stop();
+    if (this.logs) countdown.stop();
 
     return;
   }
