@@ -7,7 +7,6 @@ import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { GQLEdgeInterface, GQLTagInterface, GQLTransactionsResultInterface } from './faces/gqlResult';
 import chalk from 'chalk';
-import { rejects } from 'assert';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -15,11 +14,13 @@ export default class Deploy {
   private txs: { path: string; hash: string; tx: Transaction; type: string }[];
 
   private debug: boolean = false;
+  private logs: boolean = true;
 
-  constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean) {
+  constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
     this.arweave = arweave;
     this.debug = debug;
+    this.logs = logs;
   }
 
   async prepare(
@@ -31,8 +32,11 @@ export default class Deploy {
     this.txs = [];
 
     let leftToPrepare = files.length;
-    const countdown = new clui.Spinner(`Preparing ${leftToPrepare} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
-    countdown.start();
+    let countdown: clui.Spinner;
+    if(this.logs) {
+      countdown = new clui.Spinner(`Preparing ${leftToPrepare} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown.start();
+    }
 
     await Promise.all(
       files.map(async (f) => {
@@ -52,7 +56,7 @@ export default class Deploy {
             const tx = await this.buildTransaction(f, hash, data, type);
             this.txs.push({ path: f, hash, tx, type });
 
-            countdown.message(`Preparing ${--leftToPrepare} files...`);
+            if(this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
             resolve(true);
           });
         });
@@ -60,7 +64,7 @@ export default class Deploy {
     );
 
     await this.buildManifest(dir, index, tags);
-    countdown.stop();
+    if(this.logs) countdown.stop();
 
     return this.txs;
   }
@@ -69,8 +73,11 @@ export default class Deploy {
     let current = -1;
     let cTotal = this.txs.length;
 
-    const countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
-    countdown.start();
+    let countdown: clui.Spinner;
+    if(this.logs) {
+      const countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown.start();
+    }
 
     const go = async (index = 0) => {
       if (index >= this.txs.length) {
@@ -83,7 +90,7 @@ export default class Deploy {
         await uploader.uploadChunk();
       }
 
-      countdown.message(`Deploying ${--cTotal} files...`);
+      if(this.logs) countdown.message(`Deploying ${--cTotal} files...`);
       go(++current);
     };
 
@@ -93,7 +100,7 @@ export default class Deploy {
     }
 
     await Promise.all(gos);
-    countdown.stop();
+    if(this.logs) countdown.stop();
 
     return;
   }
