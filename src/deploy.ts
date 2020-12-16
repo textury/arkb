@@ -21,7 +21,7 @@ export default class Deploy {
     this.debug = debug;
   }
 
-  async prepare(dir: string, files: string[], index: string = 'index.html', tags: { name: string; value: string }[]) {
+  async prepare(dir: string, files: string[], index: string = 'index.html', tags: { name: string; value: string }[] = []) {
     this.txs = [];
 
     let leftToPrepare = files.length;
