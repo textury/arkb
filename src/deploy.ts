@@ -7,6 +7,7 @@ import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { GQLEdgeInterface, GQLTagInterface, GQLTransactionsResultInterface } from './faces/gqlResult';
 import chalk from 'chalk';
+import { rejects } from 'assert';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -35,11 +36,11 @@ export default class Deploy {
 
     await Promise.all(
       files.map(async (f) => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           fs.readFile(f, async (err, data) => {
             if (err) {
               console.log('Unable to read file ' + f);
-              process.exit(1);
+              return reject();
             }
 
             if (!data || !data.length) {
@@ -231,7 +232,7 @@ export default class Deploy {
       } catch (e) {
         console.log(chalk.red(`Unable to query ${this.arweave.getConfig().api.host}`));
         if (this.debug) console.log(e);
-        process.exit(0);
+        return [];
       }
 
       const transactions: GQLTransactionsResultInterface = res.data.data.transactions;
