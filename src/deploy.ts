@@ -75,7 +75,7 @@ export default class Deploy {
 
     let countdown: clui.Spinner;
     if(this.logs) {
-      const countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
       countdown.start();
     }
 
