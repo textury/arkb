@@ -1,6 +1,6 @@
 {
   "name": "arkb",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "./bin/app.js",
   "repository": "https://github.com/cedriking/arkb.git",
   "author": "Cedrik <cedrik.git@tryninja.io>",
