@@ -31,7 +31,7 @@ export default class Deploy {
     await Promise.all(
       files.map(async (f) => {
         return new Promise((resolve) => {
-          fs.readFile(f, 'utf8', async (err, data) => {
+          fs.readFile(f, async (err, data) => {
             if (err) {
               console.log('Unable to read file ' + f);
               process.exit(1);
@@ -92,7 +92,7 @@ export default class Deploy {
     return;
   }
 
-  private async buildTransaction(filePath: string, hash: string, data: string, type: string): Promise<Transaction> {
+  private async buildTransaction(filePath: string, hash: string, data: Buffer, type: string): Promise<Transaction> {
     const tx = await this.arweave.createTransaction({ data }, this.wallet);
 
     tx.addTag('App-Name', 'arkb');
@@ -160,7 +160,7 @@ export default class Deploy {
     return true;
   }
 
-  private async toHash(data: string): Promise<string> {
+  private async toHash(data: Buffer): Promise<string> {
     const hash = crypto.createHash('sha256');
     hash.update(data);
     return hash.digest('hex');
