@@ -82,12 +82,15 @@ class App {
     }
 
     console.log(chalk.magenta('\nExamples'));
-    console.log('Without saving a wallet:');
+    console.log('Without a saved wallet:');
     console.log('  arkb deploy folder/path/ --wallet path/to/my/wallet.json');
 
     console.log('\nSaving a wallet:');
     console.log('  arkb wallet-save path/to/wallet.json');
     console.log('  arkb deploy folder/path/');
+
+    console.log('\nCustom index file:');
+    console.log(' arkb deploy folder/path --index custom.html');
     process.exit(0);
   }
 
@@ -101,7 +104,7 @@ class App {
     const command = argv._[0];
     const cvalue = argv._[1];
     if (command === 'deploy') {
-      this.deploy(cvalue, argv.wallet);
+      this.deploy(cvalue, argv.wallet, argv.index);
     } else if (command === 'status') {
       this.status(cvalue);
     } else if (command === 'balance') {
@@ -118,7 +121,7 @@ class App {
   }
 
   // Arweave tasks
-  private async deploy(dir: string, walletPath: string) {
+  private async deploy(dir: string, walletPath: string, index: string) {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
     if (!this.dirExists(dir)) {
@@ -129,7 +132,11 @@ class App {
     const entries = await fg([`${dir}/**/*`], { dot: false });
     const deploy = new Deploy(wallet, this.arweave, this.debug);
 
-    const txs = await deploy.prepare(dir, entries);
+    if(!index) {
+      index = 'index.html';
+    }
+
+    const txs = await deploy.prepare(dir, entries, index);
     const balAfter = await this.showTxsDetails(txs, wallet);
 
     if (balAfter < 0) {

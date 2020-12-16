@@ -21,7 +21,7 @@ export default class Deploy {
     this.debug = debug;
   }
 
-  async prepare(dir: string, files: string[]) {
+  async prepare(dir: string, files: string[], index: string = 'index.html') {
     this.txs = [];
 
     let leftToPrepare = files.length;
@@ -38,7 +38,7 @@ export default class Deploy {
             }
 
             if (!data || !data.length) {
-              return resolve();
+              return resolve(true);
             }
 
             const hash = await this.toHash(data);
@@ -47,13 +47,13 @@ export default class Deploy {
             this.txs.push({ path: f, hash, tx, type });
 
             countdown.message(`Preparing ${--leftToPrepare} files...`);
-            resolve();
+            resolve(true);
           });
         });
       }),
     );
 
-    await this.buildManifest(dir);
+    await this.buildManifest(dir, index);
     countdown.stop();
 
     return this.txs;
