@@ -21,7 +21,7 @@ export default class Deploy {
     this.debug = debug;
   }
 
-  async prepare(dir: string, files: string[], index: string = 'index.html') {
+  async prepare(dir: string, files: string[], index: string = 'index.html', tags: {name: string; value: string}[]) {
     this.txs = [];
 
     let leftToPrepare = files.length;
@@ -53,7 +53,7 @@ export default class Deploy {
       }),
     );
 
-    await this.buildManifest(dir, index);
+    await this.buildManifest(dir, index, tags);
     countdown.stop();
 
     return this.txs;
@@ -104,7 +104,7 @@ export default class Deploy {
     return tx;
   }
 
-  private async buildManifest(dir: string, index: string = null) {
+  private async buildManifest(dir: string, index: string = null, tags: {name: string; value: string}[]) {
     const paths: { [key: string]: { id: string } } = {};
     const hashes = this.txs.map((t) => t.hash);
 
@@ -150,6 +150,13 @@ export default class Deploy {
     };
 
     const tx = await this.arweave.createTransaction({ data: JSON.stringify(data) }, this.wallet);
+
+    if(tags.length) {
+      for(const tag of tags) {
+        tx.addTag(tag.name, tag.value);
+      }
+    }
+
     tx.addTag('App-Name', 'arkb');
     tx.addTag('Type', 'manifest');
     tx.addTag('Content-Type', 'application/x.arweave-manifest+json');
