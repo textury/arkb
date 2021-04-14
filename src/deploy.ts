@@ -6,11 +6,14 @@ import clui from 'clui';
 import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { GQLEdgeInterface, GQLTagInterface, GQLTransactionsResultInterface } from './faces/gqlResult';
-import chalk from 'chalk';
+import clc from 'cli-color';
+import Ardb from 'ardb';
+import { GQLEdgeTransactionInterface, GQLTransactionInterface } from 'ardb/lib/faces/gql';
 
 export default class Deploy {
   private wallet: JWKInterface;
   private arweave: Arweave;
+  private ardb: Ardb;
   private txs: { path: string; hash: string; tx: Transaction; type: string }[];
 
   private debug: boolean = false;
@@ -21,6 +24,8 @@ export default class Deploy {
     this.arweave = arweave;
     this.debug = debug;
     this.logs = logs;
+
+    this.ardb = new Ardb(arweave, debug? 1 : 2);
   }
 
   async prepare(
@@ -122,7 +127,7 @@ export default class Deploy {
     const hashes = this.txs.map((t) => t.hash);
 
     // Query to find all the files previously deployed
-    const edges: GQLEdgeInterface[] = await this.queryGQLPaths(hashes);
+    const edges: GQLEdgeTransactionInterface[] = await this.queryGQLPaths(hashes);
     if (edges.length) {
       for (let i = 0, j = edges.length; i < j; i++) {
         const node = edges[i].node;
@@ -186,69 +191,20 @@ export default class Deploy {
     return hash.digest('hex');
   }
 
-  private async queryGQLPaths(hashes: string[]): Promise<GQLEdgeInterface[]> {
-    let hasNextPage = true;
-    let edges: GQLEdgeInterface[] = [];
-    let cursor: string = '';
+  private async queryGQLPaths(hashes: string[]): Promise<GQLEdgeTransactionInterface[]> {    
+    let edges: GQLEdgeTransactionInterface[];
+    try {
+      edges = (await this.ardb.search('transactions').tags([
+        {name: "App-Name", values: ["arkb"]},
+        {name: "File-Hash", values: hashes},
+        {name: "Type", values: ["file"]}
+      ]).only(['id', 'tags', 'tags.name', 'tags.value']).findAll() as GQLEdgeTransactionInterface[]);
 
-    while (hasNextPage) {
-      const query = {
-        query: `query {
-          transactions(
-            tags: [
-              {name: "App-Name", values: "arkb"},
-              {name: "File-Hash", values: ${JSON.stringify(hashes)}},
-              {name: "Type", values: "file"}
-            ]
-            first: 100
-            after: "${cursor}"
-          ) {
-            pageInfo {
-              hasNextPage
-            }
-            edges {
-              cursor
-              
-              node {
-                id
-                recipient
-                quantity {
-                  winston
-                  ar
-                }
-                owner {
-                  address
-                },
-                tags {
-                  name,
-                  value
-                }
-                block {
-                  timestamp
-                  height
-                }
-              }
-            }
-          }
-        }`,
-      };
+    } catch (e) {
 
-      let res: any;
-      try {
-        res = await this.arweave.api.post('https://arweave.dev/graphql', query);
-      } catch (e) {
-        console.log(chalk.red(`Unable to query ${this.arweave.getConfig().api.host}`));
-        if (this.debug) console.log(e);
-        return [];
-      }
-
-      const transactions: GQLTransactionsResultInterface = res.data.data.transactions;
-      if (transactions.edges && transactions.edges.length) {
-        edges = edges.concat(transactions.edges);
-        cursor = transactions.edges[transactions.edges.length - 1].cursor;
-      }
-
-      hasNextPage = transactions.pageInfo.hasNextPage;
+      console.log(clc.red(`Unable to query ${this.arweave.getConfig().api.host}`));
+      if (this.debug) console.log(e);
+      return [];
     }
 
     return edges;

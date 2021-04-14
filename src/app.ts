@@ -3,11 +3,11 @@
 import fs from 'fs';
 import fg from 'fast-glob';
 import clear from 'clear';
-import chalk from 'chalk';
 import figlet from 'figlet';
 import minimist from 'minimist';
 import Conf from 'conf';
 import CLI from 'clui';
+import clc from 'cli-color';
 import Arweave from 'arweave';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import cliQuestions from './cli-questions';
@@ -42,11 +42,11 @@ class App {
   // Options tasks
   private showWelcome() {
     clear();
-    console.log(chalk.yellow(figlet.textSync('ARKB', 'Whimsy')));
-    console.log(`Usage: arkb ${chalk.cyan('[options]')} ${chalk.green('[command]')}\n`);
+    console.log(clc.yellow(figlet.textSync('ARKB', 'Whimsy')));
+    console.log(`Usage: arkb ${clc.cyan('[options]')} ${clc.green('[command]')}\n`);
 
     const Line = CLI.Line;
-    new Line().column('Options', 40, [chalk.cyan]).column('Description', 20, [chalk.grey]).fill().output();
+    new Line().column('Options', 40, [clc.cyan]).column('Description', 20, [clc.blackBright]).fill().output();
 
     const opts = [
       ['-v --version', 'Show the version number'],
@@ -64,7 +64,7 @@ class App {
     }
 
     const cmds = [
-      [`deploy <dir_path> ${chalk.cyan('[options]')}`, 'Deploy a directory'],
+      [`deploy <dir_path> ${clc.cyan('[options]')}`, 'Deploy a directory'],
       ['status <tx_id>', 'Check the status of a transaction ID'],
       ['balance', 'Get the current balance of your wallet'],
       ['network', 'Get the current network info'],
@@ -75,13 +75,13 @@ class App {
 
     console.log('');
 
-    new Line().column('Commands', 40, [chalk.green]).column('Description', 20, [chalk.grey]).fill().output();
+    new Line().column('Commands', 40, [clc.green]).column('Description', 20, [clc.blackBright]).fill().output();
 
     for (let i = 0, j = cmds.length; i < j; i++) {
       new Line().column(cmds[i][0], 40).column(cmds[i][1], 60).fill().output();
     }
 
-    console.log(chalk.magenta('\nExamples'));
+    console.log(clc.magenta('\nExamples'));
     console.log('Without a saved wallet:');
     console.log('  arkb deploy folder/path/ --wallet path/to/my/wallet.json');
 
@@ -125,7 +125,7 @@ class App {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
     if (!this.dirExists(dir)) {
-      console.log(chalk.red("Directory doesn't exist"));
+      console.log(clc.red("Directory doesn't exist"));
       process.exit(0);
     }
 
@@ -140,19 +140,19 @@ class App {
     const balAfter = await this.showTxsDetails(txs, wallet);
 
     if (balAfter < 0) {
-      console.log(chalk.red("You don't have enough balance for this deploy."));
+      console.log(clc.red("You don't have enough balance for this deploy."));
       process.exit(0);
     }
 
     const res = await cliQuestions.showConfirm();
     if (!res.confirm) {
-      console.log(chalk.red('Rejected!'));
+      console.log(clc.red('Rejected!'));
       process.exit(0);
     }
 
     await deploy.deploy();
     console.log('');
-    console.log(chalk.green('Files deployed! Visit the following URL to see your deployed content:'));
+    console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
 
     let manifestTx = '';
     for (let i = 0, j = txs.length; i < j; i++) {
@@ -162,7 +162,7 @@ class App {
     }
 
     console.log(
-      chalk.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${manifestTx}`),
+      clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${manifestTx}`),
     );
   }
 
@@ -171,7 +171,7 @@ class App {
       const status = await this.arweave.transactions.getStatus(txid);
       console.log(`Confirmed: ${status.confirmed ? true : false} | Status: ${status.status}`);
     } catch (e) {
-      console.log(chalk.red('Invalid transaction ID.'));
+      console.log(clc.red('Invalid transaction ID.'));
       if (this.debug) console.log(e);
     }
 
@@ -182,7 +182,7 @@ class App {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
     if (!wallet) {
-      console.log(chalk.red('Please set a wallet or run with the --wallet option.'));
+      console.log(clc.red('Please set a wallet or run with the --wallet option.'));
       process.exit(0);
     }
 
@@ -191,7 +191,7 @@ class App {
       const bal = await this.arweave.wallets.getBalance(addy);
       console.log(`${addy} has a balance of ${this.arweave.ar.winstonToAr(bal)}`);
     } catch (e) {
-      console.log(chalk.red('Unable to retrieve wallet balance.'));
+      console.log(clc.red('Unable to retrieve wallet balance.'));
       if (this.debug) console.log(e);
     }
   }
@@ -211,9 +211,9 @@ class App {
       const encWallet = crypter.encrypt(Buffer.from(wallet)).toString('base64');
 
       this.config.set('wallet', encWallet);
-      console.log(chalk.green('Wallet saved!'));
+      console.log(clc.green('Wallet saved!'));
     } catch (e) {
-      console.log(chalk.red('Invalid wallet file.'));
+      console.log(clc.red('Invalid wallet file.'));
       if (this.debug) console.log(e);
     }
   }
@@ -224,9 +224,9 @@ class App {
     try {
       const pubKey = await this.arweave.wallets.jwkToAddress(wallet);
       fs.writeFileSync(`${pubKey}.json`, JSON.stringify(wallet), 'utf8');
-      console.log(chalk.green(`Wallet "${chalk.bold(`${pubKey}.json`)}" exported successfully.`));
+      console.log(clc.green(`Wallet "${clc.bold(`${pubKey}.json`)}" exported successfully.`));
     } catch (e) {
-      console.log(chalk.red('Unable to export the wallet file.'));
+      console.log(clc.red('Unable to export the wallet file.'));
       if (this.debug) console.log(e);
     }
   }
@@ -245,11 +245,11 @@ class App {
 
     const Line = CLI.Line;
     new Line()
-      .column('ID', 45, [chalk.cyan])
-      .column('Size', 15, [chalk.cyan])
-      .column('Fee', 17, [chalk.cyan])
-      .column('Type', 30, [chalk.cyan])
-      .column('Path', 20, [chalk.cyan])
+      .column('ID', 45, [clc.cyan])
+      .column('Size', 15, [clc.cyan])
+      .column('Fee', 17, [clc.cyan])
+      .column('Type', 30, [clc.cyan])
+      .column('Path', 20, [clc.cyan])
       .fill()
       .output();
 
@@ -273,7 +273,7 @@ class App {
 
     const arFee = this.arweave.ar.winstonToAr(totalFee.toString());
     console.log('');
-    console.log(chalk.cyan('Summary'));
+    console.log(clc.cyan('Summary'));
     console.log(`Number of files: ${txs.length - 1} + 1 manifest`);
     console.log(`Total size: ${this.bytesForHumans(totalSize)}`);
     console.log(`Total price: ${arFee}`);
@@ -283,7 +283,7 @@ class App {
     const bal = this.arweave.ar.winstonToAr(winston);
     const balAfter = +bal - +arFee;
     console.log('');
-    console.log(chalk.cyan('Wallet'));
+    console.log(clc.cyan('Wallet'));
     console.log(`Address: ${addy}`);
     console.log(`Current balance: ${bal}`);
     console.log(`Balance after deploy: ${balAfter}`);
@@ -315,14 +315,14 @@ class App {
 
     if (walletPath) {
       if (typeof walletPath !== 'string') {
-        console.log(chalk.red('The wallet must be specified.'));
+        console.log(clc.red('The wallet must be specified.'));
         process.exit(0);
       }
 
       try {
         wallet = JSON.parse(fs.readFileSync(walletPath, 'utf8'));
       } catch (e) {
-        console.log(chalk.red('Invalid wallet path.'));
+        console.log(clc.red('Invalid wallet path.'));
         if (this.debug) console.log(e);
         process.exit(0);
       }
@@ -336,7 +336,7 @@ class App {
           const decrypted = crypter.decrypt(Buffer.from(walletEncr, 'base64'));
           wallet = JSON.parse(decrypted.toString());
         } catch (e) {
-          console.log(chalk.red('Invalid password.'));
+          console.log(clc.red('Invalid password.'));
           if (this.debug) console.log(e);
           process.exit(0);
         }
@@ -344,7 +344,7 @@ class App {
     }
 
     if (!wallet) {
-      console.log(chalk.red('Save a wallet with `arkb wallet-save file-path.json`.'));
+      console.log(clc.red('Save a wallet with `arkb wallet-save file-path.json`.'));
       process.exit(0);
     }
 
