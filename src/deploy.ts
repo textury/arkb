@@ -25,7 +25,7 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
-    this.ardb = new Ardb(arweave, debug? 1 : 2);
+    this.ardb = new Ardb(arweave, debug ? 1 : 2);
   }
 
   async prepare(
@@ -191,17 +191,19 @@ export default class Deploy {
     return hash.digest('hex');
   }
 
-  private async queryGQLPaths(hashes: string[]): Promise<GQLEdgeTransactionInterface[]> {    
+  private async queryGQLPaths(hashes: string[]): Promise<GQLEdgeTransactionInterface[]> {
     let edges: GQLEdgeTransactionInterface[];
     try {
-      edges = (await this.ardb.search('transactions').tags([
-        {name: "App-Name", values: ["arkb"]},
-        {name: "File-Hash", values: hashes},
-        {name: "Type", values: ["file"]}
-      ]).only(['id', 'tags', 'tags.name', 'tags.value']).findAll() as GQLEdgeTransactionInterface[]);
-
+      edges = (await this.ardb
+        .search('transactions')
+        .tags([
+          { name: 'App-Name', values: ['arkb'] },
+          { name: 'File-Hash', values: hashes },
+          { name: 'Type', values: ['file'] },
+        ])
+        .only(['id', 'tags', 'tags.name', 'tags.value'])
+        .findAll()) as GQLEdgeTransactionInterface[];
     } catch (e) {
-
       console.log(clc.red(`Unable to query ${this.arweave.getConfig().api.host}`));
       if (this.debug) console.log(e);
       return [];
