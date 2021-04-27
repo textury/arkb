@@ -14,6 +14,7 @@ import cliQuestions from './cli-questions';
 import Crypter from './crypter';
 import Deploy from './deploy';
 import Transaction from 'arweave/node/lib/transaction';
+import IPFS from './ipfs';
 
 class App {
   private config: Conf;
@@ -53,6 +54,7 @@ class App {
       ['--host <host_or_ip>', 'Set the network hostname or ip'],
       ['--protocol <protocol>', 'Set the network protocol (http or https)'],
       ['--port <port>', 'Set the netwrok port'],
+      ['--ipfs-publish', 'Publish with Arweave+IPFS'],
       ['--timeout <timeout>', 'Set the request timeout'],
       ['--wallet <wallet_file_path>', 'Set the key file path'],
       ['--debug', 'Display additional logging'],
@@ -104,7 +106,7 @@ class App {
     const command = argv._[0];
     const cvalue = argv._[1];
     if (command === 'deploy') {
-      this.deploy(cvalue, argv.wallet, argv.index);
+      this.deploy(cvalue, argv.wallet, argv.index, argv['ipfs-publish']);
     } else if (command === 'status') {
       this.status(cvalue);
     } else if (command === 'balance') {
@@ -121,7 +123,7 @@ class App {
   }
 
   // Arweave tasks
-  private async deploy(dir: string, walletPath: string, index: string) {
+  private async deploy(dir: string, walletPath: string, index: string, toIpfs: boolean = false) {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
     if (!this.dirExists(dir)) {
@@ -136,7 +138,7 @@ class App {
       index = 'index.html';
     }
 
-    const txs = await deploy.prepare(dir, entries, index);
+    const txs = await deploy.prepare(dir, entries, index, null, toIpfs);
     const balAfter = await this.showTxsDetails(txs, wallet);
 
     if (balAfter < 0) {
@@ -148,6 +150,11 @@ class App {
     if (!res.confirm) {
       console.log(clc.red('Rejected!'));
       process.exit(0);
+    }
+
+    if (toIpfs) {
+      const ipfs = new IPFS();
+      await ipfs.deploy(dir);
     }
 
     await deploy.deploy();

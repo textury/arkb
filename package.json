@@ -1,5 +1,5 @@
 {
-  "name": "arkb",
+  "name": "@textury/arkb",
   "version": "1.0.8",
   "main": "./bin/app.js",
   "repository": "https://github.com/cedriking/arkb.git",
@@ -16,6 +16,7 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
+    "predeploy": "npm run format && npm run lint && npm run build",
     "prepare": "npm run build",
     "prepublishOnly": "npm run lint",
     "preversion": "npm run lint",
@@ -34,6 +35,8 @@
     "fast-glob": "^3.2.5",
     "figlet": "^1.5.0",
     "inquirer": "^8.0.0",
+    "ipfs-http-client": "^49.0.4",
+    "ipfs-only-hash": "^4.0.0",
     "mime": "^2.5.2",
     "minimist": "^1.2.5"
   },

@@ -9,11 +9,13 @@ import { GQLEdgeInterface, GQLTagInterface, GQLTransactionsResultInterface } fro
 import clc from 'cli-color';
 import Ardb from 'ardb';
 import { GQLEdgeTransactionInterface, GQLTransactionInterface } from 'ardb/lib/faces/gql';
+import IPFS from './ipfs';
 
 export default class Deploy {
   private wallet: JWKInterface;
   private arweave: Arweave;
   private ardb: Ardb;
+  private ipfs: IPFS = new IPFS();
   private txs: { path: string; hash: string; tx: Transaction; type: string }[];
 
   private debug: boolean = false;
@@ -33,6 +35,7 @@ export default class Deploy {
     files: string[],
     index: string = 'index.html',
     tags: { name: string; value: string }[] = [],
+    toIpfs: boolean = false,
   ) {
     this.txs = [];
 
@@ -58,7 +61,7 @@ export default class Deploy {
 
             const hash = await this.toHash(data);
             const type = mime.getType(f);
-            const tx = await this.buildTransaction(f, hash, data, type);
+            const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
             this.txs.push({ path: f, hash, tx, type });
 
             if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
@@ -110,8 +113,19 @@ export default class Deploy {
     return;
   }
 
-  private async buildTransaction(filePath: string, hash: string, data: Buffer, type: string): Promise<Transaction> {
+  private async buildTransaction(
+    filePath: string,
+    hash: string,
+    data: Buffer,
+    type: string,
+    toIpfs: boolean = false,
+  ): Promise<Transaction> {
     const tx = await this.arweave.createTransaction({ data }, this.wallet);
+
+    if (toIpfs) {
+      const ipfsHash = await this.ipfs.hash(data);
+      tx.addTag('IPFS-Add', ipfsHash);
+    }
 
     tx.addTag('App-Name', 'arkb');
     tx.addTag('Type', 'file');
@@ -169,7 +183,7 @@ export default class Deploy {
 
     const tx = await this.arweave.createTransaction({ data: JSON.stringify(data) }, this.wallet);
 
-    if (customTags.length) {
+    if (customTags && customTags.length) {
       for (const tag of customTags) {
         tx.addTag(tag.name, tag.value);
       }
