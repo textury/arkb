@@ -5,11 +5,12 @@ import mime from 'mime';
 import clui from 'clui';
 import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
-import { GQLEdgeInterface, GQLTagInterface, GQLTransactionsResultInterface } from './faces/gqlResult';
+import { GQLTagInterface } from './faces/gqlResult';
 import clc from 'cli-color';
 import Ardb from 'ardb';
-import { GQLEdgeTransactionInterface, GQLTransactionInterface } from 'ardb/lib/faces/gql';
+import { GQLEdgeTransactionInterface } from 'ardb/lib/faces/gql';
 import IPFS from './ipfs';
+import Community from 'community-js';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -21,6 +22,8 @@ export default class Deploy {
   private debug: boolean = false;
   private logs: boolean = true;
 
+  private community: Community;
+
   constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
     this.arweave = arweave;
@@ -28,6 +31,7 @@ export default class Deploy {
     this.logs = logs;
 
     this.ardb = new Ardb(arweave, debug ? 1 : 2);
+    this.community = new Community(arweave, wallet);
   }
 
   async prepare(
@@ -77,7 +81,7 @@ export default class Deploy {
     return this.txs;
   }
 
-  async deploy() {
+  async deploy(): Promise<string> {
     let current = -1;
     let cTotal = this.txs.length;
 
@@ -85,6 +89,33 @@ export default class Deploy {
     if (this.logs) {
       countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
       countdown.start();
+    }
+
+    let manifestTx = '';
+    for (let i = 0, j = this.txs.length; i < j; i++) {
+      if (this.txs[i].path === '' && this.txs[i].hash === '') {
+        manifestTx = this.txs[i].tx.id;
+      }
+    }
+
+    await this.community.setCommunityTx('eCwfEQwLFpfsfcIwbSX0l749_fsZvaYWJuSXwwDs64c');
+    const target = await this.community.selectWeightedHolder();
+
+    if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
+      const fee: number = this.txs.reduce((a, txData) => a + +txData.tx.reward, 0);
+      const quantity = parseInt((fee * 0.1).toString(), 10).toString();
+
+      const tx = await this.arweave.createTransaction({
+        target,
+        quantity,
+      });
+      tx.addTag('Action', 'Deploy');
+      tx.addTag('Message', `Deployed ${cTotal} files on https://arweave.net/${manifestTx}`);
+      tx.addTag('Service', 'arkb');
+      tx.addTag('App-Name', 'arkb');
+
+      await this.arweave.transactions.sign(tx, this.wallet);
+      await this.arweave.transactions.post(tx);
     }
 
     const go = async (index = 0) => {
@@ -110,7 +141,7 @@ export default class Deploy {
     await Promise.all(gos);
     if (this.logs) countdown.stop();
 
-    return;
+    return manifestTx;
   }
 
   private async buildTransaction(
@@ -129,7 +160,7 @@ export default class Deploy {
 
     tx.addTag('App-Name', 'arkb');
     tx.addTag('Type', 'file');
-    tx.addTag('Content-Type', mime.getType(filePath));
+    tx.addTag('Content-Type', type);
     tx.addTag('File-Hash', hash);
 
     await this.arweave.transactions.sign(tx, this.wallet);
@@ -169,6 +200,12 @@ export default class Deploy {
     if (!index) {
       if (Object.keys(paths).includes('index.html')) {
         index = 'index.html';
+      } else {
+        index = Object.keys(paths)[0];
+      }
+    } else {
+      if (!Object.keys(paths).includes(index)) {
+        index = Object.keys(paths)[0];
       }
     }
 

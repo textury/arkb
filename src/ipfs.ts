@@ -1,18 +1,11 @@
-import fs from 'fs';
-import crypto from 'crypto';
-import Arweave from 'arweave';
-import mime from 'mime';
 import clui from 'clui';
-import clc from 'cli-color';
 import IpfsHttpClient from 'ipfs-http-client';
 import Hash from 'ipfs-only-hash';
 
 export default class IPFS {
-  private debug: boolean = false;
   private logs: boolean = true;
 
-  constructor(debug: boolean = false, logs: boolean = true) {
-    this.debug = debug;
+  constructor(logs: boolean = true) {
     this.logs = logs;
   }
 
@@ -33,6 +26,7 @@ export default class IPFS {
     const glob = IpfsHttpClient.globSource(dir, { recursive: true });
     const files = await ipfs.add(glob);
     countdown.stop();
+
     return files;
   }
 

@@ -154,23 +154,23 @@ class App {
 
     if (toIpfs) {
       const ipfs = new IPFS();
-      await ipfs.deploy(dir);
+      const ipfsHash = await ipfs.deploy(dir);
+
+      console.log('');
+      console.log(clc.green('IPFS deployed! Main CID:'));
+
+      console.log(clc.cyan(ipfsHash.cid));
     }
 
-    await deploy.deploy();
+    const manifestTx: string = await deploy.deploy();
     console.log('');
     console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
-
-    let manifestTx = '';
-    for (let i = 0, j = txs.length; i < j; i++) {
-      if (txs[i].path === '' && txs[i].hash === '') {
-        manifestTx = txs[i].tx.id;
-      }
-    }
 
     console.log(
       clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${manifestTx}`),
     );
+
+    process.exit(0);
   }
 
   private async status(txid: string) {
@@ -278,12 +278,14 @@ class App {
         .output();
     }
 
+    totalFee += parseInt((totalFee * 0.1).toString(), 10);
+
     const arFee = this.arweave.ar.winstonToAr(totalFee.toString());
     console.log('');
     console.log(clc.cyan('Summary'));
     console.log(`Number of files: ${txs.length - 1} + 1 manifest`);
     console.log(`Total size: ${this.bytesForHumans(totalSize)}`);
-    console.log(`Total price: ${arFee}`);
+    console.log(`Total fee: ${arFee}`);
 
     const addy = await this.arweave.wallets.jwkToAddress(wallet);
     const winston = await this.arweave.wallets.getBalance(addy);
