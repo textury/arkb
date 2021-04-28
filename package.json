@@ -1,6 +1,6 @@
 {
   "name": "@textury/arkb",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "main": "./bin/app.js",
   "repository": "https://github.com/cedriking/arkb.git",
   "author": "Cedrik <cedrik.git@tryninja.io>",
