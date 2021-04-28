@@ -11,6 +11,8 @@ import Ardb from 'ardb';
 import { GQLEdgeTransactionInterface } from 'ardb/lib/faces/gql';
 import IPFS from './ipfs';
 import Community from 'community-js';
+import pRetry from 'p-retry';
+import PromisePool from '@supercharge/promise-pool';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -50,54 +52,75 @@ export default class Deploy {
       countdown.start();
     }
 
-    await Promise.all(
-      files.map(async (f) => {
-        return new Promise((resolve, reject) => {
-          fs.readFile(f, async (err, data) => {
-            if (err) {
-              console.log('Unable to read file ' + f);
-              return reject();
-            }
+    const go = async (f: string) => {
+      fs.readFile(f, async (err, data) => {
+        if (err) {
+          console.log('Unable to read file ' + f);
+          throw new Error(`Unable to read file: ${f}`);
+        }
 
-            if (!data || !data.length) {
-              return resolve(true);
-            }
+        if (!data || !data.length) {
+          return true;
+        }
 
-            const hash = await this.toHash(data);
-            const type = mime.getType(f);
-            const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
-            this.txs.push({ path: f, hash, tx, type });
+        const hash = await this.toHash(data);
+        const type = mime.getType(f);
+        const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
+        this.txs.push({ path: f, hash, tx, type });
 
-            if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
-            resolve(true);
-          });
-        });
-      }),
-    );
+        if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
+        return true;
+      });
+    };
+
+    const retry = async (f: string) => {
+      await pRetry(() => go(f), {
+        onFailedAttempt: async (error) => {
+          console.log(
+            clc.blackBright(
+              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
+            ),
+          );
+          await this.sleep(300);
+        },
+        retries: 5,
+      });
+    };
+
+    await PromisePool.withConcurrency(5)
+      .for(files)
+      .process(async file => {
+        await retry(file);
+        await this.sleep(300);
+        return true;
+      });
 
     // Query to find all the files previously deployed
     const hashes = this.txs.map((t) => t.hash);
     const edges: GQLEdgeTransactionInterface[] = await this.queryGQLPaths(hashes);
 
     const isFile = this.txs.length === 1 && this.txs[0].path === dir;
-    if(isFile) {
-      if(edges.length) {
+    if (isFile) {
+      if (edges.length) {
         if (this.logs) countdown.stop();
 
         console.log(clc.red('File already deployed, link:'));
-        console.log(clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`));
+        console.log(
+          clc.cyan(
+            `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
+          ),
+        );
         process.exit(0);
       }
     } else {
       await this.buildManifest(dir, index, tags, edges);
     }
-    
+
     if (this.logs) countdown.stop();
     return this.txs;
   }
 
   async deploy(isFile: boolean = false): Promise<string> {
-    let current = -1;
     let cTotal = this.txs.length;
 
     let countdown: clui.Spinner;
@@ -107,7 +130,7 @@ export default class Deploy {
     }
 
     let txid = this.txs[0].tx.id;
-    if(!isFile) {
+    if (!isFile) {
       for (let i = 0, j = this.txs.length; i < j; i++) {
         if (this.txs[i].path === '' && this.txs[i].hash === '') {
           txid = this.txs[i].tx.id;
@@ -128,7 +151,7 @@ export default class Deploy {
         quantity,
       });
       tx.addTag('Action', 'Deploy');
-      tx.addTag('Message', `Deployed ${cTotal} ${isFile? 'file' : 'files'} on https://arweave.net/${txid}`);
+      tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
       tx.addTag('Service', 'arkb');
       tx.addTag('App-Name', 'arkb');
 
@@ -136,27 +159,36 @@ export default class Deploy {
       await this.arweave.transactions.post(tx);
     }
 
-    const go = async (index = 0) => {
-      if (index >= this.txs.length) {
-        return true;
-      }
-
-      const uploader = await this.arweave.transactions.getUploader(this.txs[index].tx);
+    const go = async (tx: Transaction) => {
+      const uploader = await this.arweave.transactions.getUploader(tx);
 
       while (!uploader.isComplete) {
         await uploader.uploadChunk();
       }
 
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
-      go(++current);
+      return true;
     };
 
-    const gos = [];
-    for (let i = 0, j = 5; i < j; i++) {
-      gos.push(go(++current));
-    }
+    const retry = async (tx: Transaction) => {
+      await pRetry(() => go(tx), {
+        onFailedAttempt: async (error) => {
+          console.log(
+            clc.blackBright(
+              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
+            ),
+          );
+          await this.sleep(300);
+        },
+        retries: 5,
+      });
+    };
 
-    await Promise.all(gos);
+    await PromisePool.withConcurrency(5).for(this.txs).process(async txData => {
+      await retry(txData.tx);
+      await this.sleep(300);
+      return true;
+    });
     if (this.logs) countdown.stop();
 
     return txid;
@@ -185,9 +217,14 @@ export default class Deploy {
     return tx;
   }
 
-  private async buildManifest(dir: string, index: string = null, customTags: { name: string; value: string }[], edges: GQLEdgeTransactionInterface[]) {
+  private async buildManifest(
+    dir: string,
+    index: string = null,
+    customTags: { name: string; value: string }[],
+    edges: GQLEdgeTransactionInterface[],
+  ) {
     const paths: { [key: string]: { id: string } } = {};
-    
+
     if (edges.length) {
       for (let i = 0, j = edges.length; i < j; i++) {
         const node = edges[i].node;
@@ -258,17 +295,25 @@ export default class Deploy {
   }
 
   private async queryGQLPaths(hashes: string[]): Promise<GQLEdgeTransactionInterface[]> {
-    let edges: GQLEdgeTransactionInterface[];
+    let edges: GQLEdgeTransactionInterface[] = [];
+    let tmpEdges: GQLEdgeTransactionInterface[] = [];
+    let chunk: string[];
+
     try {
-      edges = (await this.ardb
-        .search('transactions')
-        .tags([
-          { name: 'App-Name', values: ['arkb'] },
-          { name: 'File-Hash', values: hashes },
-          { name: 'Type', values: ['file'] },
-        ])
-        .only(['id', 'tags', 'tags.name', 'tags.value'])
-        .findAll()) as GQLEdgeTransactionInterface[];
+      while (hashes.length) {
+        chunk = hashes.splice(0, 500);
+        tmpEdges = (await this.ardb
+          .search('transactions')
+          .tags([
+            { name: 'App-Name', values: ['arkb'] },
+            { name: 'File-Hash', values: chunk },
+            { name: 'Type', values: ['file'] },
+          ])
+          .only(['id', 'tags', 'tags.name', 'tags.value'])
+          .findAll()) as GQLEdgeTransactionInterface[];
+
+        edges = [...edges, ...tmpEdges];
+      }
     } catch (e) {
       console.log(clc.red(`Unable to query ${this.arweave.getConfig().api.host}`));
       if (this.debug) console.log(e);
@@ -286,5 +331,9 @@ export default class Deploy {
     }
 
     return res;
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

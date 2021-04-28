@@ -133,11 +133,11 @@ class App {
 
     let entries = [dir];
     let isFile = true;
-    if(fs.lstatSync(dir).isDirectory() ) {
+    if (fs.lstatSync(dir).isDirectory()) {
       entries = await fg([`${dir}/**/*`], { dot: false });
       isFile = false;
     }
-    
+
     const deploy = new Deploy(wallet, this.arweave, this.debug);
 
     if (!index) {
@@ -252,7 +252,7 @@ class App {
   private async showTxsDetails(
     txs: { path: string; hash: string; tx: Transaction; type: string }[],
     wallet: JWKInterface,
-    isFile: boolean = false
+    isFile: boolean = false,
   ): Promise<number> {
     let totalSize = 0;
     let deployFee = 0;
@@ -293,7 +293,7 @@ class App {
 
     console.log('');
     console.log(clc.cyan('Summary'));
-    console.log(`Number of files: ${isFile? txs.length : `${txs.length - 1} + 1 manifest`}`);
+    console.log(`Number of files: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
     console.log(`Total size: ${this.bytesForHumans(totalSize)}`);
     console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee)`);
     console.log(`Total fee: ${totalFee}`);

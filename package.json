@@ -16,7 +16,7 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
-    "predeploy": "npm run format && npm run lint && npm run build",
+    "precommit": "npm run format && npm run lint && npm run build",
     "prepare": "npm run build",
     "prepublishOnly": "npm run lint",
     "preversion": "npm run lint",
@@ -24,6 +24,7 @@
     "postversion": "git push && git push --tags"
   },
   "dependencies": {
+    "@supercharge/promise-pool": "^1.7.0",
     "@types/chalk": "^2.2.0",
     "ardb": "^1.0.7",
     "arweave": "^1.10.13",
@@ -38,7 +39,8 @@
     "ipfs-http-client": "^49.0.4",
     "ipfs-only-hash": "^4.0.0",
     "mime": "^2.5.2",
-    "minimist": "^1.2.5"
+    "minimist": "^1.2.5",
+    "p-retry": "^4.5.0"
   },
   "devDependencies": {
     "@types/clear": "^0.1.1",
