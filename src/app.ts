@@ -131,7 +131,13 @@ class App {
       process.exit(0);
     }
 
-    const entries = await fg([`${dir}/**/*`], { dot: false });
+    let entries = [dir];
+    let isFile = true;
+    if(fs.lstatSync(dir).isDirectory() ) {
+      entries = await fg([`${dir}/**/*`], { dot: false });
+      isFile = false;
+    }
+    
     const deploy = new Deploy(wallet, this.arweave, this.debug);
 
     if (!index) {
@@ -139,7 +145,7 @@ class App {
     }
 
     const txs = await deploy.prepare(dir, entries, index, null, toIpfs);
-    const balAfter = await this.showTxsDetails(txs, wallet);
+    const balAfter = await this.showTxsDetails(txs, wallet, isFile);
 
     if (balAfter < 0) {
       console.log(clc.red("You don't have enough balance for this deploy."));
@@ -162,7 +168,7 @@ class App {
       console.log(clc.cyan(ipfsHash.cid));
     }
 
-    const manifestTx: string = await deploy.deploy();
+    const manifestTx: string = await deploy.deploy(isFile);
     console.log('');
     console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
 
@@ -246,6 +252,7 @@ class App {
   private async showTxsDetails(
     txs: { path: string; hash: string; tx: Transaction; type: string }[],
     wallet: JWKInterface,
+    isFile: boolean = false
   ): Promise<number> {
     let totalSize = 0;
     let deployFee = 0;
@@ -286,16 +293,16 @@ class App {
 
     console.log('');
     console.log(clc.cyan('Summary'));
-    console.log(`Number of files: ${txs.length - 1} + 1 manifest`);
+    console.log(`Number of files: ${isFile? txs.length : `${txs.length - 1} + 1 manifest`}`);
     console.log(`Total size: ${this.bytesForHumans(totalSize)}`);
-    console.log(`Deploy fee: ${arFee}`);
-    console.log(`Service fee: ${serviceFee}`);
+    console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee)`);
     console.log(`Total fee: ${totalFee}`);
 
     const addy = await this.arweave.wallets.jwkToAddress(wallet);
     const winston = await this.arweave.wallets.getBalance(addy);
     const bal = this.arweave.ar.winstonToAr(winston);
     const balAfter = +bal - +totalFee;
+
     console.log('');
     console.log(clc.cyan('Wallet'));
     console.log(`Address: ${addy}`);

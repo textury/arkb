@@ -75,13 +75,28 @@ export default class Deploy {
       }),
     );
 
-    await this.buildManifest(dir, index, tags);
-    if (this.logs) countdown.stop();
+    // Query to find all the files previously deployed
+    const hashes = this.txs.map((t) => t.hash);
+    const edges: GQLEdgeTransactionInterface[] = await this.queryGQLPaths(hashes);
 
+    const isFile = this.txs.length === 1 && this.txs[0].path === dir;
+    if(isFile) {
+      if(edges.length) {
+        if (this.logs) countdown.stop();
+
+        console.log(clc.red('File already deployed, link:'));
+        console.log(clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`));
+        process.exit(0);
+      }
+    } else {
+      await this.buildManifest(dir, index, tags, edges);
+    }
+    
+    if (this.logs) countdown.stop();
     return this.txs;
   }
 
-  async deploy(): Promise<string> {
+  async deploy(isFile: boolean = false): Promise<string> {
     let current = -1;
     let cTotal = this.txs.length;
 
@@ -91,10 +106,13 @@ export default class Deploy {
       countdown.start();
     }
 
-    let manifestTx = '';
-    for (let i = 0, j = this.txs.length; i < j; i++) {
-      if (this.txs[i].path === '' && this.txs[i].hash === '') {
-        manifestTx = this.txs[i].tx.id;
+    let txid = this.txs[0].tx.id;
+    if(!isFile) {
+      for (let i = 0, j = this.txs.length; i < j; i++) {
+        if (this.txs[i].path === '' && this.txs[i].hash === '') {
+          txid = this.txs[i].tx.id;
+          break;
+        }
       }
     }
 
@@ -110,7 +128,7 @@ export default class Deploy {
         quantity,
       });
       tx.addTag('Action', 'Deploy');
-      tx.addTag('Message', `Deployed ${cTotal} files on https://arweave.net/${manifestTx}`);
+      tx.addTag('Message', `Deployed ${cTotal} ${isFile? 'file' : 'files'} on https://arweave.net/${txid}`);
       tx.addTag('Service', 'arkb');
       tx.addTag('App-Name', 'arkb');
 
@@ -141,7 +159,7 @@ export default class Deploy {
     await Promise.all(gos);
     if (this.logs) countdown.stop();
 
-    return manifestTx;
+    return txid;
   }
 
   private async buildTransaction(
@@ -167,12 +185,9 @@ export default class Deploy {
     return tx;
   }
 
-  private async buildManifest(dir: string, index: string = null, customTags: { name: string; value: string }[]) {
+  private async buildManifest(dir: string, index: string = null, customTags: { name: string; value: string }[], edges: GQLEdgeTransactionInterface[]) {
     const paths: { [key: string]: { id: string } } = {};
-    const hashes = this.txs.map((t) => t.hash);
-
-    // Query to find all the files previously deployed
-    const edges: GQLEdgeTransactionInterface[] = await this.queryGQLPaths(hashes);
+    
     if (edges.length) {
       for (let i = 0, j = edges.length; i < j; i++) {
         const node = edges[i].node;
