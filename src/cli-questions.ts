@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import clc from 'cli-color';
 import inquirer from 'inquirer';
 
 const cliQuestions = {
@@ -23,9 +23,7 @@ const cliQuestions = {
       {
         name: 'confirm',
         type: 'confirm',
-        message: chalk.greenBright(
-          'Carefully check the above details are correct, then confirm to complete this upload',
-        ),
+        message: clc.greenBright('Carefully check the above details are correct, then confirm to complete this upload'),
       },
     ]);
   },
