@@ -248,7 +248,7 @@ class App {
     wallet: JWKInterface,
   ): Promise<number> {
     let totalSize = 0;
-    let totalFee = 0;
+    let deployFee = 0;
 
     const Line = CLI.Line;
     new Line()
@@ -266,7 +266,7 @@ class App {
 
       const size = this.bytesForHumans(+tx.tx.data_size);
       totalSize += +tx.tx.data_size;
-      totalFee += +tx.tx.reward;
+      deployFee += +tx.tx.reward;
 
       new Line()
         .column(tx.tx.id, 45)
@@ -278,19 +278,24 @@ class App {
         .output();
     }
 
-    totalFee += parseInt((totalFee * 0.1).toString(), 10);
+    const fee = parseInt((deployFee * 0.1).toString(), 10);
 
-    const arFee = this.arweave.ar.winstonToAr(totalFee.toString());
+    const arFee = this.arweave.ar.winstonToAr(deployFee.toString());
+    const serviceFee = this.arweave.ar.winstonToAr(fee.toString());
+    const totalFee = this.arweave.ar.winstonToAr((deployFee + fee).toString());
+
     console.log('');
     console.log(clc.cyan('Summary'));
     console.log(`Number of files: ${txs.length - 1} + 1 manifest`);
     console.log(`Total size: ${this.bytesForHumans(totalSize)}`);
-    console.log(`Total fee: ${arFee}`);
+    console.log(`Deploy fee: ${arFee}`);
+    console.log(`Service fee: ${serviceFee}`);
+    console.log(`Total fee: ${totalFee}`);
 
     const addy = await this.arweave.wallets.jwkToAddress(wallet);
     const winston = await this.arweave.wallets.getBalance(addy);
     const bal = this.arweave.ar.winstonToAr(winston);
-    const balAfter = +bal - +arFee;
+    const balAfter = +bal - +totalFee;
     console.log('');
     console.log(clc.cyan('Wallet'));
     console.log(`Address: ${addy}`);
