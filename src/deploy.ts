@@ -53,28 +53,31 @@ export default class Deploy {
     }
 
     const go = async (f: string) => {
-      fs.readFile(f, async (err, data) => {
-        if (err) {
-          console.log('Unable to read file ' + f);
-          throw new Error(`Unable to read file: ${f}`);
-        }
+      return new Promise((resolve, reject) => {
+        fs.readFile(f, async (err, data) => {
+          if (err) {
+            console.log('Unable to read file ' + f);
+            throw new Error(`Unable to read file: ${f}`);
+          }
 
-        if (!data || !data.length) {
-          return true;
-        }
+          if (!data || !data.length) {
+            resolve(true);
+          }
 
-        const hash = await this.toHash(data);
-        const type = mime.getType(f);
-        const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
-        this.txs.push({ path: f, hash, tx, type });
+          const hash = await this.toHash(data);
+          const type = mime.getType(f);
+          const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
+          this.txs.push({ path: f, hash, tx, type });
 
-        if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
-        return true;
+          if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
+
+          resolve(true);
+        });
       });
     };
 
     const retry = async (f: string) => {
-      await pRetry(() => go(f), {
+      await pRetry(async () => go(f), {
         onFailedAttempt: async (error) => {
           console.log(
             clc.blackBright(
@@ -87,11 +90,10 @@ export default class Deploy {
       });
     };
 
-    await PromisePool.withConcurrency(5)
+    await PromisePool.withConcurrency(10)
       .for(files)
-      .process(async file => {
+      .process(async (file) => {
         await retry(file);
-        await this.sleep(300);
         return true;
       });
 
@@ -184,11 +186,12 @@ export default class Deploy {
       });
     };
 
-    await PromisePool.withConcurrency(5).for(this.txs).process(async txData => {
-      await retry(txData.tx);
-      await this.sleep(300);
-      return true;
-    });
+    await PromisePool.withConcurrency(5)
+      .for(this.txs)
+      .process(async (txData) => {
+        await retry(txData.tx);
+        return true;
+      });
     if (this.logs) countdown.stop();
 
     return txid;

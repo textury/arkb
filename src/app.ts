@@ -131,10 +131,10 @@ class App {
       process.exit(0);
     }
 
-    let entries = [dir];
+    let files = [dir];
     let isFile = true;
     if (fs.lstatSync(dir).isDirectory()) {
-      entries = await fg([`${dir}/**/*`], { dot: false });
+      files = await fg([`${dir}/**/*`], { dot: false });
       isFile = false;
     }
 
@@ -144,7 +144,7 @@ class App {
       index = 'index.html';
     }
 
-    const txs = await deploy.prepare(dir, entries, index, null, toIpfs);
+    const txs = await deploy.prepare(dir, files, index, null, toIpfs);
     const balAfter = await this.showTxsDetails(txs, wallet, isFile);
 
     if (balAfter < 0) {
