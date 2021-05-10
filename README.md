@@ -35,7 +35,7 @@ Options                                 Description
 -v --version                            Show the version number
 --host                                  Set the network hostname or ip
 --protocol                              Set the network protocol (http or https)
---port                                  Set the netwrok port
+--port                                  Set the network port
 --ipfs-publish                          Publish to Arweave+IPFS
 --timeout                               Set the request timeout
 --wallet                                Set the key file path
