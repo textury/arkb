@@ -55,6 +55,7 @@ class App {
       ['--protocol <protocol>', 'Set the network protocol (http or https)'],
       ['--port <port>', 'Set the netwrok port'],
       ['--ipfs-publish', 'Publish with Arweave+IPFS'],
+      ['--auto-confirm', 'Skips the confirm screen'],
       ['--timeout <timeout>', 'Set the request timeout'],
       ['--wallet <wallet_file_path>', 'Set the key file path'],
       ['--debug', 'Display additional logging'],
@@ -106,7 +107,7 @@ class App {
     const command = argv._[0];
     const cvalue = argv._[1];
     if (command === 'deploy') {
-      this.deploy(cvalue, argv.wallet, argv.index, argv['ipfs-publish']);
+      this.deploy(cvalue, argv.wallet, argv.index, argv['ipfs-publish'], argv['auto-confirm']);
     } else if (command === 'status') {
       this.status(cvalue);
     } else if (command === 'balance') {
@@ -123,7 +124,13 @@ class App {
   }
 
   // Arweave tasks
-  private async deploy(dir: string, walletPath: string, index: string, toIpfs: boolean = false) {
+  private async deploy(
+    dir: string,
+    walletPath: string,
+    index: string,
+    toIpfs: boolean = false,
+    confirm: boolean = false,
+  ) {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
     if (!this.dirExists(dir)) {
@@ -152,7 +159,13 @@ class App {
       process.exit(0);
     }
 
-    const res = await cliQuestions.showConfirm();
+    // Check if auto-confirm is added
+    let res = { confirm: false };
+    if (confirm) {
+      res.confirm = true;
+    } else {
+      res = await cliQuestions.showConfirm();
+    }
     if (!res.confirm) {
       console.log(clc.red('Rejected!'));
       process.exit(0);

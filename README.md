@@ -37,6 +37,7 @@ Options                                 Description
 --protocol                              Set the network protocol (http or https)
 --port                                  Set the netwrok port
 --ipfs-publish                          Publish to Arweave+IPFS
+--auto-confirm                          Skips the confirm screen
 --timeout                               Set the request timeout
 --wallet                                Set the key file path
 --debug                                 Display additional logging
@@ -58,6 +59,7 @@ Without saving a wallet:
 Saving a wallet:
   arkb wallet-save path/to/wallet.json
   arkb deploy folder/path/
+  arkb deploy folder/file.html
 ```
 
 ## Contributing
