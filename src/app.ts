@@ -53,7 +53,7 @@ class App {
       ['-v --version', 'Show the version number'],
       ['--host <host_or_ip>', 'Set the network hostname or ip'],
       ['--protocol <protocol>', 'Set the network protocol (http or https)'],
-      ['--port <port>', 'Set the netwrok port'],
+      ['--port <port>', 'Set the network port'],
       ['--ipfs-publish', 'Publish with Arweave+IPFS'],
       ['--auto-confirm', 'Skips the confirm screen'],
       ['--timeout <timeout>', 'Set the request timeout'],
