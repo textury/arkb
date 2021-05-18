@@ -106,11 +106,19 @@ export default class Deploy {
       if (edges.length) {
         if (this.logs) countdown.stop();
 
-        console.log(clc.red('File already deployed, link:'));
+        console.log(clc.red('File already deployed:'));
+
+        if (toIpfs && files.length === 1) {
+          const data = fs.readFileSync(files[0]);
+          const cid = await this.ipfs.hash(data);
+          console.log(`IPFS: ${clc.cyan(cid)}`);
+        }
+
         console.log(
-          clc.cyan(
-            `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
-          ),
+          'Arweave: ' +
+            clc.cyan(
+              `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
+            ),
         );
         process.exit(0);
       }
