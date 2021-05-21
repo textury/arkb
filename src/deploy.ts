@@ -8,6 +8,7 @@ import { JWKInterface } from 'arweave/node/lib/wallet';
 import { GQLTagInterface } from './faces/gqlResult';
 import clc from 'cli-color';
 import Ardb from 'ardb';
+import { version } from '../package.json';
 import { GQLEdgeTransactionInterface } from 'ardb/lib/faces/gql';
 import IPFS from './ipfs';
 import Community from 'community-js';
@@ -64,9 +65,9 @@ export default class Deploy {
             resolve(true);
           }
 
-          const hash = await this.toHash((tags.length ? Buffer.concat([data, Buffer.from(JSON.stringify(tags))]) : data));
+          const hash = await this.toHash(tags.length ? Buffer.concat([data, Buffer.from(JSON.stringify(tags))]) : data);
           const type = mime.getType(f);
-          const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
+          const tx = await this.buildTransaction(f, hash, data, type, toIpfs, tags);
           this.txs.push({ path: f, hash, tx, type });
 
           if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
@@ -164,6 +165,7 @@ export default class Deploy {
       tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
       tx.addTag('Service', 'arkb');
       tx.addTag('App-Name', 'arkb');
+      tx.addTag('App-Version', version);
 
       await this.arweave.transactions.sign(tx, this.wallet);
       await this.arweave.transactions.post(tx);
@@ -211,15 +213,21 @@ export default class Deploy {
     data: Buffer,
     type: string,
     toIpfs: boolean = false,
+    tags: { name: string; value: string }[] = [],
   ): Promise<Transaction> {
     const tx = await this.arweave.createTransaction({ data }, this.wallet);
+
+    for (const tag of tags) {
+      tx.addTag(tag.name, tag.value);
+    }
 
     if (toIpfs) {
       const ipfsHash = await this.ipfs.hash(data);
       tx.addTag('IPFS-Add', ipfsHash);
     }
 
-    tx.addTag('App-Name', 'arkb');
+    tx.addTag('User-Agent', `arkb`);
+    tx.addTag('User-Agent-Version', version);
     tx.addTag('Type', 'file');
     tx.addTag('Content-Type', type);
     tx.addTag('File-Hash', hash);
@@ -289,7 +297,8 @@ export default class Deploy {
       }
     }
 
-    tx.addTag('App-Name', 'arkb');
+    tx.addTag('User-Agent', `arkb`);
+    tx.addTag('User-Agent-Version', version);
     tx.addTag('Type', 'manifest');
     tx.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
@@ -322,6 +331,18 @@ export default class Deploy {
           ])
           .only(['id', 'tags', 'tags.name', 'tags.value'])
           .findAll()) as GQLEdgeTransactionInterface[];
+
+        if (!tmpEdges.length) {
+          tmpEdges = (await this.ardb
+            .search('transactions')
+            .tags([
+              { name: 'User-Agent', values: ['arkb'] },
+              { name: 'File-Hash', values: chunk },
+              { name: 'Type', values: ['file'] },
+            ])
+            .only(['id', 'tags', 'tags.name', 'tags.value'])
+            .findAll()) as GQLEdgeTransactionInterface[];
+        }
 
         edges = [...edges, ...tmpEdges];
       }

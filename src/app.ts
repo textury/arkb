@@ -57,8 +57,8 @@ class App {
       ['--ipfs-publish', 'Publish with Arweave+IPFS'],
       ['--auto-confirm', 'Skips the confirm screen'],
       ['--timeout <timeout>', 'Set the request timeout'],
+      ['--tag.Tag-Name=tagvalue', 'Set tags to your files'],
       ['--wallet <wallet_file_path>', 'Set the key file path'],
-      ['--tag.Tag-Name=tagvalue', 'Set tags to your deployed files'],
       ['--debug', 'Display additional logging'],
       ['-h --help', 'Display this message'],
     ];
@@ -108,11 +108,11 @@ class App {
     const command = argv._[0];
     const cvalue = argv._[1];
 
-    const tags: {name: string, value: string}[] = [];
+    const tags: { name: string; value: string }[] = [];
     const tag = argv.tag;
-    if(tag) {
-      for(const name of Object.keys(tag)) {
-        tags.push({name, value: tag[name].toString()});
+    if (tag) {
+      for (const name of Object.keys(tag)) {
+        tags.push({ name, value: tag[name].toString() });
       }
     }
 
@@ -140,7 +140,7 @@ class App {
     index: string,
     toIpfs: boolean = false,
     confirm: boolean = false,
-    tags: { name: string, value: string }[] = []
+    tags: { name: string; value: string }[] = [],
   ) {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 

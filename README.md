@@ -39,6 +39,7 @@ Options                                 Description
 --ipfs-publish                          Publish to Arweave+IPFS
 --auto-confirm                          Skips the confirm screen
 --timeout                               Set the request timeout
+--tag.Tag-Name=tagvalue                 Set tags to your files
 --wallet                                Set the key file path
 --debug                                 Display additional logging
 -h --help                               Display this message
