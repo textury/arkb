@@ -64,7 +64,7 @@ export default class Deploy {
             resolve(true);
           }
 
-          const hash = await this.toHash(data);
+          const hash = await this.toHash((tags.length ? Buffer.concat([data, Buffer.from(JSON.stringify(tags))]) : data));
           const type = mime.getType(f);
           const tx = await this.buildTransaction(f, hash, data, type, toIpfs);
           this.txs.push({ path: f, hash, tx, type });

@@ -58,6 +58,7 @@ class App {
       ['--auto-confirm', 'Skips the confirm screen'],
       ['--timeout <timeout>', 'Set the request timeout'],
       ['--wallet <wallet_file_path>', 'Set the key file path'],
+      ['--tag.Tag-Name=tagvalue', 'Set tags to your deployed files'],
       ['--debug', 'Display additional logging'],
       ['-h --help', 'Display this message'],
     ];
@@ -106,8 +107,17 @@ class App {
   private async doArweaveTask(argv: minimist.ParsedArgs) {
     const command = argv._[0];
     const cvalue = argv._[1];
+
+    const tags: {name: string, value: string}[] = [];
+    const tag = argv.tag;
+    if(tag) {
+      for(const name of Object.keys(tag)) {
+        tags.push({name, value: tag[name].toString()});
+      }
+    }
+
     if (command === 'deploy') {
-      this.deploy(cvalue, argv.wallet, argv.index, argv['ipfs-publish'], argv['auto-confirm']);
+      this.deploy(cvalue, argv.wallet, argv.index, argv['ipfs-publish'], argv['auto-confirm'], tags);
     } else if (command === 'status') {
       this.status(cvalue);
     } else if (command === 'balance') {
@@ -130,6 +140,7 @@ class App {
     index: string,
     toIpfs: boolean = false,
     confirm: boolean = false,
+    tags: { name: string, value: string }[] = []
   ) {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
@@ -151,7 +162,7 @@ class App {
       index = 'index.html';
     }
 
-    const txs = await deploy.prepare(dir, files, index, null, toIpfs);
+    const txs = await deploy.prepare(dir, files, index, tags, toIpfs);
     const balAfter = await this.showTxsDetails(txs, wallet, isFile);
 
     if (balAfter < 0) {
