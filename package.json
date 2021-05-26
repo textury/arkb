@@ -1,7 +1,7 @@
 {
   "name": "@textury/arkb",
   "version": "1.1.2",
-  "main": "./bin/app.js",
+  "main": "./bin/src/app.js",
   "repository": "https://github.com/textury/arkb.git",
   "author": "Cedrik <cedrik.git@tryninja.io>",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "bin/**/*"
   ],
   "bin": {
-    "arkb": "./bin/app.js"
+    "arkb": "./bin/src/app.js"
   },
   "scripts": {
     "start": "ts-node src/app.ts",
