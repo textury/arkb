@@ -8,7 +8,6 @@ import { JWKInterface } from 'arweave/node/lib/wallet';
 import { GQLTagInterface } from './faces/gqlResult';
 import clc from 'cli-color';
 import Ardb from 'ardb';
-import { version } from '../package.json';
 import { GQLEdgeTransactionInterface } from 'ardb/lib/faces/gql';
 import IPFS from './ipfs';
 import Community from 'community-js';
@@ -165,7 +164,7 @@ export default class Deploy {
       tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
       tx.addTag('Service', 'arkb');
       tx.addTag('App-Name', 'arkb');
-      tx.addTag('App-Version', version);
+      tx.addTag('App-Version', process.env.npm_package_version);
 
       await this.arweave.transactions.sign(tx, this.wallet);
       await this.arweave.transactions.post(tx);
@@ -227,7 +226,7 @@ export default class Deploy {
     }
 
     tx.addTag('User-Agent', `arkb`);
-    tx.addTag('User-Agent-Version', version);
+    tx.addTag('User-Agent-Version', process.env.npm_package_version);
     tx.addTag('Type', 'file');
     tx.addTag('Content-Type', type);
     tx.addTag('File-Hash', hash);
@@ -298,7 +297,7 @@ export default class Deploy {
     }
 
     tx.addTag('User-Agent', `arkb`);
-    tx.addTag('User-Agent-Version', version);
+    tx.addTag('User-Agent-Version', process.env.npm_package_version);
     tx.addTag('Type', 'manifest');
     tx.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
