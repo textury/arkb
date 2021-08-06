@@ -161,7 +161,7 @@ export default class Deploy {
       const fee: number = this.txs.reduce((a, txData) => a + +txData.tx.reward, 0);
       const quantity = parseInt((fee * 0.1).toString(), 10).toString();
 
-      if(target.length) {
+      if (target.length) {
         const tx = await this.arweave.createTransaction({
           target,
           quantity,
@@ -175,7 +175,7 @@ export default class Deploy {
 
         await this.arweave.transactions.sign(tx, this.wallet);
         await this.arweave.transactions.post(tx);
-      }      
+      }
     }
 
     const go = async (tx: Transaction) => {
