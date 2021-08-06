@@ -65,7 +65,7 @@ export default class Deploy {
           }
 
           const hash = await this.toHash(tags.length ? Buffer.concat([data, Buffer.from(JSON.stringify(tags))]) : data);
-          const type = mime.getType(f);
+          const type = mime.getType(f) || 'application/octet-stream';
           const tx = await this.buildTransaction(f, hash, data, type, toIpfs, tags);
           this.txs.push({ path: f, hash, tx, type });
 
@@ -149,25 +149,33 @@ export default class Deploy {
       }
     }
 
-    await this.community.setCommunityTx('eCwfEQwLFpfsfcIwbSX0l749_fsZvaYWJuSXwwDs64c');
-    const target = await this.community.selectWeightedHolder();
+    let target = '';
+    try {
+      await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
+      target = await this.community.selectWeightedHolder();
+    } catch {
+      console.log(clc.red('Unable to set community transaction'));
+    }
 
     if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
       const fee: number = this.txs.reduce((a, txData) => a + +txData.tx.reward, 0);
       const quantity = parseInt((fee * 0.1).toString(), 10).toString();
 
-      const tx = await this.arweave.createTransaction({
-        target,
-        quantity,
-      });
-      tx.addTag('Action', 'Deploy');
-      tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
-      tx.addTag('Service', 'arkb');
-      tx.addTag('App-Name', 'arkb');
-      tx.addTag('App-Version', process.env.npm_package_version);
+      if(target.length) {
+        const tx = await this.arweave.createTransaction({
+          target,
+          quantity,
+        });
 
-      await this.arweave.transactions.sign(tx, this.wallet);
-      await this.arweave.transactions.post(tx);
+        tx.addTag('Action', 'Deploy');
+        tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
+        tx.addTag('Service', 'arkb');
+        tx.addTag('App-Name', 'arkb');
+        tx.addTag('App-Version', process.env.npm_package_version);
+
+        await this.arweave.transactions.sign(tx, this.wallet);
+        await this.arweave.transactions.post(tx);
+      }      
     }
 
     const go = async (tx: Transaction) => {

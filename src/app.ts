@@ -197,7 +197,7 @@ class App {
     console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
 
     console.log(
-      clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${manifestTx}`),
+      clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port}/${manifestTx}`),
     );
 
     process.exit(0);
