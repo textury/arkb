@@ -332,24 +332,12 @@ export default class Deploy {
         tmpEdges = (await this.ardb
           .search('transactions')
           .tags([
-            { name: 'App-Name', values: ['arkb'] },
+            { name: 'User-Agent', values: ['arkb'] },
             { name: 'File-Hash', values: chunk },
             { name: 'Type', values: ['file'] },
           ])
           .only(['id', 'tags', 'tags.name', 'tags.value'])
           .findAll()) as GQLEdgeTransactionInterface[];
-
-        if (!tmpEdges.length) {
-          tmpEdges = (await this.ardb
-            .search('transactions')
-            .tags([
-              { name: 'User-Agent', values: ['arkb'] },
-              { name: 'File-Hash', values: chunk },
-              { name: 'Type', values: ['file'] },
-            ])
-            .only(['id', 'tags', 'tags.name', 'tags.value'])
-            .findAll()) as GQLEdgeTransactionInterface[];
-        }
 
         edges = [...edges, ...tmpEdges];
       }
