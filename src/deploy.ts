@@ -103,7 +103,7 @@ export default class Deploy {
 
     const isFile = this.txs.length === 1 && this.txs[0].path === dir;
     if (isFile) {
-      if (edges.find(edge => this.hasMatchingTag(tags, edge))) {
+      if (edges.find((edge) => this.hasMatchingTag(tags, edge))) {
         if (this.logs) countdown.stop();
 
         console.log(clc.red('File already deployed:'));
@@ -252,14 +252,16 @@ export default class Deploy {
     const paths: { [key: string]: { id: string } } = {};
 
     this.txs = this.txs.filter((t) => {
-      const remoteTx = edges.find(edge =>
-        edge.node.tags.find(edgeTag => edgeTag.value === t.hash)
-        && this.hasMatchingTag(customTags, edge));
-      if (!remoteTx) { return true; }
+      const remoteTx = edges.find(
+        (edge) => edge.node.tags.find((edgeTag) => edgeTag.value === t.hash) && this.hasMatchingTag(customTags, edge),
+      );
+      if (!remoteTx) {
+        return true;
+      }
       const path = `${t.path.split(`${dir}/`)[1]}`;
       paths[path] = { id: remoteTx.node.id };
       return false;
-    })
+    });
 
     for (let i = 0, j = this.txs.length; i < j; i++) {
       const t = this.txs[i];
@@ -318,7 +320,7 @@ export default class Deploy {
     let edges: GQLEdgeTransactionInterface[] = [];
     let tmpEdges: GQLEdgeTransactionInterface[] = [];
     let chunk: string[];
-    const ownerKey = await this.arweave.wallets.jwkToAddress(this.wallet)
+    const ownerKey = await this.arweave.wallets.jwkToAddress(this.wallet);
 
     try {
       while (hashes.length) {
@@ -345,12 +347,11 @@ export default class Deploy {
     return edges;
   }
 
-  private hasMatchingTag(
-    customTags: { name: string; value: string }[],
-    edge: GQLEdgeTransactionInterface
-  ): Boolean {
-    return !customTags.find(customTag => !edge.node.tags.find(edgeTag =>
-      edgeTag.name === customTag.name && edgeTag.value === customTag.value));
+  private hasMatchingTag(customTags: { name: string; value: string }[], edge: GQLEdgeTransactionInterface): boolean {
+    return !customTags.find(
+      (customTag) =>
+        !edge.node.tags.find((edgeTag) => edgeTag.name === customTag.name && edgeTag.value === customTag.value),
+    );
   }
 
   private sleep(ms: number) {
