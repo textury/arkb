@@ -32,6 +32,7 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
+    // @ts-ignore
     this.ardb = new Ardb(arweave, debug ? 1 : 2);
     this.community = new Community(arweave, wallet);
   }

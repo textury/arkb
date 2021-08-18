@@ -12,7 +12,8 @@
     "arkb": "./bin/app.js"
   },
   "scripts": {
-    "start": "ts-node src/app.ts",
+    "start": "node ./bin/app.js",
+    "dev": "ts-node src/app.ts",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
@@ -25,12 +26,13 @@
   },
   "dependencies": {
     "@supercharge/promise-pool": "^1.7.0",
+    "@textury/ardb": "^1.1.3",
     "ardb": "^1.0.8",
-    "arweave": "^1.10.13",
+    "arweave": "^1.10.15",
     "clear": "^0.1.0",
     "cli-color": "^2.0.0",
     "clui": "^0.3.6",
-    "community-js": "^1.1.36",
+    "community-js": "^1.1.56",
     "conf": "^10.0.1",
     "fast-glob": "^3.2.5",
     "figlet": "^1.5.0",
