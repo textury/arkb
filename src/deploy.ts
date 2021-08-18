@@ -5,7 +5,6 @@ import mime from 'mime';
 import clui from 'clui';
 import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
-import { GQLTagInterface } from './faces/gqlResult';
 import clc from 'cli-color';
 import Ardb from 'ardb';
 import { GQLEdgeTransactionInterface } from 'ardb/lib/faces/gql';
@@ -64,7 +63,7 @@ export default class Deploy {
             resolve(true);
           }
 
-          const hash = await this.toHash(tags.length ? Buffer.concat([data, Buffer.from(JSON.stringify(tags))]) : data);
+          const hash = await this.toHash(data);
           const type = mime.getType(f) || 'application/octet-stream';
           const tx = await this.buildTransaction(f, hash, data, type, toIpfs, tags);
           this.txs.push({ path: f, hash, tx, type });
@@ -103,7 +102,7 @@ export default class Deploy {
 
     const isFile = this.txs.length === 1 && this.txs[0].path === dir;
     if (isFile) {
-      if (edges.length) {
+      if (edges.find(edge => this.hasMatchingTag(tags, edge))) {
         if (this.logs) countdown.stop();
 
         console.log(clc.red('File already deployed:'));
@@ -251,22 +250,15 @@ export default class Deploy {
   ) {
     const paths: { [key: string]: { id: string } } = {};
 
-    if (edges.length) {
-      for (let i = 0, j = edges.length; i < j; i++) {
-        const node = edges[i].node;
-        const tags = await this.getTags(node.tags);
-
-        for (let k = this.txs.length - 1; k >= 0; --k) {
-          const t = this.txs[k];
-          if (t.hash === tags['File-Hash']) {
-            const path = `${t.path.split(`${dir}/`)[1]}`;
-            paths[path] = { id: node.id };
-            this.txs.splice(k, 1);
-            break;
-          }
-        }
-      }
-    }
+    this.txs = this.txs.filter((t) => {
+      const remoteTx = edges.find(edge =>
+        edge.node.tags.find(edgeTag => edgeTag.value === t.hash)
+        && this.hasMatchingTag(customTags, edge));
+      if (!remoteTx) { return true; }
+      const path = `${t.path.split(`${dir}/`)[1]}`;
+      paths[path] = { id: remoteTx.node.id };
+      return false;
+    })
 
     for (let i = 0, j = this.txs.length; i < j; i++) {
       const t = this.txs[i];
@@ -325,12 +317,14 @@ export default class Deploy {
     let edges: GQLEdgeTransactionInterface[] = [];
     let tmpEdges: GQLEdgeTransactionInterface[] = [];
     let chunk: string[];
+    const ownerKey = await this.arweave.wallets.jwkToAddress(this.wallet)
 
     try {
       while (hashes.length) {
         chunk = hashes.splice(0, 500);
         tmpEdges = (await this.ardb
           .search('transactions')
+          .from(ownerKey)
           .tags([
             { name: 'User-Agent', values: ['arkb'] },
             { name: 'File-Hash', values: chunk },
@@ -350,14 +344,12 @@ export default class Deploy {
     return edges;
   }
 
-  private async getTags(tags: GQLTagInterface[]): Promise<any> {
-    const res = {};
-
-    for (let i = 0, j = tags.length; i < j; i++) {
-      res[tags[i].name] = tags[i].value;
-    }
-
-    return res;
+  private hasMatchingTag(
+    customTags: { name: string; value: string }[],
+    edge: GQLEdgeTransactionInterface
+  ): Boolean {
+    return !customTags.find(customTag => !edge.node.tags.find(edgeTag =>
+      edgeTag.name === customTag.name && edgeTag.value === customTag.value));
   }
 
   private sleep(ms: number) {
