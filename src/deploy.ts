@@ -118,9 +118,9 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(
-            `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
-          ),
+            clc.cyan(
+              `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
+            ),
         );
         process.exit(0);
       }
