@@ -11,7 +11,7 @@ arkb runs using NodeJS and NPM. You must have both installed on your machine for
 
 Install arkb:
 ```
-npm install -g @textury/arkb
+npm install -g arkb
 ```
 
 And run:
