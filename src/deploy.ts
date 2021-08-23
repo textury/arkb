@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { createReadStream } from 'fs';
 import crypto from 'crypto';
 import Arweave from 'arweave';
 import mime from 'mime';
@@ -12,6 +12,8 @@ import IPFS from './ipfs';
 import Community from 'community-js';
 import pRetry from 'p-retry';
 import PromisePool from '@supercharge/promise-pool';
+import { pipeline } from 'stream/promises';
+import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -116,9 +118,9 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(
-              `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
-            ),
+          clc.cyan(
+            `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
+          ),
         );
         process.exit(0);
       }
@@ -178,19 +180,21 @@ export default class Deploy {
       }
     }
 
-    const go = async (tx: Transaction) => {
-      const uploader = await this.arweave.transactions.getUploader(tx);
-
-      while (!uploader.isComplete) {
-        await uploader.uploadChunk();
+    const go = async (txData: { path: string; hash: string; tx: Transaction; type: string }) => {
+      if (txData.path === '' && txData.hash === '') {
+        const uploader = await this.arweave.transactions.getUploader(txData.tx);
+        while (!uploader.isComplete) {
+          await uploader.uploadChunk();
+        }
+      } else {
+        await pipeline(createReadStream(txData.path), uploadTransactionAsync(txData.tx, this.arweave));
       }
-
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
       return true;
     };
 
-    const retry = async (tx: Transaction) => {
-      await pRetry(() => go(tx), {
+    const retry = async (txData: { path: string; hash: string; tx: Transaction; type: string }) => {
+      await pRetry(() => go(txData), {
         onFailedAttempt: async (error) => {
           console.log(
             clc.blackBright(
@@ -206,7 +210,7 @@ export default class Deploy {
     await PromisePool.withConcurrency(5)
       .for(this.txs)
       .process(async (txData) => {
-        await retry(txData.tx);
+        await retry(txData);
         return true;
       });
     if (this.logs) countdown.stop();
@@ -222,7 +226,7 @@ export default class Deploy {
     toIpfs: boolean = false,
     tags: { name: string; value: string }[] = [],
   ): Promise<Transaction> {
-    const tx = await this.arweave.createTransaction({ data }, this.wallet);
+    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
 
     for (const tag of tags) {
       tx.addTag(tag.name, tag.value);
