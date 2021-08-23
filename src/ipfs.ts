@@ -1,5 +1,5 @@
 import clui from 'clui';
-import IpfsHttpClient from 'ipfs-http-client';
+import { create, globSource } from 'ipfs-http-client';
 import Hash from 'ipfs-only-hash';
 
 export default class IPFS {
@@ -16,15 +16,14 @@ export default class IPFS {
       countdown.start();
     }
 
-    const ipfs = IpfsHttpClient({
+    const ipfs = create({
       host: 'ipfs.infura.io',
       port: 5001,
       protocol: 'https',
     });
 
     // @ts-ignore
-    const glob = IpfsHttpClient.globSource(dir, { recursive: true });
-    const files = await ipfs.add(glob);
+    const files = await ipfs.add(globSource(dir, { recursive: true }));
     countdown.stop();
 
     return files;

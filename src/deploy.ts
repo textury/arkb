@@ -14,6 +14,7 @@ import pRetry from 'p-retry';
 import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
+import ArdbTransaction from 'ardb/lib/models/transaction';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -101,11 +102,11 @@ export default class Deploy {
 
     // Query to find all the files previously deployed
     const hashes = this.txs.map((t) => t.hash);
-    const edges: GQLEdgeTransactionInterface[] = await this.queryGQLPaths(hashes);
+    const txs: ArdbTransaction[] = await this.queryGQLPaths(hashes);
 
     const isFile = this.txs.length === 1 && this.txs[0].path === dir;
     if (isFile) {
-      if (edges.find((edge) => this.hasMatchingTag(tags, edge))) {
+      if (txs.find((tx) => this.hasMatchingTag(tags, tx))) {
         if (this.logs) countdown.stop();
 
         console.log(clc.red('File already deployed:'));
@@ -118,14 +119,12 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(
-              `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${edges[0].node.id}`,
-            ),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
     } else {
-      await this.buildManifest(dir, index, tags, edges);
+      await this.buildManifest(dir, index, tags, txs);
     }
 
     if (this.logs) countdown.stop();
@@ -251,19 +250,20 @@ export default class Deploy {
     dir: string,
     index: string = null,
     customTags: { name: string; value: string }[],
-    edges: GQLEdgeTransactionInterface[],
+    txs: ArdbTransaction[],
   ) {
     const paths: { [key: string]: { id: string } } = {};
 
     this.txs = this.txs.filter((t) => {
-      const remoteTx = edges.find(
-        (edge) => edge.node.tags.find((edgeTag) => edgeTag.value === t.hash) && this.hasMatchingTag(customTags, edge),
+      const remoteTx = txs.find(
+        // tslint:disable-next-line: no-shadowed-variable
+        (tx) => tx.tags.find((txTag) => txTag.value === t.hash) && this.hasMatchingTag(customTags, tx),
       );
       if (!remoteTx) {
         return true;
       }
       const path = `${t.path.split(`${dir}/`)[1]}`;
-      paths[path] = { id: remoteTx.node.id };
+      paths[path] = { id: remoteTx.id };
       return false;
     });
 
@@ -320,16 +320,15 @@ export default class Deploy {
     return hash.digest('hex');
   }
 
-  private async queryGQLPaths(hashes: string[]): Promise<GQLEdgeTransactionInterface[]> {
-    let edges: GQLEdgeTransactionInterface[] = [];
-    let tmpEdges: GQLEdgeTransactionInterface[] = [];
+  private async queryGQLPaths(hashes: string[]): Promise<ArdbTransaction[]> {
+    let txs: ArdbTransaction[] = [];
     let chunk: string[];
     const ownerKey = await this.arweave.wallets.jwkToAddress(this.wallet);
 
     try {
       while (hashes.length) {
         chunk = hashes.splice(0, 500);
-        tmpEdges = (await this.ardb
+        txs = (await this.ardb
           .search('transactions')
           .from(ownerKey)
           .tags([
@@ -338,9 +337,7 @@ export default class Deploy {
             { name: 'Type', values: ['file'] },
           ])
           .only(['id', 'tags', 'tags.name', 'tags.value'])
-          .findAll()) as GQLEdgeTransactionInterface[];
-
-        edges = [...edges, ...tmpEdges];
+          .findAll()) as ArdbTransaction[];
       }
     } catch (e) {
       console.log(clc.red(`Unable to query ${this.arweave.getConfig().api.host}`));
@@ -348,13 +345,12 @@ export default class Deploy {
       return [];
     }
 
-    return edges;
+    return txs;
   }
 
-  private hasMatchingTag(customTags: { name: string; value: string }[], edge: GQLEdgeTransactionInterface): boolean {
+  private hasMatchingTag(customTags: { name: string; value: string }[], tx: ArdbTransaction): boolean {
     return !customTags.find(
-      (customTag) =>
-        !edge.node.tags.find((edgeTag) => edgeTag.name === customTag.name && edgeTag.value === customTag.value),
+      (customTag) => !tx.tags.find((txTag) => txTag.name === customTag.name && txTag.value === customTag.value),
     );
   }
 
