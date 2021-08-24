@@ -310,7 +310,7 @@ class App {
         .column(size, 15)
         .column(ar, 17)
         .column(tx.type, 30)
-        .column(tx.filePath.split(`${dir}/`)[1], 20)
+        .column(tx.filePath && tx.filePath.startsWith(dir) ? tx.filePath.split(`${dir}/`)[1] : '', 20)
         .fill()
         .output();
     }
