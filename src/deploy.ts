@@ -1,5 +1,4 @@
 import fs, { createReadStream } from 'fs';
-import { join as pathJoin } from 'path';
 import crypto from 'crypto';
 import Arweave from 'arweave';
 import mime from 'mime';
@@ -8,7 +7,6 @@ import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import Ardb from 'ardb';
-import { GQLEdgeTransactionInterface } from 'ardb/lib/faces/gql';
 import IPFS from './ipfs';
 import Community from 'community-js';
 import pRetry from 'p-retry';
@@ -16,13 +14,14 @@ import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
+import { TxDetail } from './faces/txDetail';
 
 export default class Deploy {
   private wallet: JWKInterface;
   private arweave: Arweave;
   private ardb: Ardb;
   private ipfs: IPFS = new IPFS();
-  private txs: { path: string; hash: string; tx: Transaction; type: string }[];
+  private txs: TxDetail[];
 
   private debug: boolean = false;
   private logs: boolean = true;
@@ -56,12 +55,12 @@ export default class Deploy {
       countdown.start();
     }
 
-    const go = async (f: string) => {
+    const go = async (filePath: string) => {
       return new Promise((resolve, reject) => {
-        fs.readFile(f, async (err, data) => {
+        fs.readFile(filePath, async (err, data) => {
           if (err) {
-            console.log('Unable to read file ' + f);
-            throw new Error(`Unable to read file: ${f}`);
+            console.log('Unable to read file ' + filePath);
+            throw new Error(`Unable to read file: ${filePath}`);
           }
 
           if (!data || !data.length) {
@@ -69,9 +68,9 @@ export default class Deploy {
           }
 
           const hash = await this.toHash(data);
-          const type = mime.getType(f) || 'application/octet-stream';
-          const tx = await this.buildTransaction(f, hash, data, type, toIpfs, tags);
-          this.txs.push({ path: f, hash, tx, type });
+          const type = mime.getType(filePath) || 'application/octet-stream';
+          const tx = await this.buildTransaction(filePath, hash, data, type, toIpfs, tags);
+          this.txs.push({ filePath, hash, tx, type });
 
           if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
 
@@ -105,7 +104,7 @@ export default class Deploy {
     const hashes = this.txs.map((t) => t.hash);
     const txs: ArdbTransaction[] = await this.queryGQLPaths(hashes);
 
-    const isFile = this.txs.length === 1 && this.txs[0].path === dir;
+    const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
     if (isFile) {
       if (txs.find((tx) => this.hasMatchingTag(tags, tx))) {
         if (this.logs) countdown.stop();
@@ -120,7 +119,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -144,7 +143,7 @@ export default class Deploy {
     let txid = this.txs[0].tx.id;
     if (!isFile) {
       for (let i = 0, j = this.txs.length; i < j; i++) {
-        if (this.txs[i].path === '' && this.txs[i].hash === '') {
+        if (this.txs[i].filePath === '' && this.txs[i].hash === '') {
           txid = this.txs[i].tx.id;
           break;
         }
@@ -180,23 +179,20 @@ export default class Deploy {
       }
     }
 
-    const go = async (txData: { path: string; hash: string; tx: Transaction; type: string }) => {
-      if (txData.path === '' && txData.hash === '') {
+    const go = async (txData: TxDetail) => {
+      if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx);
         while (!uploader.isComplete) {
           await uploader.uploadChunk();
         }
       } else {
-        await pipeline(
-          createReadStream(pathJoin(process.cwd(), txData.path)),
-          uploadTransactionAsync(txData.tx, this.arweave),
-        );
+        await pipeline(createReadStream(txData.filePath), uploadTransactionAsync(txData.tx, this.arweave));
       }
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
       return true;
     };
 
-    const retry = async (txData: { path: string; hash: string; tx: Transaction; type: string }) => {
+    const retry = async (txData: TxDetail) => {
       await pRetry(() => go(txData), {
         onFailedAttempt: async (error) => {
           console.log(
@@ -229,10 +225,7 @@ export default class Deploy {
     toIpfs: boolean = false,
     tags: { name: string; value: string }[] = [],
   ): Promise<Transaction> {
-    const tx = await pipeline(
-      createReadStream(pathJoin(process.cwd(), filePath)),
-      createTransactionAsync({}, this.arweave, this.wallet),
-    );
+    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
 
     for (const tag of tags) {
       tx.addTag(tag.name, tag.value);
@@ -269,15 +262,14 @@ export default class Deploy {
       if (!remoteTx) {
         return true;
       }
-      const path = `${t.path.split(`${dir}/`)[1]}`;
+      const path = `${t.filePath.split(`${dir}/`)[1]}`;
       paths[path] = { id: remoteTx.id };
       return false;
     });
 
     for (let i = 0, j = this.txs.length; i < j; i++) {
       const t = this.txs[i];
-      const path = `${t.path.split(`${dir}/`)[1]}`;
-      t.path = path;
+      const path = `${t.filePath.split(`${dir}/`)[1]}`;
       paths[path] = { id: t.tx.id };
     }
 
@@ -316,7 +308,7 @@ export default class Deploy {
     tx.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
     await this.arweave.transactions.sign(tx, this.wallet);
-    this.txs.push({ path: '', hash: '', tx, type: 'application/x.arweave-manifest+json' });
+    this.txs.push({ filePath: '', hash: '', tx, type: 'application/x.arweave-manifest+json' });
 
     return true;
   }

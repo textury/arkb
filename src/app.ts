@@ -15,6 +15,7 @@ import Crypter from './crypter';
 import Deploy from './deploy';
 import Transaction from 'arweave/node/lib/transaction';
 import IPFS from './ipfs';
+import { TxDetail } from './faces/txDetail';
 
 class App {
   private config: Conf;
@@ -163,7 +164,7 @@ class App {
     }
 
     const txs = await deploy.prepare(dir, files, index, tags, toIpfs);
-    const balAfter = await this.showTxsDetails(txs, wallet, isFile);
+    const balAfter = await this.showTxsDetails(txs, wallet, isFile, dir);
 
     if (balAfter < 0) {
       console.log(clc.red("You don't have enough balance for this deploy."));
@@ -198,8 +199,7 @@ class App {
 
     console.log(
       clc.cyan(
-        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-          this.arweave.api.getConfig().port
+        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );
@@ -278,9 +278,10 @@ class App {
 
   // Internal methods
   private async showTxsDetails(
-    txs: { path: string; hash: string; tx: Transaction; type: string }[],
+    txs: TxDetail[],
     wallet: JWKInterface,
     isFile: boolean = false,
+    dir: string,
   ): Promise<number> {
     let totalSize = 0;
     let deployFee = 0;
@@ -308,7 +309,7 @@ class App {
         .column(size, 15)
         .column(ar, 17)
         .column(tx.type, 30)
-        .column(tx.path, 20)
+        .column(tx.filePath.split(`${dir}/`)[1], 20)
         .fill()
         .output();
     }
