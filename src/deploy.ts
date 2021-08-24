@@ -120,7 +120,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -187,7 +187,10 @@ export default class Deploy {
           await uploader.uploadChunk();
         }
       } else {
-        await pipeline(createReadStream(pathJoin(process.cwd(), txData.path)), uploadTransactionAsync(txData.tx, this.arweave));
+        await pipeline(
+          createReadStream(pathJoin(process.cwd(), txData.path)),
+          uploadTransactionAsync(txData.tx, this.arweave),
+        );
       }
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
       return true;
