@@ -120,7 +120,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -226,7 +226,10 @@ export default class Deploy {
     toIpfs: boolean = false,
     tags: { name: string; value: string }[] = [],
   ): Promise<Transaction> {
-    const tx = await pipeline(createReadStream(pathJoin(__dirname, filePath)), createTransactionAsync({}, this.arweave, this.wallet));
+    const tx = await pipeline(
+      createReadStream(pathJoin(__dirname, filePath)),
+      createTransactionAsync({}, this.arweave, this.wallet),
+    );
 
     for (const tag of tags) {
       tx.addTag(tag.name, tag.value);
