@@ -199,7 +199,8 @@ class App {
 
     console.log(
       clc.cyan(
-        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port
+        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
+          this.arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );
