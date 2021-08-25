@@ -33,7 +33,7 @@
     "clear": "^0.1.0",
     "cli-color": "^2.0.0",
     "clui": "^0.3.6",
-    "community-js": "^1.1.58",
+    "community-js": "^1.1.59",
     "conf": "^10.0.2",
     "fast-glob": "^3.2.7",
     "figlet": "^1.5.2",
