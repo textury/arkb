@@ -199,8 +199,7 @@ class App {
 
     console.log(
       clc.cyan(
-        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-          this.arweave.api.getConfig().port
+        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );
@@ -305,12 +304,21 @@ class App {
       totalSize += +tx.tx.data_size;
       deployFee += +tx.tx.reward;
 
+      let path = tx.filePath;
+      if (path.startsWith(`${dir}/`)) {
+        path = path.split(`${dir}/`)[1];
+      }
+
+      if (!path) {
+        path = '';
+      }
+
       new Line()
         .column(tx.tx.id, 45)
         .column(size, 15)
         .column(ar, 17)
         .column(tx.type, 30)
-        .column(tx.filePath && tx.filePath.startsWith(dir) ? tx.filePath.split(`${dir}/`)[1] : '', 20)
+        .column(path, 20)
         .fill()
         .output();
     }
