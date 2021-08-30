@@ -1295,10 +1295,10 @@ commander@^7.1.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-7.2.0.tgz#a36cb57d0b501ce108e4d20559a150a391d97ab7"
   integrity sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==
 
-community-js@^1.1.59:
-  version "1.1.59"
-  resolved "https://registry.yarnpkg.com/community-js/-/community-js-1.1.59.tgz#863e040072d4257ddfd10d1f224a7238d8619b2c"
-  integrity sha512-z+TZhXNqysWxaW9Yxa0B1XoADVLBhQadxPGIDoQpFAQYYP3YtPjihT5m0ZgculxkE/PDFN8gBfTn0nhOV/3Pyg==
+community-js@^1.1.60:
+  version "1.1.60"
+  resolved "https://registry.yarnpkg.com/community-js/-/community-js-1.1.60.tgz#8fb0e5bc3b0dbbc555945797633a772a8e3b3d4c"
+  integrity sha512-OYBM60qAlbmZcyGwiH/4X6hyNnuo/S+WG/i3s4BjnQ/MnPVm6e+9XjyIwEc1CnMhQFtzrPX/6wB3wzSvKG1iEw==
   dependencies:
     ardb "^1.1.6"
     arweave "^1.10.16"
