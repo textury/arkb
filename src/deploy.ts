@@ -15,11 +15,14 @@ import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from './faces/txDetail';
+import { DataItem } from 'ans104';
+import Bundler from './bundler';
 
 export default class Deploy {
   private wallet: JWKInterface;
   private arweave: Arweave;
   private ardb: Ardb;
+  private bundler: Bundler;
   private ipfs: IPFS = new IPFS();
   private txs: TxDetail[];
 
@@ -34,6 +37,7 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
+    this.bundler = new Bundler(wallet);
     this.ardb = new Ardb(arweave, debug ? 1 : 2);
 
     try {
@@ -43,12 +47,17 @@ export default class Deploy {
     } catch {}
   }
 
+  getBundler(): Bundler {
+    return this.bundler;
+  }
+
   async prepare(
     dir: string,
     files: string[],
     index: string = 'index.html',
     tags: { name: string; value: string }[] = [],
     toIpfs: boolean = false,
+    useBundler?: string,
   ) {
     this.txs = [];
 
@@ -73,7 +82,12 @@ export default class Deploy {
 
           const hash = await this.toHash(data);
           const type = mime.getType(filePath) || 'application/octet-stream';
-          const tx = await this.buildTransaction(filePath, hash, data, type, toIpfs, tags);
+          let tx: Transaction | DataItem;
+          if (useBundler) {
+            tx = await this.bundler.createItem(hash, data, type, toIpfs, tags);
+          } else {
+            tx = await this.buildTransaction(filePath, hash, data, type, toIpfs, tags);
+          }
           this.txs.push({ filePath, hash, tx, type });
 
           if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
@@ -127,7 +141,7 @@ export default class Deploy {
         );
         process.exit(0);
       }
-    } else {
+    } else if (!useBundler) {
       await this.buildManifest(dir, index, tags, txs);
     }
 
@@ -135,8 +149,9 @@ export default class Deploy {
     return this.txs;
   }
 
-  async deploy(isFile: boolean = false): Promise<string> {
+  async deploy(isFile: boolean = false, useBundler?: string): Promise<string> {
     let cTotal = this.txs.length;
+    let txBundle: Transaction;
 
     let countdown: clui.Spinner;
     if (this.logs) {
@@ -159,7 +174,14 @@ export default class Deploy {
       const target = await this.community.selectWeightedHolder();
 
       if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
-        const fee: number = this.txs.reduce((a, txData) => a + +txData.tx.reward, 0);
+        let fee: number;
+        if (useBundler) {
+          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as DataItem[]);
+          txBundle = await bundled.toTransaction(this.arweave, this.wallet);
+          fee = +(await this.arweave.ar.winstonToAr(txBundle.reward));
+        } else {
+          fee = this.txs.reduce((a, txData) => a + +(txData.tx as Transaction).reward, 0);
+        }
         const quantity = parseInt((fee * 0.1).toString(), 10).toString();
 
         if (target.length) {
@@ -183,13 +205,26 @@ export default class Deploy {
     }
 
     const go = async (txData: TxDetail) => {
-      if (txData.filePath === '' && txData.hash === '') {
-        const uploader = await this.arweave.transactions.getUploader(txData.tx);
+      if (useBundler) {
+        await this.arweave.api.request().post(`${useBundler}/tx`, txData.tx.getRaw(), {
+          headers: {
+            'content-type': 'application/octet-stream',
+          },
+          maxRedirects: 1,
+          timeout: 10000,
+          maxBodyLength: Infinity,
+          validateStatus: (status) => ![500, 400].includes(status),
+        });
+      } else if (txData.filePath === '' && txData.hash === '') {
+        const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
           await uploader.uploadChunk();
         }
       } else {
-        await pipeline(createReadStream(txData.filePath), uploadTransactionAsync(txData.tx, this.arweave));
+        await pipeline(
+          createReadStream(txData.filePath),
+          uploadTransactionAsync(txData.tx as Transaction, this.arweave),
+        );
       }
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
       return true;
@@ -215,6 +250,7 @@ export default class Deploy {
         await retry(txData);
         return true;
       });
+
     if (this.logs) countdown.stop();
 
     return txid;

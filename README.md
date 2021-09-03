@@ -36,6 +36,7 @@ Options                                 Description
 --host                                  Set the network hostname or ip
 --protocol                              Set the network protocol (http or https)
 --port                                  Set the network port
+--use-bundler                           Use ans104 and bundler host
 --ipfs-publish                          Publish to Arweave+IPFS
 --auto-confirm                          Skips the confirm screen
 --timeout                               Set the request timeout

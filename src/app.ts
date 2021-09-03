@@ -16,7 +16,8 @@ import Deploy from './deploy';
 import Transaction from 'arweave/node/lib/transaction';
 import IPFS from './ipfs';
 import { TxDetail } from './faces/txDetail';
-
+import { DataItem } from 'ans104';
+import Bundler from './bundler';
 class App {
   private config: Conf;
   private arweave: Arweave;
@@ -56,6 +57,7 @@ class App {
       ['--protocol <protocol>', 'Set the network protocol (http or https)'],
       ['--port <port>', 'Set the network port'],
       ['--ipfs-publish', 'Publish with Arweave+IPFS'],
+      ['--use-bundler <host>', 'Use ans104 and bundler host'],
       ['--auto-confirm', 'Skips the confirm screen'],
       ['--timeout <timeout>', 'Set the request timeout'],
       ['--tag.Tag-Name=tagvalue', 'Set tags to your files'],
@@ -96,6 +98,7 @@ class App {
 
     console.log('\nCustom index file:');
     console.log(' arkb deploy folder/path --index custom.html');
+
     process.exit(0);
   }
 
@@ -118,7 +121,15 @@ class App {
     }
 
     if (command === 'deploy') {
-      this.deploy(cvalue, argv.wallet, argv.index, argv['ipfs-publish'], argv['auto-confirm'], tags);
+      this.deploy(
+        cvalue,
+        argv.wallet,
+        argv.index,
+        argv['ipfs-publish'],
+        argv['auto-confirm'],
+        tags,
+        argv['use-bundler'],
+      );
     } else if (command === 'status') {
       this.status(cvalue);
     } else if (command === 'balance') {
@@ -142,6 +153,7 @@ class App {
     toIpfs: boolean = false,
     confirm: boolean = false,
     tags: { name: string; value: string }[] = [],
+    useBundler?: string,
   ) {
     const wallet: JWKInterface = await this.getWallet(walletPath);
 
@@ -163,8 +175,8 @@ class App {
       index = 'index.html';
     }
 
-    const txs = await deploy.prepare(dir, files, index, tags, toIpfs);
-    const balAfter = await this.showTxsDetails(txs, wallet, isFile, dir);
+    const txs = await deploy.prepare(dir, files, index, tags, toIpfs, useBundler);
+    const balAfter = await this.showTxsDetails(txs, wallet, isFile, dir, useBundler, deploy.getBundler());
 
     if (balAfter < 0) {
       console.log(clc.red("You don't have enough balance for this deploy."));
@@ -193,17 +205,21 @@ class App {
       console.log(clc.cyan(ipfsHash.cid));
     }
 
-    const manifestTx: string = await deploy.deploy(isFile);
-    console.log('');
-    console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
+    const manifestTx: string = await deploy.deploy(isFile, useBundler);
 
-    console.log(
-      clc.cyan(
-        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-          this.arweave.api.getConfig().port
-        }/${manifestTx}`,
-      ),
-    );
+    console.log('');
+    if (useBundler) {
+      console.log(clc.green('Data items deployed!'));
+    } else {
+      console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
+      console.log(
+        clc.cyan(
+          `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
+            this.arweave.api.getConfig().port
+          }/${manifestTx}`,
+        ),
+      );
+    }
 
     process.exit(0);
   }
@@ -283,6 +299,8 @@ class App {
     wallet: JWKInterface,
     isFile: boolean = false,
     dir: string,
+    useBundler?: string,
+    bundler?: Bundler,
   ): Promise<number> {
     let totalSize = 0;
     let deployFee = 0;
@@ -299,11 +317,19 @@ class App {
 
     for (let i = 0, j = txs.length; i < j; i++) {
       const tx = txs[i];
-      const ar = this.arweave.ar.winstonToAr(tx.tx.reward);
+      let ar = '-';
+      const reward = (tx.tx as Transaction).reward;
+      if (reward) {
+        ar = this.arweave.ar.winstonToAr(reward);
+        deployFee += +reward;
+      }
 
-      const size = this.bytesForHumans(+tx.tx.data_size);
-      totalSize += +tx.tx.data_size;
-      deployFee += +tx.tx.reward;
+      let size = '-';
+      const dataSize = (tx.tx as Transaction).data_size;
+      if (dataSize) {
+        size = this.bytesForHumans(+dataSize);
+        totalSize += +dataSize;
+      }
 
       let path = tx.filePath;
       if (path.startsWith(`${dir}/`)) {
@@ -324,6 +350,14 @@ class App {
         .output();
     }
 
+    if (useBundler) {
+      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as DataItem[]);
+      const txBundle = await bundled.toTransaction(this.arweave, wallet);
+      deployFee = +txBundle.reward;
+
+      totalSize = +txBundle.data_size;
+    }
+
     const fee = parseInt((deployFee * 0.1).toString(), 10);
 
     const arFee = this.arweave.ar.winstonToAr(deployFee.toString());
@@ -332,7 +366,11 @@ class App {
 
     console.log('');
     console.log(clc.cyan('Summary'));
-    console.log(`Number of files: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
+    if (useBundler) {
+      console.log(`Number of data items: ${isFile ? txs.length : `${txs.length - 1}`}`);
+    } else {
+      console.log(`Number of files: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
+    }
     console.log(`Total size: ${this.bytesForHumans(totalSize)}`);
     console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee)`);
     console.log(`Total fee: ${totalFee}`);
