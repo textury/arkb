@@ -27,7 +27,7 @@
   "dependencies": {
     "@supercharge/promise-pool": "^1.7.0",
     "@textury/ardb": "^1.1.3",
-    "ans104": "^0.6.5",
+    "ans104": "^0.6.6",
     "ardb": "^1.1.6",
     "arweave": "^1.10.15",
     "arweave-stream-tx": "^1.0.2",

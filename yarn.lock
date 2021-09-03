@@ -566,10 +566,10 @@ ans104@^0.5.4:
     tmp-promise "^3.0.2"
     tslib "^2.3.0"
 
-ans104@^0.6.5:
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/ans104/-/ans104-0.6.5.tgz#cdf526afdf5e8ddf1e372683ad7c0c4b289308f2"
-  integrity sha512-DAoU+hAsqp4oMqW/VEkWRDd7oy9XNHNXEdqO4h6WE+/Knbs4zjYW2hEgXWSEGII04z/aBQtZrK/8HaN8quAQqA==
+ans104@^0.6.6:
+  version "0.6.6"
+  resolved "https://registry.yarnpkg.com/ans104/-/ans104-0.6.6.tgz#70cd871ba623ec5810f1db5bc3b730076878a6fc"
+  integrity sha512-G62Y0K2kNSPokddmcTW4rksB0ZYUVGUg/Ys55Er9b2mQqg843TuDjWTwMWnN3u914j2TELKNbKz+Q/gCJzwLyA==
   dependencies:
     "@akiroz/size-chunker-stream" "^0.0.1"
     "@types/browser-or-node" "^1.3.0"
