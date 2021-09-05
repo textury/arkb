@@ -18,6 +18,7 @@ import IPFS from './ipfs';
 import { TxDetail } from './faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from './bundler';
+import Tags from './lib/tags';
 class App {
   private config: Conf;
   private arweave: Arweave;
@@ -112,11 +113,11 @@ class App {
     const command = argv._[0];
     const cvalue = argv._[1];
 
-    const tags: { name: string; value: string }[] = [];
+    const tags = new Tags();
     const tag = argv.tag;
     if (tag) {
       for (const name of Object.keys(tag)) {
-        tags.push({ name, value: tag[name].toString() });
+        tags.addTag(name, tag[name].toString());
       }
     }
 
@@ -152,15 +153,17 @@ class App {
     index: string,
     toIpfs: boolean = false,
     confirm: boolean = false,
-    tags: { name: string; value: string }[] = [],
+    tags: Tags = new Tags(),
     useBundler?: string,
   ) {
-    const wallet: JWKInterface = await this.getWallet(walletPath);
-
+    // Check if deploy dir exists
     if (!this.dirExists(dir)) {
       console.log(clc.red("Directory doesn't exist"));
       process.exit(0);
     }
+
+    // Get the wallet
+    const wallet: JWKInterface = await this.getWallet(walletPath);
 
     let files = [dir];
     let isFile = true;
@@ -214,8 +217,7 @@ class App {
       console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
       console.log(
         clc.cyan(
-          `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-            this.arweave.api.getConfig().port
+          `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port
           }/${manifestTx}`,
         ),
       );
@@ -317,6 +319,7 @@ class App {
 
     for (let i = 0, j = txs.length; i < j; i++) {
       const tx = txs[i];
+
       let ar = '-';
       const reward = (tx.tx as Transaction).reward;
       if (reward) {
@@ -354,7 +357,6 @@ class App {
       const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
       const txBundle = await bundled.toTransaction(this.arweave, wallet);
       deployFee = +txBundle.reward;
-
       totalSize = +txBundle.data_size;
     }
 
@@ -367,7 +369,7 @@ class App {
     console.log('');
     console.log(clc.cyan('Summary'));
     if (useBundler) {
-      console.log(`Number of data items: ${txs.length}`);
+      console.log(`Number of data items: ${txs.length - 1} + 1 manifest`);
     } else {
       console.log(`Number of files: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
     }

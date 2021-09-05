@@ -17,6 +17,7 @@ import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from './faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from './bundler';
+import Tags from './lib/tags';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -46,7 +47,7 @@ export default class Deploy {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     this.packageVersion = require('../package.json').version;
   }
@@ -59,11 +60,16 @@ export default class Deploy {
     dir: string,
     files: string[],
     index: string = 'index.html',
-    tags: { name: string; value: string }[] = [],
+    tags: Tags = new Tags(),
     toIpfs: boolean = false,
     useBundler?: string,
   ) {
     this.txs = [];
+
+    if (useBundler) {
+      tags.addTag('Bundler', useBundler);
+      tags.addTag('Bundle', 'ans104');
+    }
 
     let leftToPrepare = files.length;
     let countdown: clui.Spinner;
@@ -86,11 +92,23 @@ export default class Deploy {
 
           const hash = await this.toHash(data);
           const type = mime.getType(filePath) || 'application/octet-stream';
+
+          // Add/replace default tags
+          if (toIpfs) {
+            const ipfsHash = await this.ipfs.hash(data);
+            tags.addTag('IPFS-Add', ipfsHash);
+          }
+          tags.addTag('User-Agent', `arkb`);
+          tags.addTag('User-Agent-Version', this.packageVersion);
+          tags.addTag('Type', 'file');
+          if (type) tags.addTag('Content-Type', type);
+          tags.addTag('File-Hash', hash);
+
           let tx: Transaction | FileDataItem;
           if (useBundler) {
-            tx = await this.bundler.createItem(hash, data, type, toIpfs, tags);
+            tx = await this.bundler.createItem(data, tags.tags);
           } else {
-            tx = await this.buildTransaction(filePath, hash, data, type, toIpfs, tags);
+            tx = await this.buildTransaction(filePath, tags);
           }
           this.txs.push({ filePath, hash, tx, type });
 
@@ -122,14 +140,15 @@ export default class Deploy {
         return true;
       });
 
+    if (this.logs) countdown.stop();
+
     // Query to find all the files previously deployed
     const hashes = this.txs.map((t) => t.hash);
     const txs: ArdbTransaction[] = await this.queryGQLPaths(hashes);
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
     if (isFile) {
-      if (txs.find((tx) => this.hasMatchingTag(tags, tx))) {
-        if (this.logs) countdown.stop();
+      if (txs.find(tx => tx.tags.find((txTag) => txTag.value === this.txs[0].hash))) {
 
         console.log(clc.red('File already deployed:'));
 
@@ -141,15 +160,20 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
-    } else if (!useBundler) {
-      await this.buildManifest(dir, index, tags, txs);
+    } else {
+      if (this.logs) {
+        countdown = new clui.Spinner(`Building manifest...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+        countdown.start();
+      }
+
+      await this.buildManifest(dir, index, tags, txs, useBundler);
+      if (this.logs) countdown.stop();
     }
 
-    if (this.logs) countdown.stop();
     return this.txs;
   }
 
@@ -186,8 +210,8 @@ export default class Deploy {
         } else {
           fee = this.txs.reduce((a, txData) => a + +(txData.tx as Transaction).reward, 0);
         }
-        const quantity = parseInt((fee * 0.1).toString(), 10).toString();
 
+        const quantity = parseInt((fee * 0.1).toString(), 10).toString();
         if (target.length) {
           const tx = await this.arweave.createTransaction({
             target,
@@ -210,6 +234,7 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
+        console.log(txData.tx.id);
         await this.arweave.api.request().post(`${useBundler}/tx`, await (txData.tx as FileDataItem).rawData(), {
           headers: {
             'content-type': 'application/octet-stream',
@@ -262,59 +287,39 @@ export default class Deploy {
 
   private async buildTransaction(
     filePath: string,
-    hash: string,
-    data: Buffer,
-    type: string,
-    toIpfs: boolean = false,
-    tags: { name: string; value: string }[] = [],
+    tags: Tags,
   ): Promise<Transaction> {
     const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
-
-    for (const tag of tags) {
-      tx.addTag(tag.name, tag.value);
-    }
-
-    if (toIpfs) {
-      const ipfsHash = await this.ipfs.hash(data);
-      tx.addTag('IPFS-Add', ipfsHash);
-    }
-
-    tx.addTag('User-Agent', `arkb`);
-    tx.addTag('User-Agent-Version', this.packageVersion);
-    tx.addTag('Type', 'file');
-    tx.addTag('Content-Type', type);
-    tx.addTag('File-Hash', hash);
-
+    tags.addTagsToTransaction(tx);
     await this.arweave.transactions.sign(tx, this.wallet);
     return tx;
   }
 
+
   private async buildManifest(
     dir: string,
     index: string = null,
-    customTags: { name: string; value: string }[],
+    tags: Tags,
     txs: ArdbTransaction[],
+    useBundler: string,
   ) {
     const paths: { [key: string]: { id: string } } = {};
 
     this.txs = this.txs.filter((t) => {
+      const path = t.filePath.split(`${dir}/`)[1];
+      paths[path] = { id: t.tx.id };
+
       const remoteTx = txs.find(
         // tslint:disable-next-line: no-shadowed-variable
-        (tx) => tx.tags.find((txTag) => txTag.value === t.hash) && this.hasMatchingTag(customTags, tx),
+        (tx) => tx.tags.find((txTag) => txTag.value === t.hash)
       );
       if (!remoteTx) {
         return true;
       }
-      const path = `${t.filePath.split(`${dir}/`)[1]}`;
+
       paths[path] = { id: remoteTx.id };
       return false;
     });
-
-    for (let i = 0, j = this.txs.length; i < j; i++) {
-      const t = this.txs[i];
-      const path = `${t.filePath.split(`${dir}/`)[1]}`;
-      paths[path] = { id: t.tx.id };
-    }
 
     if (!index) {
       if (Object.keys(paths).includes('index.html')) {
@@ -337,20 +342,20 @@ export default class Deploy {
       paths,
     };
 
-    const tx = await this.arweave.createTransaction({ data: JSON.stringify(data) }, this.wallet);
+    tags.addTag('Type', 'manifest');
+    tags.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
-    if (customTags && customTags.length) {
-      for (const tag of customTags) {
-        tx.addTag(tag.name, tag.value);
-      }
+    let tx: Transaction | FileDataItem;
+    if (useBundler) {
+      tx = await this.bundler.createItem(JSON.stringify(data), tags.tags);
+    } else {
+      tx = await this.arweave.createTransaction({
+        data: JSON.stringify(data),
+      });
+      tags.addTagsToTransaction(tx);
+      await this.arweave.transactions.sign(tx, this.wallet);
     }
 
-    tx.addTag('User-Agent', `arkb`);
-    tx.addTag('User-Agent-Version', this.packageVersion);
-    tx.addTag('Type', 'manifest');
-    tx.addTag('Content-Type', 'application/x.arweave-manifest+json');
-
-    await this.arweave.transactions.sign(tx, this.wallet);
     this.txs.push({ filePath: '', hash: '', tx, type: 'application/x.arweave-manifest+json' });
 
     return true;
@@ -388,12 +393,6 @@ export default class Deploy {
     }
 
     return txs;
-  }
-
-  private hasMatchingTag(customTags: { name: string; value: string }[], tx: ArdbTransaction): boolean {
-    return !customTags.find(
-      (customTag) => !tx.tags.find((txTag) => txTag.name === customTag.name && txTag.value === customTag.value),
-    );
   }
 
   private sleep(ms: number) {

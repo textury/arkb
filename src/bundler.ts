@@ -12,24 +12,9 @@ export default class Bundler {
   }
 
   async createItem(
-    hash: string,
-    data: Buffer,
-    type: string,
-    toIpfs: boolean = false,
+    data: Buffer | string,
     tags: { name: string; value: string }[] = [],
   ): Promise<FileDataItem> {
-    if (toIpfs) {
-      const ipfsHash = await this.ipfs.hash(data);
-      tags.push({ name: 'IPFS-Add', value: ipfsHash });
-    }
-
-    tags.push({ name: 'User-Agent', value: `arkb` });
-    tags.push({ name: 'User-Agent-Version', value: this.packageVersion });
-    tags.push({ name: 'Type', value: 'file' });
-    if (type) tags.push({ name: 'Content-Type', value: type });
-    tags.push({ name: 'File-Hash', value: hash });
-    tags.push({ name: 'Bundler', value: 'ans104' });
-
     const item = await createData(
       {
         data,
