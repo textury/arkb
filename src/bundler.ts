@@ -15,7 +15,7 @@ export default class Bundler {
     data: Buffer,
     type: string,
     toIpfs: boolean = false,
-    tags: { name: string; value: string }[] = []
+    tags: { name: string; value: string }[] = [],
   ): Promise<DataItem> {
     if (toIpfs) {
       const ipfsHash = await this.ipfs.hash(data);
