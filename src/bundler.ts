@@ -11,10 +11,7 @@ export default class Bundler {
     this.signer = new ArweaveSigner(wallet);
   }
 
-  async createItem(
-    data: Buffer | string,
-    tags: { name: string; value: string }[] = [],
-  ): Promise<FileDataItem> {
+  async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<FileDataItem> {
     const item = await createData(
       {
         data,

@@ -1,9 +1,9 @@
-import Transaction from "arweave/node/lib/transaction";
+import Transaction from 'arweave/node/lib/transaction';
 
 export default class Tags {
   private _tags: Map<string, string> = new Map();
 
-  public get tags(): { name: string, value: string }[] {
+  public get tags(): { name: string; value: string }[] {
     return Array.from(this._tags.entries()).map(([name, value]) => ({ name, value }));
   }
 
@@ -11,7 +11,7 @@ export default class Tags {
     this._tags.set(key, value);
   }
 
-  public addTags(tags: { name: string, value: string }[]): void {
+  public addTags(tags: { name: string; value: string }[]): void {
     tags.forEach(({ name, value }) => this.addTag(name, value));
   }
 

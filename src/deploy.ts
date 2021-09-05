@@ -47,7 +47,7 @@ export default class Deploy {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     this.packageVersion = require('../package.json').version;
   }
@@ -148,8 +148,7 @@ export default class Deploy {
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
     if (isFile) {
-      if (txs.find(tx => tx.tags.find((txTag) => txTag.value === this.txs[0].hash))) {
-
+      if (txs.find((tx) => tx.tags.find((txTag) => txTag.value === this.txs[0].hash))) {
         console.log(clc.red('File already deployed:'));
 
         if (toIpfs && files.length === 1) {
@@ -160,7 +159,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -234,15 +233,17 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        await this.arweave.api.request().post(`${useBundler}/tx`, fs.createReadStream((txData.tx as FileDataItem).filename), {
-          headers: {
-            'content-type': 'application/octet-stream',
-          },
-          maxRedirects: 1,
-          timeout: 10000,
-          maxBodyLength: Infinity,
-          validateStatus: (status) => ![500, 400].includes(status),
-        });
+        await this.arweave.api
+          .request()
+          .post(`${useBundler}/tx`, fs.createReadStream((txData.tx as FileDataItem).filename), {
+            headers: {
+              'content-type': 'application/octet-stream',
+            },
+            maxRedirects: 1,
+            timeout: 10000,
+            maxBodyLength: Infinity,
+            validateStatus: (status) => ![500, 400].includes(status),
+          });
       } else if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
@@ -284,16 +285,12 @@ export default class Deploy {
     return txid;
   }
 
-  private async buildTransaction(
-    filePath: string,
-    tags: Tags,
-  ): Promise<Transaction> {
+  private async buildTransaction(filePath: string, tags: Tags): Promise<Transaction> {
     const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
     tags.addTagsToTransaction(tx);
     await this.arweave.transactions.sign(tx, this.wallet);
     return tx;
   }
-
 
   private async buildManifest(
     dir: string,
@@ -310,7 +307,7 @@ export default class Deploy {
 
       const remoteTx = txs.find(
         // tslint:disable-next-line: no-shadowed-variable
-        (tx) => tx.tags.find((txTag) => txTag.value === t.hash)
+        (tx) => tx.tags.find((txTag) => txTag.value === t.hash),
       );
       if (!remoteTx) {
         return true;
