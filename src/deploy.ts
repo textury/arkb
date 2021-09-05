@@ -31,20 +31,24 @@ export default class Deploy {
 
   private community: Community;
 
+  private packageVersion: string = '';
+
   constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
     this.arweave = arweave;
     this.debug = debug;
     this.logs = logs;
 
-    this.bundler = new Bundler(wallet);
+    this.bundler = new Bundler(wallet, this.packageVersion);
     this.ardb = new Ardb(arweave, debug ? 1 : 2);
 
     try {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
+
+    this.packageVersion = require('../package.json').version;
   }
 
   getBundler(): Bundler {
@@ -137,7 +141,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -194,7 +198,7 @@ export default class Deploy {
           tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
           tx.addTag('Service', 'arkb');
           tx.addTag('App-Name', 'arkb');
-          tx.addTag('App-Version', process.env.npm_package_version);
+          tx.addTag('App-Version', this.packageVersion);
 
           await this.arweave.transactions.sign(tx, this.wallet);
           await this.arweave.transactions.post(tx);
@@ -276,7 +280,7 @@ export default class Deploy {
     }
 
     tx.addTag('User-Agent', `arkb`);
-    tx.addTag('User-Agent-Version', process.env.npm_package_version);
+    tx.addTag('User-Agent-Version', this.packageVersion);
     tx.addTag('Type', 'file');
     tx.addTag('Content-Type', type);
     tx.addTag('File-Hash', hash);
@@ -342,7 +346,7 @@ export default class Deploy {
     }
 
     tx.addTag('User-Agent', `arkb`);
-    tx.addTag('User-Agent-Version', process.env.npm_package_version);
+    tx.addTag('User-Agent-Version', this.packageVersion);
     tx.addTag('Type', 'manifest');
     tx.addTag('Content-Type', 'application/x.arweave-manifest+json');
 

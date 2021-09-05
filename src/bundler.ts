@@ -6,7 +6,7 @@ export default class Bundler {
   private ipfs: IPFS = new IPFS();
   private signer: ArweaveSigner;
 
-  constructor(wallet: JWKInterface) {
+  constructor(wallet: JWKInterface, private readonly packageVersion: string) {
     this.signer = new ArweaveSigner(wallet);
   }
 
@@ -15,7 +15,7 @@ export default class Bundler {
     data: Buffer,
     type: string,
     toIpfs: boolean = false,
-    tags: { name: string; value: string }[] = [],
+    tags: { name: string; value: string }[] = []
   ): Promise<DataItem> {
     if (toIpfs) {
       const ipfsHash = await this.ipfs.hash(data);
@@ -23,9 +23,9 @@ export default class Bundler {
     }
 
     tags.push({ name: 'User-Agent', value: `arkb` });
-    tags.push({ name: 'User-Agent-Version', value: process.env.npm_package_version });
+    tags.push({ name: 'User-Agent-Version', value: this.packageVersion });
     tags.push({ name: 'Type', value: 'file' });
-    tags.push({ name: 'Content-Type', value: type });
+    if (type) tags.push({ name: 'Content-Type', value: type });
     tags.push({ name: 'File-Hash', value: hash });
     tags.push({ name: 'Bundler', value: 'ans104' });
 
