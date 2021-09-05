@@ -234,8 +234,7 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        console.log(txData.tx.id);
-        await this.arweave.api.request().post(`${useBundler}/tx`, await (txData.tx as FileDataItem).rawData(), {
+        await this.arweave.api.request().post(`${useBundler}/tx`, fs.createReadStream((txData.tx as FileDataItem).filename), {
           headers: {
             'content-type': 'application/octet-stream',
           },
