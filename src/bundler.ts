@@ -1,4 +1,5 @@
-import { ArweaveSigner, bundleAndSignData, createData, DataItem } from 'ans104';
+import { ArweaveSigner } from 'ans104';
+import { createData, bundleAndSignData, FileDataItem } from 'ans104/file';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import IPFS from './ipfs';
 
@@ -16,7 +17,7 @@ export default class Bundler {
     type: string,
     toIpfs: boolean = false,
     tags: { name: string; value: string }[] = [],
-  ): Promise<DataItem> {
+  ): Promise<FileDataItem> {
     if (toIpfs) {
       const ipfsHash = await this.ipfs.hash(data);
       tags.push({ name: 'IPFS-Add', value: ipfsHash });
@@ -41,7 +42,7 @@ export default class Bundler {
     return item;
   }
 
-  async bundleAndSign(txs: DataItem[]) {
+  async bundleAndSign(txs: FileDataItem[]) {
     return bundleAndSignData(txs, this.signer);
   }
 }

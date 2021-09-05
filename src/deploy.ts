@@ -15,7 +15,7 @@ import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from './faces/txDetail';
-import { DataItem } from 'ans104';
+import { FileDataItem } from 'ans104/file';
 import Bundler from './bundler';
 
 export default class Deploy {
@@ -46,7 +46,7 @@ export default class Deploy {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     this.packageVersion = require('../package.json').version;
   }
@@ -86,7 +86,7 @@ export default class Deploy {
 
           const hash = await this.toHash(data);
           const type = mime.getType(filePath) || 'application/octet-stream';
-          let tx: Transaction | DataItem;
+          let tx: Transaction | FileDataItem;
           if (useBundler) {
             tx = await this.bundler.createItem(hash, data, type, toIpfs, tags);
           } else {
@@ -141,7 +141,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -180,7 +180,7 @@ export default class Deploy {
       if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler) {
-          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as DataItem[]);
+          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
           txBundle = await bundled.toTransaction(this.arweave, this.wallet);
           fee = +(await this.arweave.ar.winstonToAr(txBundle.reward));
         } else {
@@ -210,7 +210,7 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        await this.arweave.api.request().post(`${useBundler}/tx`, txData.tx.getRaw(), {
+        await this.arweave.api.request().post(`${useBundler}/tx`, await (txData.tx as FileDataItem).rawData(), {
           headers: {
             'content-type': 'application/octet-stream',
           },

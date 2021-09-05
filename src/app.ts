@@ -16,7 +16,7 @@ import Deploy from './deploy';
 import Transaction from 'arweave/node/lib/transaction';
 import IPFS from './ipfs';
 import { TxDetail } from './faces/txDetail';
-import { DataItem } from 'ans104';
+import { FileDataItem } from 'ans104/file';
 import Bundler from './bundler';
 class App {
   private config: Conf;
@@ -214,8 +214,7 @@ class App {
       console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
       console.log(
         clc.cyan(
-          `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-            this.arweave.api.getConfig().port
+          `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port
           }/${manifestTx}`,
         ),
       );
@@ -351,7 +350,7 @@ class App {
     }
 
     if (useBundler) {
-      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as DataItem[]);
+      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
       const txBundle = await bundled.toTransaction(this.arweave, wallet);
       deployFee = +txBundle.reward;
 
@@ -367,7 +366,7 @@ class App {
     console.log('');
     console.log(clc.cyan('Summary'));
     if (useBundler) {
-      console.log(`Number of data items: ${isFile ? txs.length : `${txs.length - 1}`}`);
+      console.log(`Number of data items: ${txs.length}`);
     } else {
       console.log(`Number of files: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
     }
