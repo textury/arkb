@@ -60,6 +60,7 @@ class App {
       ['--ipfs-publish', 'Publish with Arweave+IPFS'],
       ['--use-bundler <host>', 'Use ans104 and bundler host'],
       ['--auto-confirm', 'Skips the confirm screen'],
+      ['--fee-multiplier 1', 'Set the fee multiplier for all transactions'],
       ['--timeout <timeout>', 'Set the request timeout'],
       ['--tag.Tag-Name=tagvalue', 'Set tags to your files'],
       ['--wallet <wallet_file_path>', 'Set the key file path'],
@@ -121,6 +122,22 @@ class App {
       }
     }
 
+    let feeMultiplier = 1;
+    if (argv['fee-multiplier']) {
+      try {
+        const feeArgv = parseFloat(argv['fee-multiplier']);
+        if (feeArgv > 1) {
+          feeMultiplier = feeArgv;
+        }
+        // tslint:disable-next-line: no-empty
+      } catch {}
+    }
+
+    const useBundler = argv['use-bundler'];
+    if (useBundler && feeMultiplier) {
+      console.log(clc.yellow('\nWarning: Fee multiplier is ignored when using the bundler'));
+    }
+
     if (command === 'deploy') {
       this.deploy(
         cvalue,
@@ -130,6 +147,7 @@ class App {
         argv['auto-confirm'],
         tags,
         argv['use-bundler'],
+        feeMultiplier,
       );
     } else if (command === 'status') {
       this.status(cvalue);
@@ -146,7 +164,6 @@ class App {
     }
   }
 
-  // Arweave tasks
   private async deploy(
     dir: string,
     walletPath: string,
@@ -155,6 +172,7 @@ class App {
     confirm: boolean = false,
     tags: Tags = new Tags(),
     useBundler?: string,
+    feeMultiplier: number = 1,
   ) {
     // Check if deploy dir exists
     if (!this.dirExists(dir)) {
@@ -178,7 +196,7 @@ class App {
       index = 'index.html';
     }
 
-    const txs = await deploy.prepare(dir, files, index, tags, toIpfs, useBundler);
+    const txs = await deploy.prepare(dir, files, index, tags, toIpfs, useBundler, feeMultiplier);
     const balAfter = await this.showTxsDetails(txs, wallet, isFile, dir, useBundler, deploy.getBundler());
 
     if (balAfter < 0) {
@@ -212,17 +230,17 @@ class App {
 
     console.log('');
     if (useBundler) {
-      console.log(clc.green('Data items deployed!'));
+      console.log(clc.green('Data items deployed! Visit the following URL to see your deployed content:'));
     } else {
       console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
-      console.log(
-        clc.cyan(
-          `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-            this.arweave.api.getConfig().port
-          }/${manifestTx}`,
-        ),
-      );
     }
+    console.log(
+      clc.cyan(
+        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
+          this.arweave.api.getConfig().port
+        }/${manifestTx}`,
+      ),
+    );
 
     process.exit(0);
   }

@@ -39,6 +39,7 @@ Options                                 Description
 --use-bundler                           Use ans104 and bundler host
 --ipfs-publish                          Publish to Arweave+IPFS
 --auto-confirm                          Skips the confirm screen
+--fee-multiplier                        Set the fee multiplier for all transactions
 --timeout                               Set the request timeout
 --tag.Tag-Name=tagvalue                 Set tags to your files
 --wallet                                Set the key file path

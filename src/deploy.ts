@@ -63,6 +63,7 @@ export default class Deploy {
     tags: Tags = new Tags(),
     toIpfs: boolean = false,
     useBundler?: string,
+    feeMultiplier?: number,
   ) {
     this.txs = [];
 
@@ -109,6 +110,9 @@ export default class Deploy {
             tx = await this.bundler.createItem(data, tags.tags);
           } else {
             tx = await this.buildTransaction(filePath, tags);
+            if (feeMultiplier) {
+              (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
+            }
           }
           this.txs.push({ filePath, hash, tx, type });
 
@@ -169,7 +173,7 @@ export default class Deploy {
         countdown.start();
       }
 
-      await this.buildManifest(dir, index, tags, txs, useBundler);
+      await this.buildManifest(dir, index, tags, txs, useBundler, feeMultiplier);
       if (this.logs) countdown.stop();
     }
 
@@ -298,6 +302,7 @@ export default class Deploy {
     tags: Tags,
     txs: ArdbTransaction[],
     useBundler: string,
+    feeMultiplier: number,
   ) {
     const paths: { [key: string]: { id: string } } = {};
 
@@ -349,6 +354,9 @@ export default class Deploy {
         data: JSON.stringify(data),
       });
       tags.addTagsToTransaction(tx);
+      if (feeMultiplier) {
+        (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
+      }
       await this.arweave.transactions.sign(tx, this.wallet);
     }
 
