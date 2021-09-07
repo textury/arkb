@@ -24,6 +24,10 @@
     "version": "npm run format && git add -A src",
     "postversion": "git push && git push --tags"
   },
+  "engines": {
+    "node": ">=15.11.0",
+    "npm": ">=7.6.0"
+  },
   "dependencies": {
     "@supercharge/promise-pool": "^1.7.0",
     "@textury/ardb": "^1.1.3",
