@@ -36,7 +36,8 @@ Options                                 Description
 --host                                  Set the network hostname or ip
 --protocol                              Set the network protocol (http or https)
 --port                                  Set the network port
---use-bundler                           Use ans104 and bundler host
+--use-bundler http://bundler.arweave.net:10000
+                                        Use ans104 and bundler host
 --ipfs-publish                          Publish to Arweave+IPFS
 --auto-confirm                          Skips the confirm screen
 --fee-multiplier                        Set the fee multiplier for all transactions
@@ -63,6 +64,9 @@ Saving a wallet:
   arkb wallet-save path/to/wallet.json
   arkb deploy folder/path/
   arkb deploy folder/file.html
+
+Using bundles:
+  arkb deploy --use-bundler http://bundler.arweave.net:10000  folder
 ```
 
 ## Contributing
