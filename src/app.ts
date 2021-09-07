@@ -101,6 +101,9 @@ class App {
     console.log('\nCustom index file:');
     console.log(' arkb deploy folder/path --index custom.html');
 
+    console.log('\nUsing Bundles:');
+    console.log(' arkb deploy --use-bundler http://bundler.arweave.net:10000  folder');
+
     process.exit(0);
   }
 
