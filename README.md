@@ -19,6 +19,12 @@ And run:
 arkb --help
 ```
 
+
+
+> **Note:** If you are planning to upload large batches of data transactions to the Arweave network, it is *strongly* advised that you use the `--use-bundler` option instead of regular deploy to avoid transaction failures. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/preview/WUAtjfiDQEIqhsUcHXIFTn5ZmeDIE7If9hJREBLRgak).
+
+
+
 ```
                     ?88        ?88      
                      88b        88b     
