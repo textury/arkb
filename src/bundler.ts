@@ -1,13 +1,11 @@
 import { ArweaveSigner } from 'ans104';
 import { createData, bundleAndSignData, FileDataItem } from 'ans104/file';
 import { JWKInterface } from 'arweave/node/lib/wallet';
-import IPFS from './ipfs';
 
 export default class Bundler {
-  private ipfs: IPFS = new IPFS();
   private signer: ArweaveSigner;
 
-  constructor(wallet: JWKInterface, private readonly packageVersion: string) {
+  constructor(wallet: JWKInterface) {
     this.signer = new ArweaveSigner(wallet);
   }
 

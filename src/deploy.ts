@@ -40,14 +40,14 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
-    this.bundler = new Bundler(wallet, this.packageVersion);
+    this.bundler = new Bundler(wallet);
     this.ardb = new Ardb(arweave, debug ? 1 : 2);
 
     try {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     this.packageVersion = require('../package.json').version;
   }
@@ -163,7 +163,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -231,7 +231,7 @@ export default class Deploy {
           await this.arweave.transactions.post(tx);
         }
       }
-    } catch {
+    } catch (e) {
       console.log(clc.red('Unable to set community transaction'));
     }
 
