@@ -93,7 +93,9 @@ class App {
 
     console.log(clc.magenta('\nExamples'));
     console.log('Without a saved wallet:');
-    console.log(`  arkb deploy folder${path.sep}path${path.sep} --wallet path${path.sep}to${path.sep}my${path.sep}wallet.json`);
+    console.log(
+      `  arkb deploy folder${path.sep}path${path.sep} --wallet path${path.sep}to${path.sep}my${path.sep}wallet.json`,
+    );
 
     console.log('\nSaving a wallet:');
     console.log(`  arkb wallet-save path${path.sep}to${path.sep}wallet.json`);

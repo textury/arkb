@@ -10,13 +10,9 @@ export default class Bundler {
   }
 
   async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<DataItem> {
-    const item = await createData(
-      data,
-      this.signer,
-      {
-        tags,
-      },
-    );
+    const item = await createData(data, this.signer, {
+      tags,
+    });
 
     await item.sign(this.signer);
 
