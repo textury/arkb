@@ -47,7 +47,8 @@
     "ipfs-only-hash": "^4.0.0",
     "mime": "^2.5.2",
     "minimist": "^1.2.5",
-    "p-retry": "^4.6.1"
+    "p-retry": "^4.6.1",
+    "redstone-smartweave": "^0.3.10-alpha.6"
   },
   "devDependencies": {
     "@types/clear": "^0.1.2",

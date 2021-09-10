@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
+import path from 'path';
 import fg from 'fast-glob';
 import clear from 'clear';
 import figlet from 'figlet';
@@ -92,23 +93,23 @@ class App {
 
     console.log(clc.magenta('\nExamples'));
     console.log('Without a saved wallet:');
-    console.log('  arkb deploy folder/path/ --wallet path/to/my/wallet.json');
+    console.log(`  arkb deploy folder${path.sep}path${path.sep} --wallet path${path.sep}to${path.sep}my${path.sep}wallet.json`);
 
     console.log('\nSaving a wallet:');
-    console.log('  arkb wallet-save path/to/wallet.json');
-    console.log('  arkb deploy folder/path/');
+    console.log(`  arkb wallet-save path${path.sep}to${path.sep}wallet.json`);
+    console.log(`  arkb deploy folder${path.sep}path`);
 
     console.log('\nCustom index file:');
-    console.log(' arkb deploy folder/path --index custom.html');
+    console.log(`  arkb deploy folder${path.sep}path --index custom.html`);
 
     console.log('\nUsing Bundles:');
-    console.log(' arkb deploy --use-bundler http://bundler.arweave.net:10000  folder');
+    console.log('  arkb deploy folder --use-bundler http://bundler.arweave.net:10000');
 
     process.exit(0);
   }
 
   private showVersion() {
-    const version = require('../package.json').version;
+    const version = require(path.join('..', 'package.json')).version;
     console.log(`v${version}`);
     process.exit(0);
   }
@@ -356,13 +357,13 @@ class App {
         totalSize += +dataSize;
       }
 
-      let path = tx.filePath;
-      if (path.startsWith(`${dir}/`)) {
-        path = path.split(`${dir}/`)[1];
+      let filePath = tx.filePath;
+      if (filePath.startsWith(`${dir}${path.sep}`)) {
+        filePath = filePath.split(`${dir}${path.sep}`)[1];
       }
 
-      if (!path) {
-        path = '';
+      if (!filePath) {
+        filePath = '';
       }
 
       new Line()
@@ -370,7 +371,7 @@ class App {
         .column(size, 15)
         .column(ar, 17)
         .column(tx.type, 30)
-        .column(path, 20)
+        .column(filePath, 20)
         .fill()
         .output();
     }

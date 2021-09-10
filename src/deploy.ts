@@ -1,4 +1,5 @@
 import fs, { createReadStream } from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import Arweave from 'arweave';
 import mime from 'mime';
@@ -298,8 +299,8 @@ export default class Deploy {
     const paths: { [key: string]: { id: string } } = {};
 
     this.txs = this.txs.filter((t) => {
-      const path = t.filePath.split(`${dir}/`)[1];
-      paths[path] = { id: t.tx.id };
+      const filePath = t.filePath.split(`${dir}${path.sep}`)[1];
+      paths[filePath] = { id: t.tx.id };
 
       const remoteTx = txs.find(
         // tslint:disable-next-line: no-shadowed-variable
@@ -309,7 +310,7 @@ export default class Deploy {
         return true;
       }
 
-      paths[path] = { id: remoteTx.id };
+      paths[filePath] = { id: remoteTx.id };
       return false;
     });
 

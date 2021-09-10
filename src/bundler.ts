@@ -19,6 +19,8 @@ export default class Bundler {
     );
 
     await item.sign(this.signer);
+
+    console.log(item.toJSON());
     return item;
   }
 
