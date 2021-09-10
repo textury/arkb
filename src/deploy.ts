@@ -15,7 +15,7 @@ import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from './faces/txDetail';
-import { FileDataItem } from 'ans104/file';
+import { DataItem } from 'arbundles';
 import Bundler from './bundler';
 import Tags from './lib/tags';
 
@@ -69,7 +69,7 @@ export default class Deploy {
 
     if (useBundler) {
       tags.addTag('Bundler', useBundler);
-      tags.addTag('Bundle', 'ans104');
+      tags.addTag('Bundle', 'arbundles');
     }
 
     let leftToPrepare = files.length;
@@ -105,7 +105,7 @@ export default class Deploy {
           if (type) tags.addTag('Content-Type', type);
           tags.addTag('File-Hash', hash);
 
-          let tx: Transaction | FileDataItem;
+          let tx: Transaction | DataItem;
           if (useBundler) {
             tx = await this.bundler.createItem(data, tags.tags);
           } else {
@@ -207,7 +207,7 @@ export default class Deploy {
       if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler) {
-          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
+          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as DataItem[]);
           txBundle = await bundled.toTransaction(this.arweave, this.wallet);
           fee = +(await this.arweave.ar.winstonToAr(txBundle.reward));
         } else {
@@ -237,17 +237,8 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        await this.arweave.api
-          .request()
-          .post(`${useBundler}/tx`, fs.createReadStream((txData.tx as FileDataItem).filename), {
-            headers: {
-              'content-type': 'application/octet-stream',
-            },
-            maxRedirects: 1,
-            timeout: 10000,
-            maxBodyLength: Infinity,
-            validateStatus: (status) => ![500, 400].includes(status),
-          });
+        // @ts-ignore
+        await (txData as DataItem).sendToBundler('http://bundler.arweave.net:10000');
       } else if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
@@ -346,7 +337,7 @@ export default class Deploy {
     tags.addTag('Type', 'manifest');
     tags.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
-    let tx: Transaction | FileDataItem;
+    let tx: Transaction | DataItem;
     if (useBundler) {
       tx = await this.bundler.createItem(JSON.stringify(data), tags.tags);
     } else {

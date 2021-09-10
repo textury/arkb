@@ -16,7 +16,7 @@ import Deploy from './deploy';
 import Transaction from 'arweave/node/lib/transaction';
 import IPFS from './ipfs';
 import { TxDetail } from './faces/txDetail';
-import { FileDataItem } from 'ans104/file';
+import { DataItem } from 'arbundles';
 import Bundler from './bundler';
 import Tags from './lib/tags';
 class App {
@@ -376,7 +376,7 @@ class App {
     }
 
     if (useBundler) {
-      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
+      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as DataItem[]);
       const txBundle = await bundled.toTransaction(this.arweave, wallet);
       deployFee = +txBundle.reward;
       totalSize = +txBundle.data_size;
