@@ -1,5 +1,5 @@
-import { ArweaveSigner } from 'ans104';
-import { createData, bundleAndSignData, FileDataItem } from 'ans104/file';
+import { ArweaveSigner } from 'arbundles';
+import { createData, bundleAndSignData, DataItem } from 'arbundles';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 
 export default class Bundler {
@@ -9,20 +9,18 @@ export default class Bundler {
     this.signer = new ArweaveSigner(wallet);
   }
 
-  async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<FileDataItem> {
-    const item = await createData(
-      {
-        data,
-        tags,
-      },
-      this.signer,
-    );
+  async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<DataItem> {
+    const item = await createData(data, this.signer, {
+      tags,
+    });
 
     await item.sign(this.signer);
+
+    console.log(item.toJSON());
     return item;
   }
 
-  async bundleAndSign(txs: FileDataItem[]) {
+  async bundleAndSign(txs: DataItem[]) {
     return bundleAndSignData(txs, this.signer);
   }
 }
