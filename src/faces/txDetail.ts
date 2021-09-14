@@ -1,9 +1,9 @@
-import { DataItem } from 'arbundles';
+import { FileDataItem } from 'ans104/file';
 import Transaction from 'arweave/node/lib/transaction';
 
 export interface TxDetail {
   filePath: string;
   hash: string;
-  tx: Transaction | DataItem;
+  tx: Transaction | FileDataItem;
   type: string;
 }

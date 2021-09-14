@@ -17,7 +17,7 @@ import Deploy from './deploy';
 import Transaction from 'arweave/node/lib/transaction';
 import IPFS from './ipfs';
 import { TxDetail } from './faces/txDetail';
-import { DataItem } from 'arbundles';
+import { FileDataItem } from 'ans104/file';
 import Bundler from './bundler';
 import Tags from './lib/tags';
 class App {
@@ -136,7 +136,7 @@ class App {
           feeMultiplier = feeArgv;
         }
         // tslint:disable-next-line: no-empty
-      } catch {}
+      } catch { }
     }
 
     const useBundler = argv['use-bundler'];
@@ -242,8 +242,7 @@ class App {
     }
     console.log(
       clc.cyan(
-        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${
-          this.arweave.api.getConfig().port
+        `${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}:${this.arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );
@@ -379,7 +378,7 @@ class App {
     }
 
     if (useBundler) {
-      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as DataItem[]);
+      const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
       const txBundle = await bundled.toTransaction(this.arweave, wallet);
       deployFee = +txBundle.reward;
       totalSize = +txBundle.data_size;
