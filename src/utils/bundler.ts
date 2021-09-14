@@ -15,10 +15,13 @@ export default class Bundler {
   }
 
   async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<FileDataItem> {
-    const item = await createData({
-      data,
-      tags
-    }, this.signer);
+    const item = await createData(
+      {
+        data,
+        tags,
+      },
+      this.signer,
+    );
 
     await item.sign(this.signer);
     return item;

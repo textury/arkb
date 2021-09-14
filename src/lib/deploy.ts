@@ -8,17 +8,17 @@ import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import Ardb from 'ardb';
-import IPFS from './ipfs';
+import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import pRetry from 'p-retry';
 import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
-import { TxDetail } from './faces/txDetail';
+import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
-import Bundler from './bundler';
-import Tags from './lib/tags';
+import Bundler from '../utils/bundler';
+import Tags from '../lib/tags';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -49,7 +49,7 @@ export default class Deploy {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     this.packageVersion = require('../package.json').version;
   }
@@ -129,9 +129,7 @@ export default class Deploy {
       await pRetry(async () => go(f), {
         onFailedAttempt: async (error) => {
           console.log(
-            clc.blackBright(
-              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`,
-            ),
+            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`),
           );
           await this.sleep(300);
         },
@@ -165,7 +163,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -239,7 +237,7 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        await this.bundler.post((txData.tx as FileDataItem), useBundler);
+        await this.bundler.post(txData.tx as FileDataItem, useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
