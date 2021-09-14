@@ -49,7 +49,7 @@ export default class Deploy {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     this.packageVersion = require('../package.json').version;
   }
@@ -129,9 +129,7 @@ export default class Deploy {
       await pRetry(async () => go(f), {
         onFailedAttempt: async (error) => {
           console.log(
-            clc.blackBright(
-              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`,
-            ),
+            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`),
           );
           await this.sleep(300);
         },
@@ -165,7 +163,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -239,7 +237,7 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        await this.bundler.post((txData.tx as FileDataItem), useBundler);
+        await this.bundler.post(txData.tx as FileDataItem, useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
