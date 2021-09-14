@@ -16,7 +16,7 @@ import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from './faces/txDetail';
-import { DataItem } from 'arbundles';
+import { FileDataItem } from 'ans104/file';
 import Bundler from './bundler';
 import Tags from './lib/tags';
 
@@ -41,14 +41,15 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
-    this.bundler = new Bundler(wallet);
+    // @ts-ignore
+    this.bundler = new Bundler(wallet, this.arweave);
     this.ardb = new Ardb(arweave, debug ? 1 : 2);
 
     try {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     this.packageVersion = require('../package.json').version;
   }
@@ -106,7 +107,7 @@ export default class Deploy {
           if (type) tags.addTag('Content-Type', type);
           tags.addTag('File-Hash', hash);
 
-          let tx: Transaction | DataItem;
+          let tx: Transaction | FileDataItem;
           if (useBundler) {
             tx = await this.bundler.createItem(data, tags.tags);
           } else {
@@ -129,7 +130,7 @@ export default class Deploy {
         onFailedAttempt: async (error) => {
           console.log(
             clc.blackBright(
-              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
+              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`,
             ),
           );
           await this.sleep(300);
@@ -164,7 +165,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         process.exit(0);
       }
@@ -208,7 +209,7 @@ export default class Deploy {
       if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler) {
-          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as DataItem[]);
+          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
           txBundle = await bundled.toTransaction(this.arweave, this.wallet);
           fee = +(await this.arweave.ar.winstonToAr(txBundle.reward));
         } else {
@@ -238,8 +239,7 @@ export default class Deploy {
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        // @ts-ignore
-        await (txData as DataItem).sendToBundler('http://bundler.arweave.net:10000');
+        await this.bundler.post((txData.tx as FileDataItem), useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
@@ -338,7 +338,7 @@ export default class Deploy {
     tags.addTag('Type', 'manifest');
     tags.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
-    let tx: Transaction | DataItem;
+    let tx: Transaction | FileDataItem;
     if (useBundler) {
       tx = await this.bundler.createItem(JSON.stringify(data), tags.tags);
     } else {
