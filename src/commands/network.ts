@@ -7,7 +7,7 @@ import { getArweaveUri, numbersForHumans, snakeCaseToTitleCase } from '../utils/
 
 const command: CommandInterface = {
   name: 'network',
-  aliases: ['net'],
+  aliases: ['n'],
   description: 'Get the current network info',
   useOptions: true,
   args: [],

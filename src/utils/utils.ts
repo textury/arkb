@@ -12,10 +12,12 @@ export function getArweaveUri(arweave: Arweave) {
 }
 
 export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Arweave {
-  const host = argv.host || 'arweave.net';
-  const protocol = argv.protocol || 'https';
-  const port = argv.port || 443;
   const timeout = argv.timeout || 20000;
+
+  const gateway = argv.gateway || 'https://arweave.net';
+  const protocol = gateway.split('://')[0] || 'https';
+  const host = gateway.split('://')[1] || 'arweave.net';
+  const port = gateway.split(':')[2] || (protocol === 'https' ? 443 : 80);
 
   return Arweave.init({
     host,

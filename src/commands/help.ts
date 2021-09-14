@@ -22,11 +22,9 @@ const command: CommandInterface = {
 
     const opts = [
       ['-v --version', 'Show the version number'],
-      ['--host <host_or_ip>', 'Set the network hostname or ip'],
-      ['--protocol <protocol>', 'Set the network protocol (http or https)'],
-      ['--port <port>', 'Set the network port'],
+      ['--gateway <host_or_ip>', 'Set the gateway hostname or ip'],
       ['--ipfs-publish', 'Publish with Arweave+IPFS'],
-      ['--use-bundler <host>', 'Use ans104 and bundler host'],
+      ['--use-bundler <host_or_ip>', 'Use ans104 and bundler host'],
       ['--auto-confirm', 'Skips the confirm screen'],
       ['--fee-multiplier 1', 'Set the fee multiplier for all transactions'],
       ['--timeout <timeout>', 'Set the request timeout'],

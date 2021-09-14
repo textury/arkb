@@ -14,7 +14,7 @@ import ArgumentsInterface from '../faces/arguments';
 
 const command: CommandInterface = {
   name: 'deploy',
-  aliases: [''],
+  aliases: ['d'],
   description: 'Deploy a directory or file',
   useOptions: true,
   args: ['folder/or.file'],
@@ -26,11 +26,15 @@ const command: CommandInterface = {
     // Check if deploy dir exists
     if (!dirExists(dir)) {
       console.log(clc.red("Directory doesn't exist"));
-      process.exit(0);
+      return;
     }
 
     // Get the wallet
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
+    if (!wallet) {
+      console.log(clc.red('Please set a wallet or run with the --wallet option.'));
+      return;
+    }
 
     let files = [dir];
     let isFile = true;
@@ -50,7 +54,7 @@ const command: CommandInterface = {
 
     if (balAfter < 0) {
       console.log(clc.red("You don't have enough balance for this deploy."));
-      process.exit(0);
+      return;
     }
 
     // Check if auto-confirm is added
@@ -60,7 +64,7 @@ const command: CommandInterface = {
     }
     if (!res.confirm) {
       console.log(clc.red('Rejected!'));
-      process.exit(0);
+      return;
     }
 
     if (ipfsPublish) {

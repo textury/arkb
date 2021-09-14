@@ -12,7 +12,7 @@ export async function getWallet(walletPath: string, config: Conf, debug: boolean
   if (walletPath) {
     if (typeof walletPath !== 'string') {
       console.log(clc.red('The wallet must be specified.'));
-      process.exit(0);
+      return;
     }
 
     try {
@@ -20,7 +20,7 @@ export async function getWallet(walletPath: string, config: Conf, debug: boolean
     } catch (e) {
       console.log(clc.red('Invalid wallet path.'));
       if (debug) console.log(e);
-      process.exit(0);
+      return;
     }
   }
 
@@ -34,14 +34,14 @@ export async function getWallet(walletPath: string, config: Conf, debug: boolean
       } catch (e) {
         console.log(clc.red('Invalid password.'));
         if (debug) console.log(e);
-        process.exit(0);
+        return;
       }
     }
   }
 
   if (!wallet) {
     console.log(clc.red('Save a wallet with `arkb wallet-save file-path.json`.'));
-    process.exit(0);
+    return;
   }
 
   return wallet;

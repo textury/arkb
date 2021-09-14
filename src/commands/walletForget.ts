@@ -7,7 +7,7 @@ import ArgumentsInterface from '../faces/arguments';
 
 const command: CommandInterface = {
   name: 'wallet-forget',
-  aliases: ['wallet-remove'],
+  aliases: ['wf'],
   description: `Removes a previously saved wallet`,
   useOptions: false,
   args: [],

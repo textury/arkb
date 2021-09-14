@@ -6,7 +6,7 @@ import { getWallet } from '../utils/wallet';
 
 const command: CommandInterface = {
   name: 'balance',
-  aliases: ['bal'],
+  aliases: ['b'],
   description: 'Get the current balance of your wallet',
   useOptions: true,
   args: ['address'],
@@ -17,7 +17,7 @@ const command: CommandInterface = {
 
     if (!wallet) {
       console.log(clc.red('Please set a wallet or run with the --wallet option.'));
-      process.exit(0);
+      return;
     }
 
     try {

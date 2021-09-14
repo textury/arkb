@@ -19,6 +19,10 @@ const command: CommandInterface = {
     const { config, arweave, debug } = args;
 
     const wallet: JWKInterface = await getWallet(null, config, debug);
+    if (!wallet) {
+      console.log(clc.red('Please set a wallet or run with the --wallet option.'));
+      return;
+    }
 
     try {
       const address = await arweave.wallets.jwkToAddress(wallet);

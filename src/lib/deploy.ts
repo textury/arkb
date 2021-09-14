@@ -166,7 +166,7 @@ export default class Deploy {
           'Arweave: ' +
           clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
-        process.exit(0);
+        return;
       }
     } else {
       if (this.logs) {
