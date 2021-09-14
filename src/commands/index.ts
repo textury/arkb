@@ -31,12 +31,12 @@ export async function cliTask(argv: minimist.ParsedArgs, arweave: Arweave, confi
         feeMultiplier = feeArgv;
       }
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
   }
 
   const useBundler = argv['use-bundler'];
-  if (useBundler && feeMultiplier) {
-    console.log(clc.yellow('\nWarning: Fee multiplier is ignored when using the bundler'));
+  if (useBundler && feeMultiplier > 1) {
+    console.log(clc.yellow('\nFee multiplier is ignored when using the bundler'));
   }
 
   switch (command) {
