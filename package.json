@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "node ./bin/app.js",
-    "dev": "ts-node src/app.ts",
+    "dev": "yarn build && node ./bin/app.js",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",

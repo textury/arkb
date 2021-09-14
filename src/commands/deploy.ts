@@ -11,87 +11,85 @@ import { getWallet } from '../utils/wallet';
 import { dirExists } from '../utils/utils';
 import { showDeployDetails } from '../utils/showDeployDetails';
 import Conf from 'conf';
+import CommandInterface from '../faces/command';
+import ArgumentsInterface from '../faces/arguments';
 
-export async function cliDeploy(
-  dir: string,
-  walletPath: string,
-  index: string,
-  toIpfs: boolean = false,
-  confirm: boolean = false,
-  tags: Tags = new Tags(),
-  arweave: Arweave,
-  config: Conf,
-  debug: boolean,
-  useBundler?: string,
-  feeMultiplier: number = 1,
-) {
-  // Check if deploy dir exists
-  if (!dirExists(dir)) {
-    console.log(clc.red("Directory doesn't exist"));
-    process.exit(0);
-  }
+const command: CommandInterface = {
+  name: 'deploy',
+  aliases: [''],
+  description: 'Deploy a directory or file',
+  useOptions: true,
+  args: ['folder/or.file'],
+  execute: async (args: ArgumentsInterface): Promise<void> => {
+    const { commandValue: dir, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier } = args;
 
-  // Get the wallet
-  const wallet: JWKInterface = await getWallet(walletPath, config, debug);
+    // Check if deploy dir exists
+    if (!dirExists(dir)) {
+      console.log(clc.red("Directory doesn't exist"));
+      process.exit(0);
+    }
 
-  let files = [dir];
-  let isFile = true;
-  if (fs.lstatSync(dir).isDirectory()) {
-    files = await fg([`${dir}/**/*`], { dot: false });
-    isFile = false;
-  }
+    // Get the wallet
+    const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 
-  const deploy = new Deploy(wallet, arweave, debug);
+    let files = [dir];
+    let isFile = true;
+    if (fs.lstatSync(dir).isDirectory()) {
+      files = await fg([`${dir}/**/*`], { dot: false });
+      isFile = false;
+    }
 
-  if (!index) {
-    index = 'index.html';
-  }
+    const deploy = new Deploy(wallet, arweave, debug);
 
-  const txs = await deploy.prepare(dir, files, index, tags, toIpfs, useBundler, feeMultiplier);
-  const balAfter = await showDeployDetails(txs, wallet, isFile, dir, arweave, useBundler, deploy.getBundler());
+    if (!args.index) {
+      args.index = 'index.html';
+    }
 
-  if (balAfter < 0) {
-    console.log(clc.red("You don't have enough balance for this deploy."));
-    process.exit(0);
-  }
+    const txs = await deploy.prepare(dir, files, args.index, tags, ipfsPublish, useBundler, feeMultiplier);
+    const balAfter = await showDeployDetails(txs, wallet, isFile, dir, arweave, useBundler, deploy.getBundler());
 
-  // Check if auto-confirm is added
-  let res = { confirm: false };
-  if (confirm) {
-    res.confirm = true;
-  } else {
-    res = await cliQuestions.showConfirm();
-  }
-  if (!res.confirm) {
-    console.log(clc.red('Rejected!'));
-    process.exit(0);
-  }
+    if (balAfter < 0) {
+      console.log(clc.red("You don't have enough balance for this deploy."));
+      process.exit(0);
+    }
 
-  if (toIpfs) {
-    const ipfs = new IPFS();
-    const ipfsHash = await ipfs.deploy(dir);
+    // Check if auto-confirm is added
+    let res = { confirm: false };
+    if (confirm) {
+      res.confirm = true;
+    } else {
+      res = await cliQuestions.showConfirm();
+    }
+    if (!res.confirm) {
+      console.log(clc.red('Rejected!'));
+      process.exit(0);
+    }
+
+    if (ipfsPublish) {
+      const ipfs = new IPFS();
+      const ipfsHash = await ipfs.deploy(dir);
+
+      console.log('');
+      console.log(clc.green('IPFS deployed! Main CID:'));
+
+      console.log(clc.cyan(ipfsHash.cid));
+    }
+
+    const manifestTx: string = await deploy.deploy(isFile, useBundler);
 
     console.log('');
-    console.log(clc.green('IPFS deployed! Main CID:'));
-
-    console.log(clc.cyan(ipfsHash.cid));
+    if (useBundler) {
+      console.log(clc.green('Data items deployed! Visit the following URL to see your deployed content:'));
+    } else {
+      console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
+    }
+    console.log(
+      clc.cyan(
+        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${arweave.api.getConfig().port
+        }/${manifestTx}`,
+      ),
+    );
   }
+};
 
-  const manifestTx: string = await deploy.deploy(isFile, useBundler);
-
-  console.log('');
-  if (useBundler) {
-    console.log(clc.green('Data items deployed! Visit the following URL to see your deployed content:'));
-  } else {
-    console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
-  }
-  console.log(
-    clc.cyan(
-      `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${
-        arweave.api.getConfig().port
-      }/${manifestTx}`,
-    ),
-  );
-
-  process.exit(0);
-}
+export default command;
