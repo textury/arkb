@@ -19,6 +19,7 @@ import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
+import { getPackageVersion } from '../utils/utils';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -51,7 +52,7 @@ export default class Deploy {
       // tslint:disable-next-line: no-empty
     } catch { }
 
-    this.packageVersion = require(path.join('..', '..', 'package.json')).version;
+    this.packageVersion = getPackageVersion();
   }
 
   getBundler(): Bundler {

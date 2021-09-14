@@ -3,6 +3,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import Arweave from 'arweave';
 import minimist from 'minimist';
 
@@ -55,6 +56,14 @@ export function numbersForHumans(x: number): string {
 
 export function dirExists(dir: string): boolean {
   return fs.existsSync(dir);
+}
+
+export function getUserDirectory(): string {
+  return process.cwd();
+}
+
+export function getPackageVersion(): string {
+  return require(path.join(__dirname, '..', '..', 'package.json')).version;
 }
 
 // tslint:disable-next-line: variable-name

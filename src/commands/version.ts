@@ -1,6 +1,7 @@
 import { join } from 'path';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
+import { getPackageVersion } from '../utils/utils';
 
 const command: CommandInterface = {
   name: 'version',
@@ -9,7 +10,7 @@ const command: CommandInterface = {
   useOptions: false,
   args: [],
   execute: async (_: ArgumentsInterface): Promise<void> => {
-    const version = require(join('..', '..', 'package.json')).version;
+    const version = getPackageVersion();
     console.log(`v${version}`);
   }
 };

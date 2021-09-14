@@ -1,16 +1,14 @@
 import fs from 'fs';
-import Arweave from 'arweave';
+import path from 'path';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import fg from 'fast-glob';
 import Deploy from '../lib/deploy';
-import Tags from '../lib/tags';
 import cliQuestions from '../utils/cli-questions';
 import IPFS from '../utils/ipfs';
 import { getWallet } from '../utils/wallet';
-import { dirExists } from '../utils/utils';
+import { dirExists, getUserDirectory } from '../utils/utils';
 import { showDeployDetails } from '../utils/showDeployDetails';
-import Conf from 'conf';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
 
@@ -21,7 +19,9 @@ const command: CommandInterface = {
   useOptions: true,
   args: ['folder/or.file'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValue: dir, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier } = args;
+    const { commandValue, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
+
+    const dir = path.join(getUserDirectory(), commandValue);
 
     // Check if deploy dir exists
     if (!dirExists(dir)) {
@@ -54,10 +54,8 @@ const command: CommandInterface = {
     }
 
     // Check if auto-confirm is added
-    let res = { confirm: false };
-    if (confirm) {
-      res.confirm = true;
-    } else {
+    let res = { confirm: !!autoConfirm };
+    if (!autoConfirm) {
       res = await cliQuestions.showConfirm();
     }
     if (!res.confirm) {
