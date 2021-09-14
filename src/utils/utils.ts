@@ -66,6 +66,10 @@ export function getPackageVersion(): string {
   return require(path.join(__dirname, '..', '..', 'package.json')).version;
 }
 
+export async function pause(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // tslint:disable-next-line: variable-name
 export function snakeCaseToTitleCase(snake_case: string): string {
   const sentence = snake_case.toLowerCase().split('_');

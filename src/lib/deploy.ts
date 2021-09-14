@@ -19,7 +19,7 @@ import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
-import { getPackageVersion } from '../utils/utils';
+import { getPackageVersion, pause } from '../utils/utils';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -132,7 +132,7 @@ export default class Deploy {
           console.log(
             clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`),
           );
-          await this.sleep(300);
+          await pause(300);
         },
         retries: 5,
       });
@@ -262,7 +262,7 @@ export default class Deploy {
               `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
             ),
           );
-          await this.sleep(300);
+          await pause(300);
         },
         retries: 5,
       });
@@ -388,9 +388,5 @@ export default class Deploy {
     }
 
     return txs;
-  }
-
-  private sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
