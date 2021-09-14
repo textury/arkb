@@ -16,6 +16,9 @@ cliCommands.cliTask({
   config,
   debug,
   arweave
-}).finally(() => {
+}).then(() => {
   process.exit(0);
+}).catch((e) => {
+  if (debug) console.log(e);
+  process.exit(1);
 });
