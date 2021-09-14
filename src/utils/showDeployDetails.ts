@@ -83,9 +83,9 @@ export async function showDeployDetails(
   console.log('');
   console.log(clc.cyan('Summary'));
   if (useBundler) {
-    console.log(`Number of data items: ${txs.length - 1} + 1 manifest`);
+    console.log(`Data items to deploy: ${txs.length - 1} + 1 manifest`);
   } else {
-    console.log(`Number of files: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
+    console.log(`Files to deploy: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
   }
   console.log(`Total size: ${bytesForHumans(totalSize)}`);
   console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee)`);
