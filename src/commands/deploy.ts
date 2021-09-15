@@ -45,11 +45,17 @@ const command: CommandInterface = {
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValue, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
 
+    // Check if we have received a command value
+    if (!commandValue) {
+      console.log(clc.red("You forgot to set the directory or file that you want to deploy."));
+      return;
+    }
+
     const dir = path.join(getUserDirectory(), commandValue);
 
     // Check if deploy dir exists
     if (!dirExists(dir)) {
-      console.log(clc.red("Directory doesn't exist"));
+      console.log(clc.red("Directory doesn't exist."));
       return;
     }
 

@@ -92,18 +92,7 @@ export default class CliCommands {
 
     if (this.commands.has(command)) {
       const commandObj = this.commands.get(command);
-
-      if (commandObj.name !== 'help' && (partialArgs.argv.help || partialArgs.argv.h)) {
-        console.log(clc.bold(`\nExample usage of ${clc.green(command)}:\n`));
-        for (const option of commandObj.options) {
-          const usage = commandObj.usage && commandObj.usage.length > 0 ? ` ${commandObj.usage[Math.floor(Math.random() * commandObj.usage.length)]}` : '';
-          console.log(`${clc.blackBright(`${option.description}:`)}
-arkb ${command + usage} --${option.name}${option.arg ? `=${option.usage}` : ''}\n`);
-        }
-        return;
-      }
-
-      if (commandObj && typeof commandObj.execute === 'function') {
+      if (commandObj && typeof commandObj.execute === 'function' && !this.showHelp(commandObj, command, args)) {
         await commandObj.execute(args);
       }
     } else {
@@ -119,5 +108,20 @@ arkb ${command + usage} --${option.name}${option.arg ? `=${option.usage}` : ''}\
     } else if ((commOrOpt as OptionInterface).alias) {
       this.options.set((commOrOpt as OptionInterface).alias, (commOrOpt as OptionInterface));
     }
+  }
+
+  private showHelp(commandObj: CommandInterface, command: string, partialArgs: Partial<ArgumentsInterface>): boolean {
+    if (commandObj.name === 'help' || (!partialArgs.argv.help && !partialArgs.argv.h)) {
+      return false;
+    }
+
+    console.log(clc.bold(`\nExample usage of ${clc.green(command)}:\n`));
+    for (const option of commandObj.options) {
+      const usage = commandObj.usage && commandObj.usage.length > 0 ? ` ${commandObj.usage[Math.floor(Math.random() * commandObj.usage.length)]}` : '';
+      console.log(`${clc.blackBright(`${option.description}:`)}
+arkb ${command + usage} --${option.name}${option.arg ? `=${option.usage}` : ''}\n`);
+    }
+
+    return true;
   }
 }
