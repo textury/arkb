@@ -63,7 +63,7 @@ const command: CommandInterface = {
     // Get the wallet
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
     if (!wallet) {
-      console.log(clc.red('Please set a wallet or run with the --wallet option.'));
+      console.log(clc.red('Please save a wallet or run with the --wallet option.'));
       return;
     }
 
