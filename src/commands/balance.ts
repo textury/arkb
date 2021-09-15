@@ -3,15 +3,25 @@ import clc from 'cli-color';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { getWallet } from '../utils/wallet';
+import gatewayOption from '../options/gateway';
+import timeoutOption from '../options/timeout';
+import walletOption from '../options/wallet';
+import debugOption from '../options/debug';
+import helpOption from '../options/help';
 
 const command: CommandInterface = {
   name: 'balance',
   aliases: ['b'],
   description: 'Get the current balance of your wallet',
-  useOptions: true,
-  args: ['address'],
+  options: [
+    gatewayOption,
+    timeoutOption,
+    walletOption,
+    debugOption,
+    helpOption
+  ],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValue: walletPath, config, debug, arweave } = args;
+    const { wallet: walletPath, config, debug, arweave } = args;
 
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 

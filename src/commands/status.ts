@@ -3,13 +3,23 @@ import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { status } from '../lib/status';
 import { getArweaveUri } from '../utils/utils';
+import gatewayOption from '../options/gateway';
+import timeoutOption from '../options/timeout';
+import debugOption from '../options/debug';
+import helpOption from '../options/help';
 
 const command: CommandInterface = {
   name: 'status',
   aliases: ['s'],
   description: 'Check the status of a transaction ID',
-  useOptions: true,
-  args: ['txid'],
+  options: [
+    gatewayOption,
+    timeoutOption,
+    debugOption,
+    helpOption
+  ],
+  arg: 'txid',
+  usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValue: txid, arweave, debug } = args;
 

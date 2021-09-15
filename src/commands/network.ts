@@ -1,16 +1,18 @@
-import Arweave from 'arweave';
 import clc from 'cli-color';
 import { debug } from 'console';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { getArweaveUri, numbersForHumans, snakeCaseToTitleCase } from '../utils/utils';
+import gatewayOption from '../options/gateway';
+import timeoutOption from '../options/timeout';
+import debugOption from '../options/debug';
+import helpOption from '../options/help';
 
 const command: CommandInterface = {
   name: 'network',
   aliases: ['n'],
   description: 'Get the current network info',
-  useOptions: true,
-  args: [],
+  options: [gatewayOption, timeoutOption, debugOption, helpOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { arweave } = args;
 

@@ -4,13 +4,14 @@ import cliQuestions from '../utils/cli-questions';
 import Crypter from '../utils/crypter';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
+import path from 'path';
 
 const command: CommandInterface = {
   name: 'wallet-save',
   aliases: ['ws'],
-  description: `Saves a wallet, removes the need of the ${clc.cyan('--wallet')} option`,
-  useOptions: false,
-  args: ['folder/wallet.json'],
+  description: `Saves a wallet, removes the need of the --wallet option`,
+  arg: 'wallet_path',
+  usage: [`folder/${path.sep}keyfile.json`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValue: walletPath, config, debug } = args;
 

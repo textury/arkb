@@ -1,10 +1,12 @@
 import ArgumentsInterface from "./arguments";
+import OptionInterface from "./option";
 
 export default interface CommandInterface {
   name: string;
-  aliases: string[];
+  aliases?: string[];
+  options?: OptionInterface[];
+  arg?: string;
+  usage?: string[];
   description: string;
-  useOptions: boolean;
-  args: string[];
   execute: (args: ArgumentsInterface) => Promise<void>;
 }

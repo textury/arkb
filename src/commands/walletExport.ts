@@ -1,10 +1,6 @@
 import fs from 'fs';
-import Arweave from 'arweave';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
-import cliQuestions from '../utils/cli-questions';
-import Crypter from '../utils/crypter';
-import Conf from 'conf';
 import { getWallet } from '../utils/wallet';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
@@ -13,8 +9,6 @@ const command: CommandInterface = {
   name: 'wallet-export',
   aliases: ['we'],
   description: `Exports a previously saved wallet`,
-  useOptions: false,
-  args: [],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { config, arweave, debug } = args;
 

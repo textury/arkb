@@ -11,13 +11,37 @@ import { dirExists, getUserDirectory } from '../utils/utils';
 import { showDeployDetails } from '../utils/showDeployDetails';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
+import gatewayOption from '../options/gateway';
+import ipfsPublishOption from '../options/ipfsPublish';
+import useBundlerOption from '../options/useBundler';
+import autoConfirmOption from '../options/autoConfirm';
+import feeMultiplierOption from '../options/feeMultiplier';
+import timeoutOption from '../options/timeout';
+import tagNameOption from '../options/tagName';
+import tagValueOption from '../options/tagValue';
+import walletOption from '../options/wallet';
+import debugOption from '../options/debug';
+import helpOption from '../options/help';
 
 const command: CommandInterface = {
   name: 'deploy',
   aliases: ['d'],
   description: 'Deploy a directory or file',
-  useOptions: true,
-  args: ['folder/or.file'],
+  options: [
+    gatewayOption,
+    useBundlerOption,
+    feeMultiplierOption,
+    tagNameOption,
+    tagValueOption,
+    walletOption,
+    ipfsPublishOption,
+    autoConfirmOption,
+    timeoutOption,
+    debugOption,
+    helpOption
+  ],
+  arg: 'folder_or_file',
+  usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValue, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
 
