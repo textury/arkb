@@ -43,14 +43,15 @@ const command: CommandInterface = {
   arg: 'folder_or_file',
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValue, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
+    const { commandValues, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
 
     // Check if we have received a command value
-    if (!commandValue) {
+    if (!commandValues || !commandValues.length) {
       console.log(clc.red("You forgot to set the directory or file that you want to deploy."));
       return;
     }
 
+    const commandValue = commandValues[0];
     const dir = path.join(getUserDirectory(), commandValue);
 
     // Check if deploy dir exists

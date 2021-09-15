@@ -38,8 +38,10 @@ export default class CliCommands {
   }
 
   async cliTask(partialArgs: Partial<ArgumentsInterface>) {
+    console.log(partialArgs.argv);
+
     let command = partialArgs.argv._[0];
-    const commandValue = partialArgs.argv._[1];
+    const commandValues = partialArgs.argv._.slice(1);
 
     if (!command) {
       command = 'help';
@@ -79,7 +81,7 @@ export default class CliCommands {
       config: partialArgs.config,
       wallet: partialArgs.argv.wallet,
       command,
-      commandValue,
+      commandValues,
       tags,
       feeMultiplier,
       useBundler,

@@ -13,13 +13,14 @@ const command: CommandInterface = {
   arg: 'wallet_path',
   usage: [`folder/${path.sep}keyfile.json`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValue: walletPath, config, debug } = args;
+    const { commandValues, config, debug } = args;
 
-    if (!walletPath) {
+    if (!commandValues || !commandValues.length) {
       console.log(clc.redBright('Wallet path is required.'));
       return;
     }
 
+    const walletPath = commandValues[0];
     try {
       const wallet = fs.readFileSync(walletPath, 'utf8');
       const res = await cliQuestions.askWalletPassword('Set a password for your wallet');

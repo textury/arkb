@@ -11,7 +11,7 @@ export default interface ArgumentsInterface {
   config: Conf;
   debug: boolean;
   command: string;
-  commandValue: string;
+  commandValues: string[];
   wallet: string;
   index: string;
   ipfsPublish: boolean;

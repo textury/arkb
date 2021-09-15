@@ -21,14 +21,16 @@ const command: CommandInterface = {
   arg: 'txid',
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValue: txid, arweave, debug } = args;
+    const { commandValues, arweave, debug } = args;
 
-    if (!txid) {
+    if (!commandValues || !commandValues.length) {
       console.log(clc.redBright('Error: Missing transaction ID'));
       return;
     }
 
+    const txid = commandValues[0];
     const arweaveUri = getArweaveUri(arweave);
+
     try {
       const res = await status(txid, arweave);
 
