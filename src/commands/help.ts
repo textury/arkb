@@ -53,8 +53,16 @@ const command: CommandInterface = {
       .filter(([key, cmd]) => !cmd.aliases.includes(key))
       .map(([key, cmd]) => {
         const aliases = cmd.aliases && cmd.aliases.length > 0 ? ` (${cmd.aliases.join(', ')})` : '';
-        const arg = cmd.arg && cmd.arg.length > 0 ? clc.blackBright(` <${cmd.arg}>`) : '';
+
+        let arg = '';
+        if (cmd.args && cmd.args.length > 0) {
+          for (const a of cmd.args) {
+            arg += clc.blackBright(` <${a}>`);
+          }
+        }
+
         const opt = cmd.options && cmd.options.length > 0 ? ' [options]' : '';
+
         return [
           cmd.name + aliases + arg + opt,
           cmd.description

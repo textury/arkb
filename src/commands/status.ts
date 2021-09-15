@@ -18,7 +18,7 @@ const command: CommandInterface = {
     debugOption,
     helpOption
   ],
-  arg: 'txid',
+  args: ['txid'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValues, arweave, debug } = args;

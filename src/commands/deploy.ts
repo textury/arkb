@@ -40,7 +40,7 @@ const command: CommandInterface = {
     debugOption,
     helpOption
   ],
-  arg: 'folder_or_file',
+  args: ['folder_or_file'],
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValues, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
