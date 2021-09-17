@@ -21,13 +21,15 @@ const command: CommandInterface = {
       console.log(clc.green(`Network Details for ${getArweaveUri(arweave)}\n`));
       Object.keys(net).forEach((key) => {
         const value = net[key];
-        console.log(`${clc.yellow(snakeCaseToTitleCase(key))}: ${clc.cyan(isNaN(value) ? value : numbersForHumans(value))}`);
+        console.log(
+          `${clc.yellow(snakeCaseToTitleCase(key))}: ${clc.cyan(isNaN(value) ? value : numbersForHumans(value))}`,
+        );
       });
     } catch (err) {
       console.log(clc.red(`Unable to reach ${getArweaveUri(arweave)} - ${err.message}`));
       if (debug) console.log(err);
     }
-  }
+  },
 };
 
 export default command;

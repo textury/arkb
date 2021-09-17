@@ -1,4 +1,4 @@
-import ArgumentsInterface from "./arguments";
+import ArgumentsInterface from './arguments';
 
 export default interface OptionInterface {
   name: string;

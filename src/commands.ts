@@ -12,9 +12,7 @@ export default class CliCommands {
 
   constructor() {
     // Commands
-    const commandFiles = fs
-      .readdirSync(path.join(__dirname, 'commands'))
-      .filter((file) => file.endsWith('.js'));
+    const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter((file) => file.endsWith('.js'));
 
     for (const file of commandFiles) {
       const filePath = path.join(__dirname, 'commands', file);
@@ -25,9 +23,7 @@ export default class CliCommands {
     }
 
     // Options
-    const optionFiles = fs
-      .readdirSync(path.join(__dirname, 'options'))
-      .filter((file) => file.endsWith('.js'));
+    const optionFiles = fs.readdirSync(path.join(__dirname, 'options')).filter((file) => file.endsWith('.js'));
 
     for (const file of optionFiles) {
       const filePath = path.join(__dirname, 'options', file);
@@ -54,7 +50,6 @@ export default class CliCommands {
       }
     }
 
-
     let feeMultiplier = 1;
     if (partialArgs.argv['fee-multiplier']) {
       try {
@@ -63,7 +58,7 @@ export default class CliCommands {
           feeMultiplier = feeArgv;
         }
         // tslint:disable-next-line: no-empty
-      } catch { }
+      } catch {}
     }
 
     const useBundler = partialArgs.argv['use-bundler'];
@@ -103,10 +98,10 @@ export default class CliCommands {
   private addAliases(commOrOpt: CommandInterface | OptionInterface) {
     if ((commOrOpt as CommandInterface).aliases && (commOrOpt as CommandInterface).aliases.length > 0) {
       for (const alias of (commOrOpt as CommandInterface).aliases) {
-        this.commands.set(alias, (commOrOpt as CommandInterface));
+        this.commands.set(alias, commOrOpt as CommandInterface);
       }
     } else if ((commOrOpt as OptionInterface).alias) {
-      this.options.set((commOrOpt as OptionInterface).alias, (commOrOpt as OptionInterface));
+      this.options.set((commOrOpt as OptionInterface).alias, commOrOpt as OptionInterface);
     }
   }
 
@@ -117,7 +112,10 @@ export default class CliCommands {
 
     console.log(clc.bold(`\nExample usage of ${clc.green(command)}:\n`));
     for (const option of commandObj.options) {
-      const usage = commandObj.usage && commandObj.usage.length > 0 ? ` ${commandObj.usage[Math.floor(Math.random() * commandObj.usage.length)]}` : '';
+      const usage =
+        commandObj.usage && commandObj.usage.length > 0
+          ? ` ${commandObj.usage[Math.floor(Math.random() * commandObj.usage.length)]}`
+          : '';
       console.log(`${clc.blackBright(`${option.description}:`)}
 arkb ${command + usage} --${option.name}${option.arg ? `=${option.usage}` : ''}\n`);
     }

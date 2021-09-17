@@ -38,16 +38,27 @@ const command: CommandInterface = {
     autoConfirmOption,
     timeoutOption,
     debugOption,
-    helpOption
+    helpOption,
   ],
   args: ['folder_or_file'],
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
+    const {
+      commandValues,
+      walletPath,
+      config,
+      debug,
+      arweave,
+      tags,
+      ipfsPublish,
+      useBundler,
+      feeMultiplier,
+      autoConfirm,
+    } = args;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
-      console.log(clc.red("You forgot to set the directory or file that you want to deploy."));
+      console.log(clc.red('You forgot to set the directory or file that you want to deploy.'));
       return;
     }
 
@@ -118,11 +129,12 @@ const command: CommandInterface = {
     }
     console.log(
       clc.cyan(
-        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${arweave.api.getConfig().port
+        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${
+          arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );
-  }
+  },
 };
 
 export default command;

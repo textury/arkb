@@ -26,10 +26,7 @@ const command: CommandInterface = {
       .map(([key, opt]) => {
         const alias = opt.alias ? ` -${opt.alias}` : '';
         const arg = opt.arg ? clc.blackBright(` <${opt.arg}>`) : '';
-        return [
-          `--${opt.name + alias + arg}`,
-          opt.description,
-        ];
+        return [`--${opt.name + alias + arg}`, opt.description];
       });
 
     for (let i = 0, j = opts.length; i < j; i++) {
@@ -48,10 +45,7 @@ const command: CommandInterface = {
           }
         }
 
-        return [
-          cmd.name + aliases + arg,
-          cmd.description
-        ];
+        return [cmd.name + aliases + arg, cmd.description];
       });
 
     console.log('');
@@ -77,7 +71,7 @@ const command: CommandInterface = {
 
     console.log('\nUsing Bundles:');
     console.log('  arkb deploy folder --use-bundler http://bundler.arweave.net:10000');
-  }
+  },
 };
 
 export default command;

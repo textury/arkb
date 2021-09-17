@@ -26,7 +26,7 @@ const command: CommandInterface = {
       console.log(clc.red('Unable to export the wallet file.'));
       if (debug) console.log(e);
     }
-  }
+  },
 };
 
 export default command;

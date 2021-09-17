@@ -1,8 +1,8 @@
-import Arweave from "arweave";
-import Transaction from "arweave/node/lib/transaction";
-import { JWKInterface } from "arweave/node/lib/wallet";
-import Community from "community-js";
-import { getPackageVersion } from "../utils/utils";
+import Arweave from 'arweave';
+import Transaction from 'arweave/node/lib/transaction';
+import { JWKInterface } from 'arweave/node/lib/wallet';
+import Community from 'community-js';
+import { getPackageVersion } from '../utils/utils';
 
 export default class Transfer {
   private community: Community;
@@ -12,10 +12,13 @@ export default class Transfer {
   }
 
   async execute(target: string, amount: string, feeMultiplier: number = 1): Promise<string> {
-    const tx = await this.arweave.createTransaction({
-      target,
-      quantity: this.arweave.ar.arToWinston(amount),
-    }, this.wallet);
+    const tx = await this.arweave.createTransaction(
+      {
+        target,
+        quantity: this.arweave.ar.arToWinston(amount),
+      },
+      this.wallet,
+    );
 
     tx.addTag('User-Agent', `arkb`);
     tx.addTag('User-Agent-Version', getPackageVersion());
@@ -32,7 +35,7 @@ export default class Transfer {
       const feeTarget = await this.community.selectWeightedHolder();
 
       if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== feeTarget) {
-        const quantity = parseInt(((+tx.reward) * 0.1).toString(), 10).toString();
+        const quantity = parseInt((+tx.reward * 0.1).toString(), 10).toString();
         if (feeTarget.length) {
           const feeTx = await this.arweave.createTransaction({
             target: feeTarget,
@@ -50,7 +53,7 @@ export default class Transfer {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     const txid = tx.id;
     await this.arweave.transactions.post(tx);

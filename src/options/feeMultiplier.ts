@@ -1,11 +1,11 @@
-import OptionInterface from "../faces/option";
+import OptionInterface from '../faces/option';
 
 const option: OptionInterface = {
-  name: "fee-multiplier",
+  name: 'fee-multiplier',
   alias: 'm',
-  description: "Set the fee multiplier for all transactions",
+  description: 'Set the fee multiplier for all transactions',
   arg: 'number',
-  usage: '1'
+  usage: '1',
 };
 
 export default option;

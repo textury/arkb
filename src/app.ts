@@ -11,14 +11,17 @@ const debug = !!argv.debug;
 const arweave = setArweaveInstance(argv, debug);
 
 const cliCommands = new CliCommands();
-cliCommands.cliTask({
-  argv,
-  config,
-  debug,
-  arweave
-}).then(() => {
-  process.exit(0);
-}).catch((e) => {
-  if (debug) console.log(e);
-  process.exit(1);
-});
+cliCommands
+  .cliTask({
+    argv,
+    config,
+    debug,
+    arweave,
+  })
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((e) => {
+    if (debug) console.log(e);
+    process.exit(1);
+  });

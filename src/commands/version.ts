@@ -9,7 +9,7 @@ const command: CommandInterface = {
   execute: async (_: ArgumentsInterface): Promise<void> => {
     const version = getPackageVersion();
     console.log(`v${version}`);
-  }
+  },
 };
 
 export default command;

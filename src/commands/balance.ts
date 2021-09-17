@@ -13,13 +13,7 @@ const command: CommandInterface = {
   name: 'balance',
   aliases: ['b'],
   description: 'Get the current balance of your wallet',
-  options: [
-    gatewayOption,
-    timeoutOption,
-    walletOption,
-    debugOption,
-    helpOption
-  ],
+  options: [gatewayOption, timeoutOption, walletOption, debugOption, helpOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, config, debug, arweave } = args;
 
@@ -42,7 +36,7 @@ const command: CommandInterface = {
       console.log(clc.red('Unable to retrieve wallet balance.'));
       if (debug) console.log(e);
     }
-  }
+  },
 };
 
 export default command;

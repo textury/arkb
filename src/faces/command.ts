@@ -1,5 +1,5 @@
-import ArgumentsInterface from "./arguments";
-import OptionInterface from "./option";
+import ArgumentsInterface from './arguments';
+import OptionInterface from './option';
 
 export default interface CommandInterface {
   name: string;

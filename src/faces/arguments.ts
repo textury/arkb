@@ -1,9 +1,9 @@
-import Arweave from "arweave";
-import Conf from "conf";
-import minimist from "minimist";
-import Tags from "../lib/tags";
-import CommandInterface from "./command";
-import OptionInterface from "./option";
+import Arweave from 'arweave';
+import Conf from 'conf';
+import minimist from 'minimist';
+import Tags from '../lib/tags';
+import CommandInterface from './command';
+import OptionInterface from './option';
 
 export default interface ArgumentsInterface {
   argv: minimist.ParsedArgs;
@@ -21,4 +21,4 @@ export default interface ArgumentsInterface {
   feeMultiplier: number;
   commands: Map<string, CommandInterface>;
   options: Map<string, OptionInterface>;
-};
+}

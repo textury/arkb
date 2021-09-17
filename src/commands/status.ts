@@ -12,12 +12,7 @@ const command: CommandInterface = {
   name: 'status',
   aliases: ['s'],
   description: 'Check the status of a transaction ID',
-  options: [
-    gatewayOption,
-    timeoutOption,
-    debugOption,
-    helpOption
-  ],
+  options: [gatewayOption, timeoutOption, debugOption, helpOption],
   args: ['txid'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
@@ -34,7 +29,7 @@ const command: CommandInterface = {
     try {
       const res = await status(txid, arweave);
 
-      console.log("🚀 ~ file: status.ts ~ line 20 ~ .then ~ res", res)
+      console.log('🚀 ~ file: status.ts ~ line 20 ~ .then ~ res', res);
       let responseStatus = '';
       switch (res.status) {
         case 200:
@@ -72,7 +67,7 @@ Block explorer URL: ${clc.cyan(`https://viewblock.io/arweave/block/${res.blockHe
       console.log(clc.red(`Unable to reach ${getArweaveUri(arweave)} - ${e.message}`));
       if (debug) console.log(e);
     }
-  }
+  },
 };
 
 export default command;

@@ -14,13 +14,7 @@ import Transfer from '../lib/transfer';
 const command: CommandInterface = {
   name: 'transfer',
   description: 'Send funds to an Arweave wallet',
-  options: [
-    gatewayOption,
-    timeoutOption,
-    walletOption,
-    debugOption,
-    helpOption
-  ],
+  options: [gatewayOption, timeoutOption, walletOption, debugOption, helpOption],
   args: ['address', 'amount'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1 0.01'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
@@ -61,12 +55,11 @@ const command: CommandInterface = {
       const txid = await transfer.execute(target, amount.toString(), feeMultiplier);
 
       console.log(clc.greenBright(`Transfer successful! Transaction ID: ${txid}`));
-
     } catch (error) {
       console.log(clc.redBright('Unable to send funds.'));
       if (debug) console.log(error);
     }
-  }
+  },
 };
 
 export default command;

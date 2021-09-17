@@ -15,7 +15,7 @@ const command: CommandInterface = {
       console.log(clc.red('Unable to forget the wallet.'));
       if (debug) console.log(e);
     }
-  }
+  },
 };
 
 export default command;
