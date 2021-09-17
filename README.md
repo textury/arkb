@@ -24,9 +24,10 @@ arkb help
 
 
 ```
-                    ?88        ?88      
-                     88b        88b     
- d888b8b    88bd88b  888  d88'  888888b 
+                    d8b        d8b
+                    ?88        ?88
+                     88b        88b
+ d888b8b    88bd88b  888  d88'  888888b
 d8P' ?88    88P'  `  888bd8P'   88P `?8b
 88b  ,88b  d88      d88888b    d88,  d88
 `?88P'`88bd88'     d88' `?88b,d88'`?88P'
@@ -36,40 +37,29 @@ d8P' ?88    88P'  `  888bd8P'   88P `?8b
 Usage: arkb [options] [command]
 
 Options                                 Description
--------------------------------------   -------------------------------------------------
---gateway=<host_or_ip>                  Set the network hostname or ip
---use-bundler=<host_or_ip>              Use ans104 and bundler host
---ipfs-publish                          Publish to Arweave+IPFS
 --auto-confirm                          Skips the confirm screen
---fee-multiplier=<number>               Set the fee multiplier for all transactions
---timeout=<number>                      Set the request timeout
---tag.Tag-Name=<tagvalue>               Set tags to your files
---wallet=<wallet_path>                  Set the key file path
---debug                                 Display additional logging
+--debug                                 Display log messages
+--fee-multiplier -m <number>            Set the fee multiplier for all transactions
+--gateway -g <host_or_ip>               Set the gateway hostname or ip address
+--help -h                               Show usage help for a command
+--ipfs-publish                          Publish to Arweave+IPFS
+--tag-name <name>                       Set a tag name
+--tag-value <value>                     Set a tag value
+--timeout -t <number>                   Set the request timeout
+--use-bundler <host_or_ip>              Use an ans104 bundler
+--wallet -w <wallet_path>               Set the key file path
 
 Commands (alias)                        Description
--------------------------------------   -------------------------------------------------
-help (h)                                Display this message
-version (v)                             Display the current version
-deploy (d) <dir_path> [options]         Deploy a directory
-status (s) <tx_id> [options]            Check the status of a transaction ID
-balance (b) [options]                   Get the wallet balance
-network (n) [options]                   Get the network info
-wallet-save (ws) <wallet_file_path>     Save a wallet to remove the need for the --wallet option
-wallet-export (we)                      Decrypt and export the saved wallet file
-wallet-forget (wf)                      Forget your saved wallet file
-
-Examples
-Without saving a wallet:
-  arkb deploy folder/path/ --wallet path/to/my/wallet.json
-
-Saving a wallet:
-  arkb wallet-save path/to/wallet.json
-  arkb deploy folder/path/
-  arkb deploy folder/file.html
-
-Using a bundler:
-  arkb deploy folder --use-bundler http://bundler.arweave.net:10000
+balance (b)                             Get the current balance of your wallet
+deploy (d) <folder_or_file>             Deploy a directory or file
+help (h)                                Deploy a directory or file
+network (n)                             Get the current network info
+status (s) <txid>                       Check the status of a transaction ID
+transfer <address> <amount>             Send funds to an Arweave wallet
+version (v)                             Show the current arkb version number
+wallet-export (we)                      Exports a previously saved wallet
+wallet-forget (wf)                      Removes a previously saved wallet
+wallet-save (ws) <wallet_path>          Saves a wallet, removes the need of the --wallet option
 ```
 
 ## Contributing
