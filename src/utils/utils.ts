@@ -15,9 +15,16 @@ export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): A
   const timeout = argv.timeout || 20000;
 
   const gateway = argv.gateway || 'https://arweave.net';
-  const protocol = gateway.split('://')[0] || 'https';
-  const host = gateway.split('://')[1] || 'arweave.net';
-  const port = gateway.split(':')[2] || (protocol === 'https' ? 443 : 80);
+  let protocol = 'https';
+  let host = 'arweave.net';
+  let port = 443;
+
+  const match = gateway.match(/(https?):\/\/([\w\.]+):?(\d+)?/);
+  if (match) {
+    protocol = match[1];
+    host = match[2];
+    port = +match[3] || (protocol === 'https' ? 443 : 80);
+  }
 
   return Arweave.init({
     host,
