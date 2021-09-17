@@ -48,7 +48,7 @@ export default class Deploy {
       this.community = new Community(arweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
   }
 
   getBundler(): Bundler {
@@ -160,7 +160,7 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+          clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
         return;
       }
@@ -199,8 +199,6 @@ export default class Deploy {
 
     const prevConsole = console;
     try {
-      // tslint:disable-next-line: no-empty
-      console.log = () => {};
       await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
       const target = await this.community.selectWeightedHolder();
 
@@ -232,8 +230,7 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch {}
-    console = prevConsole;
+    } catch { }
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
