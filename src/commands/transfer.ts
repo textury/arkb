@@ -24,7 +24,7 @@ const command: CommandInterface = {
   args: ['address', 'amount'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1 0.01'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, wallet: walletPath, arweave, config, debug } = args;
+    const { commandValues, walletPath, feeMultiplier, arweave, config, debug } = args;
 
     try {
       const target = commandValues[0].toString();
@@ -58,9 +58,9 @@ const command: CommandInterface = {
       }
 
       const transfer = new Transfer(wallet, arweave);
-      await transfer.execute(target, amount.toString());
+      const txid = await transfer.execute(target, amount.toString());
 
-      console.log(clc.greenBright('Transfer successful'));
+      console.log(clc.greenBright(`Transfer successful! Transaction ID: ${txid}`));
 
     } catch (error) {
       console.log(clc.redBright('Unable to send funds.'));

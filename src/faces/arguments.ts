@@ -12,7 +12,7 @@ export default interface ArgumentsInterface {
   debug: boolean;
   command: string;
   commandValues: string[];
-  wallet: string;
+  walletPath: string;
   index: string;
   ipfsPublish: boolean;
   autoConfirm: boolean;

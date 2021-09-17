@@ -77,7 +77,7 @@ export default class CliCommands {
       arweave: partialArgs.arweave,
       debug: partialArgs.debug,
       config: partialArgs.config,
-      wallet: partialArgs.argv.wallet,
+      walletPath: partialArgs.argv.wallet,
       command,
       commandValues,
       tags,

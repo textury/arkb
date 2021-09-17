@@ -21,7 +21,7 @@ const command: CommandInterface = {
     helpOption
   ],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { wallet: walletPath, config, debug, arweave } = args;
+    const { walletPath, config, debug, arweave } = args;
 
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 

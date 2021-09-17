@@ -43,7 +43,7 @@ const command: CommandInterface = {
   args: ['folder_or_file'],
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, wallet: walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
+    const { commandValues, walletPath, config, debug, arweave, tags, ipfsPublish, useBundler, feeMultiplier, autoConfirm } = args;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
