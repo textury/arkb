@@ -38,8 +38,6 @@ export default class CliCommands {
   }
 
   async cliTask(partialArgs: Partial<ArgumentsInterface>) {
-    console.log(partialArgs.argv);
-
     let command = partialArgs.argv._[0];
     const commandValues = partialArgs.argv._.slice(1);
 
