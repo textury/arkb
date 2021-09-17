@@ -58,7 +58,7 @@ const command: CommandInterface = {
       }
 
       const transfer = new Transfer(wallet, arweave);
-      const txid = await transfer.execute(target, amount.toString());
+      const txid = await transfer.execute(target, amount.toString(), feeMultiplier);
 
       console.log(clc.greenBright(`Transfer successful! Transaction ID: ${txid}`));
 

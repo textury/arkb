@@ -11,7 +11,7 @@ export default class Transfer {
     this.community = new Community(arweave, wallet);
   }
 
-  async execute(target: string, amount: string): Promise<string> {
+  async execute(target: string, amount: string, feeMultiplier: number = 1): Promise<string> {
     const tx = await this.arweave.createTransaction({
       target,
       quantity: this.arweave.ar.arToWinston(amount),
@@ -22,6 +22,10 @@ export default class Transfer {
     tx.addTag('Type', 'transfer');
 
     await this.arweave.transactions.sign(tx, this.wallet);
+
+    if (feeMultiplier && feeMultiplier > 1) {
+      tx.reward = (feeMultiplier * +tx.reward).toString();
+    }
 
     try {
       await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');

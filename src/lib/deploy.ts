@@ -109,7 +109,7 @@ export default class Deploy {
             tx = await this.bundler.createItem(data, tags.tags);
           } else {
             tx = await this.buildTransaction(filePath, tags);
-            if (feeMultiplier) {
+            if (feeMultiplier && feeMultiplier > 1) {
               (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
             }
           }
