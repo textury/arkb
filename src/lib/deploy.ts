@@ -8,17 +8,18 @@ import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import Ardb from 'ardb';
-import IPFS from './ipfs';
+import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import pRetry from 'p-retry';
 import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
-import { TxDetail } from './faces/txDetail';
+import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
-import Bundler from './bundler';
-import Tags from './lib/tags';
+import Bundler from '../utils/bundler';
+import Tags from '../lib/tags';
+import { getPackageVersion, pause } from '../utils/utils';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -32,8 +33,6 @@ export default class Deploy {
   private logs: boolean = true;
 
   private community: Community;
-
-  private packageVersion: string = '';
 
   constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
@@ -50,8 +49,6 @@ export default class Deploy {
 
       // tslint:disable-next-line: no-empty
     } catch { }
-
-    this.packageVersion = require('../package.json').version;
   }
 
   getBundler(): Bundler {
@@ -102,7 +99,7 @@ export default class Deploy {
             tags.addTag('IPFS-Add', ipfsHash);
           }
           tags.addTag('User-Agent', `arkb`);
-          tags.addTag('User-Agent-Version', this.packageVersion);
+          tags.addTag('User-Agent-Version', getPackageVersion());
           tags.addTag('Type', 'file');
           if (type) tags.addTag('Content-Type', type);
           tags.addTag('File-Hash', hash);
@@ -112,7 +109,7 @@ export default class Deploy {
             tx = await this.bundler.createItem(data, tags.tags);
           } else {
             tx = await this.buildTransaction(filePath, tags);
-            if (feeMultiplier) {
+            if (feeMultiplier && feeMultiplier > 1) {
               (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
             }
           }
@@ -129,11 +126,9 @@ export default class Deploy {
       await pRetry(async () => go(f), {
         onFailedAttempt: async (error) => {
           console.log(
-            clc.blackBright(
-              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`,
-            ),
+            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`),
           );
-          await this.sleep(300);
+          await pause(300);
         },
         retries: 5,
       });
@@ -167,7 +162,7 @@ export default class Deploy {
           'Arweave: ' +
           clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
         );
-        process.exit(0);
+        return;
       }
     } else {
       if (this.logs) {
@@ -227,19 +222,18 @@ export default class Deploy {
           tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
           tx.addTag('Service', 'arkb');
           tx.addTag('App-Name', 'arkb');
-          tx.addTag('App-Version', this.packageVersion);
+          tx.addTag('App-Version', getPackageVersion());
 
           await this.arweave.transactions.sign(tx, this.wallet);
           await this.arweave.transactions.post(tx);
         }
       }
-    } catch (e) {
-      console.log(clc.red('Unable to set community transaction'));
-    }
+      // tslint:disable-next-line: no-empty
+    } catch { }
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
-        await this.bundler.post((txData.tx as FileDataItem), useBundler);
+        await this.bundler.post(txData.tx as FileDataItem, useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
         const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
@@ -263,7 +257,7 @@ export default class Deploy {
               `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
             ),
           );
-          await this.sleep(300);
+          await pause(300);
         },
         retries: 5,
       });
@@ -389,9 +383,5 @@ export default class Deploy {
     }
 
     return txs;
-  }
-
-  private sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

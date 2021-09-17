@@ -16,10 +16,8 @@ npm install -g arkb
 
 And run:
 ```
-arkb --help
+arkb help
 ```
-
-
 
 > **Note:** If you are planning to upload large batches of data transactions to the Arweave network, it is *strongly* advised that you use the `--use-bundler` option instead of regular deploy to avoid transaction failures. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/preview/WUAtjfiDQEIqhsUcHXIFTn5ZmeDIE7If9hJREBLRgak).
 
@@ -38,29 +36,28 @@ d8P' ?88    88P'  `  888bd8P'   88P `?8b
 Usage: arkb [options] [command]
 
 Options                                 Description
--v --version                            Show the version number
---host                                  Set the network hostname or ip
---protocol                              Set the network protocol (http or https)
---port                                  Set the network port
---use-bundler http://bundler.arweave.net:10000
-                                        Use ans104 and bundler host
+-------------------------------------   -------------------------------------------------
+--gateway=<host_or_ip>                  Set the network hostname or ip
+--use-bundler=<host_or_ip>              Use ans104 and bundler host
 --ipfs-publish                          Publish to Arweave+IPFS
 --auto-confirm                          Skips the confirm screen
---fee-multiplier                        Set the fee multiplier for all transactions
---timeout                               Set the request timeout
---tag.Tag-Name=tagvalue                 Set tags to your files
---wallet                                Set the key file path
+--fee-multiplier=<number>               Set the fee multiplier for all transactions
+--timeout=<number>                      Set the request timeout
+--tag.Tag-Name=<tagvalue>               Set tags to your files
+--wallet=<wallet_path>                  Set the key file path
 --debug                                 Display additional logging
--h --help                               Display this message
 
-Commands                                Description
-deploy <dir_path> [options]             Deploy a directory
-status <tx_id>                          Check the status of a transaction ID
-balance                                 Get the current balance of your wallet
-network                                 Get the current network info
-wallet-save <wallet_file_path>          Save a wallet to remove the need for the --wallet option
-wallet-export                           Decrypt and export the saved wallet file
-wallet-forget                           Forget your saved wallet file
+Commands (alias)                        Description
+-------------------------------------   -------------------------------------------------
+help (h)                                Display this message
+version (v)                             Display the current version
+deploy (d) <dir_path> [options]         Deploy a directory
+status (s) <tx_id> [options]            Check the status of a transaction ID
+balance (b) [options]                   Get the wallet balance
+network (n) [options]                   Get the network info
+wallet-save (ws) <wallet_file_path>     Save a wallet to remove the need for the --wallet option
+wallet-export (we)                      Decrypt and export the saved wallet file
+wallet-forget (wf)                      Forget your saved wallet file
 
 Examples
 Without saving a wallet:
@@ -71,8 +68,8 @@ Saving a wallet:
   arkb deploy folder/path/
   arkb deploy folder/file.html
 
-Using bundles:
-  arkb deploy --use-bundler http://bundler.arweave.net:10000  folder
+Using a bundler:
+  arkb deploy folder --use-bundler http://bundler.arweave.net:10000
 ```
 
 ## Contributing

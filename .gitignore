@@ -106,3 +106,4 @@ dist
 testwallet.json
 bin/
 tests
+.DS_Store
