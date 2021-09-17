@@ -52,7 +52,7 @@ const command: CommandInterface = {
     }
 
     const commandValue = commandValues[0];
-    const dir = path.join(getUserDirectory(), commandValue);
+    const dir = path.join(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
 
     // Check if deploy dir exists
     if (!dirExists(dir)) {
