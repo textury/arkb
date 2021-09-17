@@ -34,8 +34,6 @@ export default class Deploy {
 
   private community: Community;
 
-  private packageVersion: string = '';
-
   constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
     this.arweave = arweave;
@@ -51,8 +49,6 @@ export default class Deploy {
 
       // tslint:disable-next-line: no-empty
     } catch { }
-
-    this.packageVersion = getPackageVersion();
   }
 
   getBundler(): Bundler {
@@ -103,7 +99,7 @@ export default class Deploy {
             tags.addTag('IPFS-Add', ipfsHash);
           }
           tags.addTag('User-Agent', `arkb`);
-          tags.addTag('User-Agent-Version', this.packageVersion);
+          tags.addTag('User-Agent-Version', getPackageVersion());
           tags.addTag('Type', 'file');
           if (type) tags.addTag('Content-Type', type);
           tags.addTag('File-Hash', hash);
@@ -226,15 +222,14 @@ export default class Deploy {
           tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
           tx.addTag('Service', 'arkb');
           tx.addTag('App-Name', 'arkb');
-          tx.addTag('App-Version', this.packageVersion);
+          tx.addTag('App-Version', getPackageVersion());
 
           await this.arweave.transactions.sign(tx, this.wallet);
           await this.arweave.transactions.post(tx);
         }
       }
-    } catch (e) {
-      console.log(clc.red('Unable to set community transaction'));
-    }
+      // tslint:disable-next-line: no-empty
+    } catch { }
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
