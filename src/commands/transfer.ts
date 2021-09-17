@@ -1,0 +1,72 @@
+import { JWKInterface } from 'arweave/node/lib/wallet';
+import clc from 'cli-color';
+import ArgumentsInterface from '../faces/arguments';
+import CommandInterface from '../faces/command';
+import { getWallet } from '../utils/wallet';
+import gatewayOption from '../options/gateway';
+import timeoutOption from '../options/timeout';
+import walletOption from '../options/wallet';
+import debugOption from '../options/debug';
+import helpOption from '../options/help';
+import { isValidWalletAddress } from '../utils/utils';
+import Transfer from '../lib/transfer';
+
+const command: CommandInterface = {
+  name: 'transfer',
+  description: 'Send funds to an Arweave wallet',
+  options: [
+    gatewayOption,
+    timeoutOption,
+    walletOption,
+    debugOption,
+    helpOption
+  ],
+  args: ['address', 'amount'],
+  usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1 0.01'],
+  execute: async (args: ArgumentsInterface): Promise<void> => {
+    const { commandValues, wallet: walletPath, arweave, config, debug } = args;
+
+    try {
+      const target = commandValues[0].toString();
+      const amount = +commandValues[1];
+
+      // Get the wallet
+      const wallet: JWKInterface = await getWallet(walletPath, config, debug);
+      if (!wallet) {
+        console.log(clc.red('Please save a wallet or run with the --wallet option.'));
+        return;
+      }
+
+      // Check if the target address is valid
+      if (!isValidWalletAddress(target)) {
+        console.log(clc.redBright('Invalid target wallet address'));
+        return;
+      }
+
+      // Check if the amount is a positive number
+      if (isNaN(amount) || amount <= 0) {
+        console.log(clc.redBright('Invalid amount'));
+        return;
+      }
+
+      // Check if the wallet has enough balance
+      const addy = await arweave.wallets.jwkToAddress(wallet);
+      const bal = await arweave.wallets.getBalance(addy);
+      if (+bal < amount) {
+        console.log(clc.redBright('Insufficient balance'));
+        return;
+      }
+
+      const transfer = new Transfer(wallet, arweave);
+      await transfer.execute(target, amount.toString());
+
+      console.log(clc.greenBright('Transfer successful'));
+
+    } catch (error) {
+      console.log(clc.redBright('Unable to send funds.'));
+      if (debug) console.log(error);
+    }
+  }
+};
+
+export default command;

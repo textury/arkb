@@ -35,6 +35,10 @@ export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): A
   });
 }
 
+export function isValidWalletAddress(address: string): boolean {
+  return /[a-z0-9_-]{43}/i.test(address);
+}
+
 export function bytesForHumans(bytes: number): string {
   const sizes = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 
