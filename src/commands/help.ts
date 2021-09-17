@@ -32,25 +32,12 @@ const command: CommandInterface = {
         ];
       });
 
-    // const opts = [
-    //   [`--gateway ${clc.blackBright('<host_or_ip>')}`, 'Set the gateway hostname or ip'],
-    //   [`--use-bundler ${clc.blackBright('<host_or_ip>')}`, 'Use ans104 and bundler host'],
-    //   [`--fee-multiplier ${clc.blackBright('<number>')}`, 'Set the fee multiplier for all transactions'],
-    //   [`--timeout ${clc.blackBright('<timeout>')}`, 'Set the request timeout'],
-    //   [`--wallet ${clc.blackBright('<wallet_path>')}`, 'Set the key file path'],
-    //   [`--tag.Tag-Name=tagvalue`, 'Set tags to your files'],
-    //   ['--ipfs-publish', 'Publish with Arweave+IPFS'],
-    //   ['--auto-confirm', 'Skips the confirm screen'],
-    //   ['--debug', 'Display additional logging'],
-    //   ['-h --help', 'Display this message'],
-    // ];
-
     for (let i = 0, j = opts.length; i < j; i++) {
       new Line().column(opts[i][0], 40).column(opts[i][1], 50).fill().output();
     }
 
     const cmds = Array.from(commands)
-      .filter(([key, cmd]) => !cmd.aliases.includes(key))
+      .filter(([key, cmd]) => !cmd.aliases || !cmd.aliases.includes(key))
       .map(([key, cmd]) => {
         const aliases = cmd.aliases && cmd.aliases.length > 0 ? ` (${cmd.aliases.join(', ')})` : '';
 
@@ -61,10 +48,8 @@ const command: CommandInterface = {
           }
         }
 
-        const opt = cmd.options && cmd.options.length > 0 ? ' [options]' : '';
-
         return [
-          cmd.name + aliases + arg + opt,
+          cmd.name + aliases + arg,
           cmd.description
         ];
       });
