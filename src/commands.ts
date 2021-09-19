@@ -58,7 +58,10 @@ export default class CliCommands {
           }
         }
       } else {
-        tags.addTag((Array.isArray(tagNames) ? tagNames[0].toString() : tagNames.toString()), (Array.isArray(tagValues) ? tagValues[0].toString() : tagValues.toString()));
+        tags.addTag(
+          Array.isArray(tagNames) ? tagNames[0].toString() : tagNames.toString(),
+          Array.isArray(tagValues) ? tagValues[0].toString() : tagValues.toString(),
+        );
       }
     }
 
@@ -70,7 +73,7 @@ export default class CliCommands {
           feeMultiplier = feeArgv;
         }
         // tslint:disable-next-line: no-empty
-      } catch { }
+      } catch {}
     }
 
     const useBundler = partialArgs.argv['use-bundler'];
