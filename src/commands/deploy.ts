@@ -129,8 +129,7 @@ const command: CommandInterface = {
     }
     console.log(
       clc.cyan(
-        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${
-          arweave.api.getConfig().port
+        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );

@@ -42,11 +42,23 @@ export default class CliCommands {
     }
 
     const tags = new Tags();
-    const tag = partialArgs.argv.tag;
+    const tagNames = partialArgs.argv['tag-name'];
+    const tagValues = partialArgs.argv['tag-value'];
 
-    if (tag) {
-      for (const name of Object.keys(tag)) {
-        tags.addTag(name, tag[name].toString());
+    if (tagNames && tagValues) {
+      const isArrayTagNames = Array.isArray(tagNames);
+      const isArrayTagValues = Array.isArray(tagValues);
+
+      if (isArrayTagNames && isArrayTagValues) {
+        for (let i = 0; i < tagNames.length; i++) {
+          const name = tagNames[i]?.toString();
+          const value = tagValues[i]?.toString();
+          if (name && value) {
+            tags.addTag(name, value);
+          }
+        }
+      } else {
+        tags.addTag((Array.isArray(tagNames) ? tagNames[0].toString() : tagNames.toString()), (Array.isArray(tagValues) ? tagValues[0].toString() : tagValues.toString()));
       }
     }
 
@@ -58,7 +70,7 @@ export default class CliCommands {
           feeMultiplier = feeArgv;
         }
         // tslint:disable-next-line: no-empty
-      } catch {}
+      } catch { }
     }
 
     const useBundler = partialArgs.argv['use-bundler'];
