@@ -52,7 +52,7 @@ Options                                 Description
 Commands (alias)                        Description
 balance (b)                             Get the current balance of your wallet
 deploy (d) <folder_or_file>             Deploy a directory or file
-help (h)                                Deploy a directory or file
+help (h)                                Show usage help for a command
 network (n)                             Get the current network info
 status (s) <txid>                       Check the status of a transaction ID
 transfer <address> <amount>             Send funds to an Arweave wallet
