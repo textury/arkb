@@ -63,12 +63,15 @@ const command: CommandInterface = {
     }
 
     const commandValue = commandValues[0];
-    const dir = path.join(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
+    let dir = path.join(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
 
     // Check if deploy dir exists
     if (!dirExists(dir)) {
-      console.log(clc.red("Directory doesn't exist."));
-      return;
+      dir = commandValue.replace(/[\/\\]$/, '');
+      if (!dirExists(dir)) {
+        console.log(clc.red(`The directory or file does not exist.`));
+        return;
+      }
     }
 
     // Get the wallet
@@ -129,8 +132,7 @@ const command: CommandInterface = {
     }
     console.log(
       clc.cyan(
-        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${
-          arweave.api.getConfig().port
+        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${arweave.api.getConfig().port
         }/${manifestTx}`,
       ),
     );
