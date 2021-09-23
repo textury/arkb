@@ -134,12 +134,9 @@ export default class Deploy {
       });
     };
 
-    await PromisePool.withConcurrency(10)
-      .for(files)
-      .process(async (file) => {
-        await retry(file);
-        return true;
-      });
+    for (const file of files) {
+      await retry(file);
+    }
 
     if (this.logs) countdown.stop();
 
