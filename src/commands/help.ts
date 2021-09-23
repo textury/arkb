@@ -9,7 +9,7 @@ import CommandInterface from '../faces/command';
 const command: CommandInterface = {
   name: 'help',
   aliases: ['h'],
-  description: 'Deploy a directory or file',
+  description: 'Show usage help for a command',
   execute: async (args: ArgumentsInterface): Promise<void> => {
     clear();
 
