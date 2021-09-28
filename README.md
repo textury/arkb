@@ -40,6 +40,7 @@ Options                                 Description
 --auto-confirm                          Skips the confirm screen
 --debug                                 Display log messages
 --fee-multiplier -m <number>            Set the fee multiplier for all transactions
+--force -f                              Force a redeploy of all the files
 --gateway -g <host_or_ip>               Set the gateway hostname or ip address
 --help -h                               Show usage help for a command
 --ipfs-publish                          Publish to Arweave+IPFS

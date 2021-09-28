@@ -63,6 +63,7 @@ export default class Deploy {
     toIpfs: boolean = false,
     useBundler?: string,
     feeMultiplier?: number,
+    forceRedeploy: boolean = false,
   ) {
     this.txs = [];
 
@@ -145,7 +146,7 @@ export default class Deploy {
     const txs: ArdbTransaction[] = await this.queryGQLPaths(hashes);
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
-    if (isFile) {
+    if (isFile && !forceRedeploy) {
       if (txs.find((tx) => tx.tags.find((txTag) => txTag.value === this.txs[0].hash))) {
         console.log(clc.red('File already deployed:'));
 
@@ -167,7 +168,7 @@ export default class Deploy {
         countdown.start();
       }
 
-      await this.buildManifest(dir, index, tags, txs, useBundler, feeMultiplier);
+      await this.buildManifest(dir, index, tags, txs, useBundler, feeMultiplier, forceRedeploy);
       if (this.logs) countdown.stop();
     }
 
@@ -287,24 +288,27 @@ export default class Deploy {
     txs: ArdbTransaction[],
     useBundler: string,
     feeMultiplier: number,
+    forceRedeploy: boolean,
   ) {
     const paths: { [key: string]: { id: string } } = {};
 
-    this.txs = this.txs.filter((t) => {
-      const filePath = t.filePath.split(`${dir}${path.sep}`)[1];
-      paths[filePath] = { id: t.tx.id };
+    if (!forceRedeploy) {
+      this.txs = this.txs.filter((t) => {
+        const filePath = t.filePath.split(`${dir}${path.sep}`)[1];
+        paths[filePath] = { id: t.tx.id };
 
-      const remoteTx = txs.find(
-        // tslint:disable-next-line: no-shadowed-variable
-        (tx) => tx.tags.find((txTag) => txTag.value === t.hash),
-      );
-      if (!remoteTx) {
-        return true;
-      }
+        const remoteTx = txs.find(
+          // tslint:disable-next-line: no-shadowed-variable
+          (tx) => tx.tags.find((txTag) => txTag.value === t.hash),
+        );
+        if (!remoteTx) {
+          return true;
+        }
 
-      paths[filePath] = { id: remoteTx.id };
-      return false;
-    });
+        paths[filePath] = { id: remoteTx.id };
+        return false;
+      });
+    }
 
     if (!index) {
       if (Object.keys(paths).includes('index.html')) {

@@ -22,6 +22,7 @@ import tagValueOption from '../options/tagValue';
 import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
+import forceOption from '../options/force';
 
 const command: CommandInterface = {
   name: 'deploy',
@@ -44,6 +45,7 @@ const command: CommandInterface = {
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const {
+      argv,
       commandValues,
       walletPath,
       config,
@@ -55,6 +57,8 @@ const command: CommandInterface = {
       feeMultiplier,
       autoConfirm,
     } = args;
+
+    const forceRedeploy = argv.force || false;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
@@ -94,7 +98,16 @@ const command: CommandInterface = {
       args.index = 'index.html';
     }
 
-    const txs = await deploy.prepare(dir, files, args.index, tags, ipfsPublish, useBundler, feeMultiplier);
+    const txs = await deploy.prepare(
+      dir,
+      files,
+      args.index,
+      tags,
+      ipfsPublish,
+      useBundler,
+      feeMultiplier,
+      forceRedeploy,
+    );
     const balAfter = await showDeployDetails(txs, wallet, isFile, dir, arweave, useBundler, deploy.getBundler());
 
     if (balAfter < 0) {
