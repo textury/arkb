@@ -7,23 +7,22 @@ import clui from 'clui';
 import clc from 'cli-color';
 import IPFS from '../utils/ipfs';
 import Community from 'community-js';
-import pRetry from 'p-retry';
-import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
 import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
 import { getPackageVersion, pause } from '../utils/utils';
-import { createTransactionAsync } from '../utils/createTransactionAsync';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
-import { uploadTransactionAsync } from '../utils/uploadTransactionAsync';
 import Cache from '../utils/cache';
+import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
+import Arweave from 'arweave';
 
 export default class Deploy {
   private wallet: JWKInterface;
   private blockweave: Blockweave;
+  private arweave: Arweave;
   private bundler: Bundler;
   private ipfs: IPFS = new IPFS();
   private cache: Cache;
@@ -41,8 +40,15 @@ export default class Deploy {
     this.logs = logs;
 
     this.cache = new Cache(debug);
-
     this.bundler = new Bundler(wallet, this.blockweave);
+
+    this.arweave = Arweave.init({
+      host: blockweave.config.host,
+      port: blockweave.config.port,
+      protocol: blockweave.config.protocol,
+      timeout: blockweave.config.timeout,
+      logging: blockweave.config.logging,
+    });
 
     try {
       // @ts-ignore
@@ -120,12 +126,14 @@ export default class Deploy {
 
       if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
     }
-
     if (this.logs) countdown.stop();
 
     // Query to find all the files previously deployed
-    if (this.logs) countdown = new clui.Spinner('Removing duplicates...', ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
-    const txs: TxDetail[] = await this.queryGQLPaths(this.txs, forceRedeploy);
+    if (this.logs) {
+      countdown = new clui.Spinner('Removing duplicates...', ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown.start();
+    }
+    const txs: TxDetail[] = await this.deduplicate(this.txs, forceRedeploy, countdown);
     if (this.logs) countdown.stop();
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
@@ -173,7 +181,6 @@ export default class Deploy {
       }
     }
 
-    const prevConsole = console;
     try {
       await this.community.setCommunityTx('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
       const target = await this.community.selectWeightedHolder();
@@ -191,10 +198,13 @@ export default class Deploy {
 
         const quantity = parseInt((fee * 0.1).toString(), 10).toString();
         if (target.length) {
-          const tx = await this.blockweave.createTransaction({
-            target,
-            quantity,
-          });
+          const tx = await this.blockweave.createTransaction(
+            {
+              target,
+              quantity,
+            },
+            this.wallet,
+          );
 
           tx.addTag('Action', 'Deploy');
           tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
@@ -202,46 +212,62 @@ export default class Deploy {
           tx.addTag('App-Name', 'arkb');
           tx.addTag('App-Version', getPackageVersion());
 
-          await this.blockweave.transactions.sign(tx, this.wallet);
-          await this.blockweave.transactions.post(tx);
+          await tx.signAndPost();
         }
       }
       // tslint:disable-next-line: no-empty
     } catch {}
 
-    const go = async (txData: TxDetail) => {
+    for (const txData of this.txs) {
+      let deployed = false;
+
       if (useBundler) {
-        await this.bundler.post(txData.tx as FileDataItem, useBundler);
-      } else if (txData.filePath === '' && txData.hash === '') {
-        await (txData.tx as Transaction).post();
-      } else {
-        await pipeline(
-          createReadStream(txData.filePath),
-          uploadTransactionAsync(txData.tx as Transaction, this.blockweave),
-        );
+        try {
+          await this.bundler.post(txData.tx as FileDataItem, useBundler);
+          deployed = true;
+        } catch (e) {
+          console.log(e);
+          console.log(clc.red('Failed to deploy data item:', txData.filePath));
+        }
       }
-      if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
-      return true;
-    };
 
-    const retry = async (txData: TxDetail) => {
-      await pRetry(() => go(txData), {
-        onFailedAttempt: async (error) => {
-          console.log(
-            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error:`, error.stack),
+      if (txData.filePath === '' && txData.hash === '') {
+        await (txData.tx as Transaction).post(0);
+        deployed = true;
+      }
+
+      if (!deployed) {
+        try {
+          await pipeline(
+            createReadStream(txData.filePath),
+            // @ts-ignore
+            uploadTransactionAsync(txData.tx as Transaction, this.blockweave),
           );
-          await pause(300);
-        },
-        retries: 5,
-      });
-    };
+          deployed = true;
+        } catch (e) {
+          if (this.debug) {
+            console.log(e);
+            console.log(
+              clc.red(`Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`),
+            );
+          }
+        }
+      }
 
-    await PromisePool.withConcurrency(5)
-      .for(this.txs)
-      .process(async (txData) => {
-        await retry(txData);
-        return true;
-      });
+      if (!deployed) {
+        try {
+          await (txData.tx as Transaction).post(0);
+          deployed = true;
+        } catch (e) {
+          if (this.debug) {
+            console.log(e);
+            console.log(clc.red(`Failed to upload ${txData.filePath} using normal post!`));
+          }
+        }
+      }
+
+      if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
+    }
 
     if (this.logs) countdown.stop();
 
@@ -249,10 +275,11 @@ export default class Deploy {
   }
 
   private async buildTransaction(filePath: string, tags: Tags): Promise<Transaction> {
-    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.blockweave, this.wallet));
+    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
     tags.addTagsToTransaction(tx);
-    await tx.sign();
+    await this.arweave.transactions.sign(tx, this.wallet);
 
+    // @ts-ignore
     return tx;
   }
 
@@ -334,7 +361,7 @@ export default class Deploy {
     return hash.digest('hex');
   }
 
-  private async queryGQLPaths(txsDetail: TxDetail[], forceRedeploy: boolean = false): Promise<TxDetail[]> {
+  private async deduplicate(txsDetail: TxDetail[], forceRedeploy: boolean = false, countdown): Promise<TxDetail[]> {
     const txs: TxDetail[] = [];
 
     if (forceRedeploy) {
@@ -348,8 +375,11 @@ export default class Deploy {
       return txs;
     }
 
+    let files = txsDetail.length;
+
     // Lets check on cache to see if we have deployed these hashes
     for (const txD of txsDetail) {
+      if (this.logs) countdown.message(`Deploying ${--files} files...`);
       let cached = this.cache.get(txD.hash);
 
       if (!cached) {

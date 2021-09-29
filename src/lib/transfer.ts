@@ -8,8 +8,11 @@ export default class Transfer {
   private community: Community;
 
   constructor(private readonly wallet: JWKInterface, private readonly blockweave: Blockweave) {
-    // @ts-ignore
-    this.community = new Community(blockweave, wallet);
+    try {
+      // @ts-ignore
+      this.community = new Community(blockweave, wallet);
+      // tslint:disable-next-line: no-empty
+    } catch (e) {}
   }
 
   async execute(target: string, amount: string, feeMultiplier: number = 1): Promise<string> {
@@ -38,10 +41,13 @@ export default class Transfer {
       if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== feeTarget) {
         const quantity = parseInt((+tx.reward * 0.1).toString(), 10).toString();
         if (feeTarget.length) {
-          const feeTx = await this.blockweave.createTransaction({
-            target: feeTarget,
-            quantity,
-          });
+          const feeTx = await this.blockweave.createTransaction(
+            {
+              target: feeTarget,
+              quantity,
+            },
+            this.wallet,
+          );
 
           feeTx.addTag('Action', 'Transfer');
           feeTx.addTag('Message', `Transferred AR to ${target}`);
@@ -49,15 +55,14 @@ export default class Transfer {
           feeTx.addTag('App-Name', 'arkb');
           feeTx.addTag('App-Version', getPackageVersion());
 
-          await this.blockweave.transactions.sign(feeTx, this.wallet);
-          await this.blockweave.transactions.post(feeTx);
+          await feeTx.signAndPost(this.wallet, undefined, 0);
         }
       }
       // tslint:disable-next-line: no-empty
     } catch {}
 
     const txid = tx.id;
-    await this.blockweave.transactions.post(tx);
+    await tx.post(0);
 
     return txid;
   }

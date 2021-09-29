@@ -15,7 +15,7 @@ export default class Tags {
     tags.forEach(({ name, value }) => this.addTag(name, value));
   }
 
-  public addTagsToTransaction(tx: Transaction): void {
+  public addTagsToTransaction(tx: any): void {
     this.tags.forEach(({ name, value }) => tx.addTag(name, value));
   }
 }

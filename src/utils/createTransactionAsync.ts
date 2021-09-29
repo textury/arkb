@@ -5,7 +5,7 @@ import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { bufferTob64Url } from 'blockweave/dist/utils/buffer';
 import { pipeline } from 'stream/promises';
-import { generateTransactionChunksAsync } from './generateTransactionChunkAsync';
+import { generateTransactionChunksAsync } from './generateTransactionChunksAsync';
 
 export function createTransactionAsync(
   attributes: Partial<Omit<CreateTransactionInterface, 'data'>>,

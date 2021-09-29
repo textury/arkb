@@ -5,7 +5,6 @@ import { pipeline } from 'stream/promises';
 import chunker from 'stream-chunker';
 import { backOff } from 'exponential-backoff';
 import Merkle, { MAX_CHUNK_SIZE } from 'blockweave/dist/utils/merkle';
-
 // Copied from `arweave-js`.
 const FATAL_CHUNK_UPLOAD_ERRORS = [
   'invalid_json',
@@ -57,6 +56,7 @@ export function uploadTransactionAsync(tx: Transaction, blockweave: Blockweave, 
 
     function prepareChunkUploadPayload(chunkIndex: number, chunkData: Buffer): ChunkUploadPayload {
       const proof = proofs[chunkIndex];
+
       return {
         data_root: tx.data_root,
         data_size: tx.data_size,
@@ -66,82 +66,87 @@ export function uploadTransactionAsync(tx: Transaction, blockweave: Blockweave, 
       };
     }
 
-    await pipeline(source, chunker(MAX_CHUNK_SIZE, { flush: true }), async (chunkedSource: AsyncIterable<Buffer>) => {
-      let chunkIndex = 0;
-      let dataRebalancedIntoFinalChunk: Buffer | undefined;
+    await pipeline(
+      source,
+      chunker(MAX_CHUNK_SIZE, { flush: true }),
+      // tslint:disable-next-line: only-arrow-functions
+      async function (chunkedSource: AsyncIterable<Buffer>) {
+        let chunkIndex = 0;
+        let dataRebalancedIntoFinalChunk: Buffer | undefined;
 
-      const activeChunkUploads: Promise<any>[] = [];
+        const activeChunkUploads: Promise<any>[] = [];
 
-      for await (const chunkData of chunkedSource) {
-        const currentChunk = chunks[chunkIndex];
-        const chunkSize = currentChunk.maxByteRange - currentChunk.minByteRange;
-        const expectedToBeFinalRebalancedChunk = dataRebalancedIntoFinalChunk != null;
+        for await (const chunkData of chunkedSource) {
+          const currentChunk = chunks[chunkIndex];
+          const chunkSize = currentChunk.maxByteRange - currentChunk.minByteRange;
+          const expectedToBeFinalRebalancedChunk = dataRebalancedIntoFinalChunk != null;
 
-        let chunkPayload: ChunkUploadPayload;
+          let chunkPayload: ChunkUploadPayload;
 
-        if (chunkData.byteLength === chunkSize) {
-          // If the transaction data chunks was never rebalanced this is the only code path that
-          // will execute as the incoming chunked data as the will always be equivalent to `chunkSize`.
-          chunkPayload = prepareChunkUploadPayload(chunkIndex, chunkData);
-        } else if (chunkData.byteLength > chunkSize) {
-          // If the incoming chunk data is larger than the expected size of the current chunk
-          // it means that the transaction had chunks that were rebalanced to meet the minimum chunk size.
-          //
-          // It also means that the chunk we're currently processing should be the second to last
-          // chunk.
-          chunkPayload = prepareChunkUploadPayload(chunkIndex, chunkData.slice(0, chunkSize));
+          if (chunkData.byteLength === chunkSize) {
+            // If the transaction data chunks was never rebalanced this is the only code path that
+            // will execute as the incoming chunked data as the will always be equivalent to `chunkSize`.
+            chunkPayload = prepareChunkUploadPayload(chunkIndex, chunkData);
+          } else if (chunkData.byteLength > chunkSize) {
+            // If the incoming chunk data is larger than the expected size of the current chunk
+            // it means that the transaction had chunks that were rebalanced to meet the minimum chunk size.
+            //
+            // It also means that the chunk we're currently processing should be the second to last
+            // chunk.
+            chunkPayload = prepareChunkUploadPayload(chunkIndex, chunkData.slice(0, chunkSize));
 
-          dataRebalancedIntoFinalChunk = chunkData.slice(chunkSize);
-        } else if (chunkData.byteLength < chunkSize && expectedToBeFinalRebalancedChunk) {
-          // If this is the final rebalanced chunk, create the upload payload by concatenating the previous
-          // chunk's data that was moved into this and the remaining stream data.
-          chunkPayload = prepareChunkUploadPayload(
-            chunkIndex,
-            Buffer.concat(
-              [dataRebalancedIntoFinalChunk!, chunkData],
-              dataRebalancedIntoFinalChunk!.length + chunkData.length,
-            ),
+            dataRebalancedIntoFinalChunk = chunkData.slice(chunkSize);
+          } else if (chunkData.byteLength < chunkSize && expectedToBeFinalRebalancedChunk) {
+            // If this is the final rebalanced chunk, create the upload payload by concatenating the previous
+            // chunk's data that was moved into this and the remaining stream data.
+            chunkPayload = prepareChunkUploadPayload(
+              chunkIndex,
+              Buffer.concat(
+                [dataRebalancedIntoFinalChunk!, chunkData],
+                dataRebalancedIntoFinalChunk!.length + chunkData.length,
+              ),
+            );
+          } else {
+            throw Error('Transaction data stream terminated incorrectly.');
+          }
+
+          const chunkValid = await merkle.validatePath(
+            txChunkData.data_root,
+            parseInt(chunkPayload.offset, 10),
+            0,
+            parseInt(chunkPayload.data_size, 10),
+            b64UrlToBuffer(chunkPayload.data_path),
           );
-        } else {
-          throw Error('Transaction data stream terminated incorrectly.');
+
+          if (!chunkValid) {
+            throw new Error(`Unable to validate chunk ${chunkIndex}.`);
+          }
+
+          // Upload multiple transaction chunks in parallel to speed up the upload.
+
+          // If we are already at the maximum concurrent chunk upload limit,
+          // wait till all of them to complete first before continuing.
+          if (activeChunkUploads.length >= MAX_CONCURRENT_CHUNK_UPLOAD_COUNT) {
+            await Promise.all(activeChunkUploads);
+            // Clear the active chunk uploads array.
+            activeChunkUploads.length = 0;
+          }
+
+          activeChunkUploads.push(
+            backOff(() => blockweave.api.post('chunk', chunkPayload), {
+              retry: (err) => !FATAL_CHUNK_UPLOAD_ERRORS.includes(err.message),
+            }),
+          );
+
+          chunkIndex++;
         }
 
-        const chunkValid = await merkle.validatePath(
-          txChunkData.data_root,
-          parseInt(chunkPayload.offset, 10),
-          0,
-          parseInt(chunkPayload.data_size, 10),
-          b64UrlToBuffer(chunkPayload.data_path),
-        );
+        await Promise.all(activeChunkUploads);
 
-        if (!chunkValid) {
-          throw new Error(`Unable to validate chunk ${chunkIndex}.`);
+        if (chunkIndex < chunks.length) {
+          throw Error('Transaction upload incomplete.');
         }
-
-        // Upload multiple transaction chunks in parallel to speed up the upload.
-
-        // If we are already at the maximum concurrent chunk upload limit,
-        // wait till all of them to complete first before continuing.
-        if (activeChunkUploads.length >= MAX_CONCURRENT_CHUNK_UPLOAD_COUNT) {
-          await Promise.all(activeChunkUploads);
-          // Clear the active chunk uploads array.
-          activeChunkUploads.length = 0;
-        }
-
-        activeChunkUploads.push(
-          backOff(() => blockweave.api.post('chunk', chunkPayload), {
-            retry: (err) => !FATAL_CHUNK_UPLOAD_ERRORS.includes(err.message),
-          }),
-        );
-
-        chunkIndex++;
-      }
-
-      await Promise.all(activeChunkUploads);
-
-      if (chunkIndex < chunks.length) {
-        throw Error('Transaction upload incomplete.');
-      }
-    });
+      },
+    );
   };
 }
