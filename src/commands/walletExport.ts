@@ -1,16 +1,16 @@
 import fs from 'fs';
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import { getWallet } from '../utils/wallet';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 const command: CommandInterface = {
   name: 'wallet-export',
   aliases: ['we'],
   description: `Exports a previously saved wallet`,
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { config, arweave, debug } = args;
+    const { config, blockweave, debug } = args;
 
     const wallet: JWKInterface = await getWallet(null, config, debug);
     if (!wallet) {
@@ -19,7 +19,7 @@ const command: CommandInterface = {
     }
 
     try {
-      const address = await arweave.wallets.jwkToAddress(wallet);
+      const address = await blockweave.wallets.jwkToAddress(wallet);
       fs.writeFileSync(`${address}.json`, JSON.stringify(wallet), 'utf8');
       console.log(clc.green(`Wallet "${clc.bold(`${address}.json`)}" exported successfully.`));
     } catch (e) {

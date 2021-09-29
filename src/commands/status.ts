@@ -2,7 +2,6 @@ import clc from 'cli-color';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { status } from '../lib/status';
-import { getArweaveUri } from '../utils/utils';
 import gatewayOption from '../options/gateway';
 import timeoutOption from '../options/timeout';
 import debugOption from '../options/debug';
@@ -16,7 +15,7 @@ const command: CommandInterface = {
   args: ['txid'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, arweave, debug } = args;
+    const { commandValues, blockweave, debug } = args;
 
     if (!commandValues || !commandValues.length) {
       console.log(clc.redBright('Error: Missing transaction ID'));
@@ -24,10 +23,10 @@ const command: CommandInterface = {
     }
 
     const txid = commandValues[0];
-    const arweaveUri = getArweaveUri(arweave);
+    const arweaveUri = blockweave.config.url;
 
     try {
-      const res = await status(txid, arweave);
+      const res = await status(txid, blockweave);
 
       console.log('🚀 ~ file: status.ts ~ line 20 ~ .then ~ res', res);
       let responseStatus = '';
@@ -64,7 +63,7 @@ Transaction explorer URL: ${clc.cyan(`https://viewblock.io/arweave/tx/${txid}`)}
 Block explorer URL: ${clc.cyan(`https://viewblock.io/arweave/block/${res.blockHeight}`)}`);
       }
     } catch (e) {
-      console.log(clc.red(`Unable to reach ${getArweaveUri(arweave)} - ${e.message}`));
+      console.log(clc.red(`Unable to reach ${blockweave.config.url} - ${e.message}`));
       if (debug) console.log(e);
     }
   },

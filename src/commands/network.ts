@@ -2,7 +2,7 @@ import clc from 'cli-color';
 import { debug } from 'console';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
-import { getArweaveUri, numbersForHumans, snakeCaseToTitleCase } from '../utils/utils';
+import { numbersForHumans, snakeCaseToTitleCase } from '../utils/utils';
 import gatewayOption from '../options/gateway';
 import timeoutOption from '../options/timeout';
 import debugOption from '../options/debug';
@@ -14,11 +14,11 @@ const command: CommandInterface = {
   description: 'Get the current network info',
   options: [gatewayOption, timeoutOption, debugOption, helpOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { arweave } = args;
+    const { blockweave } = args;
 
     try {
-      const net = await arweave.network.getInfo();
-      console.log(clc.green(`Network Details for ${getArweaveUri(arweave)}\n`));
+      const net = await blockweave.network.getInfo();
+      console.log(clc.green(`Network Details for ${blockweave.config.url}\n`));
       Object.keys(net).forEach((key) => {
         const value = net[key];
         console.log(
@@ -26,7 +26,7 @@ const command: CommandInterface = {
         );
       });
     } catch (err) {
-      console.log(clc.red(`Unable to reach ${getArweaveUri(arweave)} - ${err.message}`));
+      console.log(clc.red(`Unable to reach ${blockweave.config.url} - ${err.message}`));
       if (debug) console.log(err);
     }
   },

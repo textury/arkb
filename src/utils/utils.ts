@@ -2,37 +2,23 @@
  * utils.ts - Various utility functions
  */
 
+import Blockweave from 'blockweave';
 import fs from 'fs';
 import path from 'path';
-import Arweave from 'arweave';
 import minimist from 'minimist';
 
-export function getArweaveUri(arweave: Arweave) {
-  return arweave.getConfig().api.protocol + '://' + arweave.getConfig().api.host + ':' + arweave.getConfig().api.port;
-}
-
-export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Arweave {
+export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Blockweave {
   const timeout = argv.timeout || 20000;
-
   const gateway = argv.gateway || 'https://arweave.net';
-  let protocol = 'https';
-  let host = 'arweave.net';
-  let port = 443;
 
-  const match = gateway.match(/(https?):\/\/([\w\.]+):?(\d+)?/);
-  if (match) {
-    protocol = match[1];
-    host = match[2];
-    port = +match[3] || (protocol === 'https' ? 443 : 80);
-  }
-
-  return Arweave.init({
-    host,
-    port,
-    protocol,
-    timeout,
-    logging: debug,
-  });
+  return new Blockweave(
+    {
+      url: gateway,
+      timeout,
+      logging: debug,
+    },
+    [gateway],
+  );
 }
 
 export function isValidWalletAddress(address: string): boolean {

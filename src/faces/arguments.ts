@@ -1,4 +1,4 @@
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 import Conf from 'conf';
 import minimist from 'minimist';
 import Tags from '../lib/tags';
@@ -7,7 +7,7 @@ import OptionInterface from './option';
 
 export default interface ArgumentsInterface {
   argv: minimist.ParsedArgs;
-  arweave: Arweave;
+  blockweave: Blockweave;
   config: Conf;
   debug: boolean;
   command: string;

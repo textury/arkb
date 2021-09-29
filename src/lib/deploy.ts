@@ -1,32 +1,32 @@
 import fs, { createReadStream } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 import mime from 'mime';
 import clui from 'clui';
-import Transaction from 'arweave/node/lib/transaction';
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
-import Ardb from 'ardb';
 import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import pRetry from 'p-retry';
 import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
-import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
-import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
 import { getPackageVersion, pause } from '../utils/utils';
+import { createTransactionAsync } from '../utils/createTransactionAsync';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+import Transaction from 'blockweave/dist/lib/transaction';
+import { uploadTransactionAsync } from '../utils/uploadTransactionAsync';
+import Cache from '../utils/cache';
 
 export default class Deploy {
   private wallet: JWKInterface;
-  private arweave: Arweave;
-  private ardb: Ardb;
+  private blockweave: Blockweave;
   private bundler: Bundler;
   private ipfs: IPFS = new IPFS();
+  private cache: Cache;
   private txs: TxDetail[];
 
   private debug: boolean = false;
@@ -34,18 +34,19 @@ export default class Deploy {
 
   private community: Community;
 
-  constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
+  constructor(wallet: JWKInterface, blockweave: Blockweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
-    this.arweave = arweave;
+    this.blockweave = blockweave;
     this.debug = debug;
     this.logs = logs;
 
-    // @ts-ignore
-    this.bundler = new Bundler(wallet, this.arweave);
-    this.ardb = new Ardb(arweave, debug ? 1 : 2);
+    this.cache = new Cache(debug);
+
+    this.bundler = new Bundler(wallet, this.blockweave);
 
     try {
-      this.community = new Community(arweave, wallet);
+      // @ts-ignore
+      this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
     } catch {}
@@ -79,89 +80,66 @@ export default class Deploy {
       countdown.start();
     }
 
-    const go = async (filePath: string) => {
-      return new Promise((resolve, reject) => {
-        fs.readFile(filePath, async (err, data) => {
-          if (err) {
-            console.log('Unable to read file ' + filePath);
-            throw new Error(`Unable to read file: ${filePath}`);
-          }
+    for (const filePath of files) {
+      let data: Buffer;
+      try {
+        data = fs.readFileSync(filePath);
+      } catch (e) {
+        console.log('Unable to read file ' + filePath);
+        throw new Error(`Unable to read file: ${filePath}`);
+      }
 
-          if (!data || !data.length) {
-            resolve(true);
-          }
+      if (!data || !data.length) {
+        continue;
+      }
 
-          const hash = await this.toHash(data);
-          const type = mime.getType(filePath) || 'application/octet-stream';
+      const hash = await this.toHash(data);
+      const type = mime.getType(filePath) || 'application/octet-stream';
 
-          // Add/replace default tags
-          if (toIpfs) {
-            const ipfsHash = await this.ipfs.hash(data);
-            tags.addTag('IPFS-Add', ipfsHash);
-          }
-          tags.addTag('User-Agent', `arkb`);
-          tags.addTag('User-Agent-Version', getPackageVersion());
-          tags.addTag('Type', 'file');
-          if (type) tags.addTag('Content-Type', type);
-          tags.addTag('File-Hash', hash);
+      // Add/replace default tags
+      if (toIpfs) {
+        const ipfsHash = await this.ipfs.hash(data);
+        tags.addTag('IPFS-Add', ipfsHash);
+      }
+      tags.addTag('User-Agent', `arkb`);
+      tags.addTag('User-Agent-Version', getPackageVersion());
+      tags.addTag('Type', 'file');
+      if (type) tags.addTag('Content-Type', type);
+      tags.addTag('File-Hash', hash);
 
-          let tx: Transaction | FileDataItem;
-          if (useBundler) {
-            tx = await this.bundler.createItem(data, tags.tags);
-          } else {
-            tx = await this.buildTransaction(filePath, tags);
-            if (feeMultiplier && feeMultiplier > 1) {
-              (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
-            }
-          }
-          this.txs.push({ filePath, hash, tx, type });
+      let tx: Transaction | FileDataItem;
+      if (useBundler) {
+        tx = await this.bundler.createItem(data, tags.tags);
+      } else {
+        tx = await this.buildTransaction(filePath, tags);
+        if (feeMultiplier && feeMultiplier > 1) {
+          (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
+        }
+      }
+      this.txs.push({ filePath, hash, tx, type });
 
-          if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
-
-          resolve(true);
-        });
-      });
-    };
-
-    const retry = async (f: string) => {
-      await pRetry(async () => go(f), {
-        onFailedAttempt: async (error) => {
-          console.log(
-            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`),
-          );
-          await pause(300);
-        },
-        retries: 5,
-      });
-    };
-
-    for (const file of files) {
-      await retry(file);
+      if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
     }
 
     if (this.logs) countdown.stop();
 
     // Query to find all the files previously deployed
-    const hashes = this.txs.map((t) => t.hash);
-    const txs: ArdbTransaction[] = await this.queryGQLPaths(hashes);
+    if (this.logs) countdown = new clui.Spinner('Removing duplicates...', ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+    const txs: TxDetail[] = await this.queryGQLPaths(this.txs, forceRedeploy);
+    if (this.logs) countdown.stop();
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
-    if (isFile && !forceRedeploy) {
-      if (txs.find((tx) => tx.tags.find((txTag) => txTag.value === this.txs[0].hash))) {
-        console.log(clc.red('File already deployed:'));
+    if (isFile && txs.length) {
+      console.log(clc.red('File already deployed:'));
 
-        if (toIpfs && files.length === 1) {
-          const data = fs.readFileSync(files[0]);
-          const cid = await this.ipfs.hash(data);
-          console.log(`IPFS: ${clc.cyan(cid)}`);
-        }
-
-        console.log(
-          'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
-        );
-        return;
+      if (toIpfs) {
+        const data = fs.readFileSync(files[0]);
+        const cid = await this.ipfs.hash(data);
+        console.log(`IPFS: ${clc.cyan(cid)}`);
       }
+
+      console.log('Arweave: ' + clc.cyan(`${this.blockweave.config.url}/${txs[0].tx.id}`));
+      return;
     } else {
       if (this.logs) {
         countdown = new clui.Spinner(`Building manifest...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
@@ -197,22 +175,23 @@ export default class Deploy {
 
     const prevConsole = console;
     try {
-      await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
+      await this.community.setCommunityTx('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
       const target = await this.community.selectWeightedHolder();
 
-      if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
+      if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler) {
           const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
-          txBundle = await bundled.toTransaction(this.arweave, this.wallet);
-          fee = +(await this.arweave.ar.winstonToAr(txBundle.reward));
+          // @ts-ignore
+          txBundle = await bundled.toTransaction(this.blockweave, this.wallet);
+          fee = +(await this.blockweave.ar.winstonToAr(txBundle.reward));
         } else {
           fee = this.txs.reduce((a, txData) => a + +(txData.tx as Transaction).reward, 0);
         }
 
         const quantity = parseInt((fee * 0.1).toString(), 10).toString();
         if (target.length) {
-          const tx = await this.arweave.createTransaction({
+          const tx = await this.blockweave.createTransaction({
             target,
             quantity,
           });
@@ -223,8 +202,8 @@ export default class Deploy {
           tx.addTag('App-Name', 'arkb');
           tx.addTag('App-Version', getPackageVersion());
 
-          await this.arweave.transactions.sign(tx, this.wallet);
-          await this.arweave.transactions.post(tx);
+          await this.blockweave.transactions.sign(tx, this.wallet);
+          await this.blockweave.transactions.post(tx);
         }
       }
       // tslint:disable-next-line: no-empty
@@ -234,14 +213,11 @@ export default class Deploy {
       if (useBundler) {
         await this.bundler.post(txData.tx as FileDataItem, useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
-        const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
-        while (!uploader.isComplete) {
-          await uploader.uploadChunk();
-        }
+        await (txData.tx as Transaction).post();
       } else {
         await pipeline(
           createReadStream(txData.filePath),
-          uploadTransactionAsync(txData.tx as Transaction, this.arweave),
+          uploadTransactionAsync(txData.tx as Transaction, this.blockweave),
         );
       }
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
@@ -252,9 +228,7 @@ export default class Deploy {
       await pRetry(() => go(txData), {
         onFailedAttempt: async (error) => {
           console.log(
-            clc.blackBright(
-              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
-            ),
+            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error:`, error.stack),
           );
           await pause(300);
         },
@@ -275,9 +249,10 @@ export default class Deploy {
   }
 
   private async buildTransaction(filePath: string, tags: Tags): Promise<Transaction> {
-    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
+    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.blockweave, this.wallet));
     tags.addTagsToTransaction(tx);
-    await this.arweave.transactions.sign(tx, this.wallet);
+    await tx.sign();
+
     return tx;
   }
 
@@ -285,7 +260,7 @@ export default class Deploy {
     dir: string,
     index: string = null,
     tags: Tags,
-    txs: ArdbTransaction[],
+    txs: TxDetail[],
     useBundler: string,
     feeMultiplier: number,
     forceRedeploy: boolean,
@@ -297,15 +272,12 @@ export default class Deploy {
         const filePath = t.filePath.split(`${dir}${path.sep}`)[1];
         paths[filePath] = { id: t.tx.id };
 
-        const remoteTx = txs.find(
-          // tslint:disable-next-line: no-shadowed-variable
-          (tx) => tx.tags.find((txTag) => txTag.value === t.hash),
-        );
+        const remoteTx = txs.find((txD) => txD.hash === t.hash);
         if (!remoteTx) {
           return true;
         }
 
-        paths[filePath] = { id: remoteTx.id };
+        paths[filePath] = { id: remoteTx.tx.id };
         return false;
       });
     }
@@ -338,14 +310,17 @@ export default class Deploy {
     if (useBundler) {
       tx = await this.bundler.createItem(JSON.stringify(data), tags.tags);
     } else {
-      tx = await this.arweave.createTransaction({
-        data: JSON.stringify(data),
-      });
-      tags.addTagsToTransaction(tx);
+      tx = await this.blockweave.createTransaction(
+        {
+          data: JSON.stringify(data),
+        },
+        this.wallet,
+      );
+      tags.addTagsToTransaction(tx as Transaction);
       if (feeMultiplier) {
         (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
       }
-      await this.arweave.transactions.sign(tx, this.wallet);
+      await tx.sign();
     }
 
     this.txs.push({ filePath: '', hash: '', tx, type: 'application/x.arweave-manifest+json' });
@@ -359,31 +334,55 @@ export default class Deploy {
     return hash.digest('hex');
   }
 
-  private async queryGQLPaths(hashes: string[]): Promise<ArdbTransaction[]> {
-    let txs: ArdbTransaction[] = [];
-    let chunk: string[];
-    const ownerKey = await this.arweave.wallets.jwkToAddress(this.wallet);
+  private async queryGQLPaths(txsDetail: TxDetail[], forceRedeploy: boolean = false): Promise<TxDetail[]> {
+    const txs: TxDetail[] = [];
 
-    try {
-      while (hashes.length) {
-        chunk = hashes.splice(0, 500);
-        txs = (await this.ardb
-          .search('transactions')
-          .from(ownerKey)
-          .tags([
-            { name: 'User-Agent', values: ['arkb'] },
-            { name: 'File-Hash', values: chunk },
-            { name: 'Type', values: ['file'] },
-          ])
-          .only(['id', 'tags', 'tags.name', 'tags.value'])
-          .findAll()) as ArdbTransaction[];
+    if (forceRedeploy) {
+      for (const txD of txsDetail) {
+        this.cache.set(txD.hash, {
+          id: txD.tx.id,
+          confirmed: false,
+        });
       }
-    } catch (e) {
-      console.log(clc.red(`Unable to query ${this.arweave.getConfig().api.host}`));
-      if (this.debug) console.log(e);
-      return [];
+      this.cache.save();
+      return txs;
     }
 
+    // Lets check on cache to see if we have deployed these hashes
+    for (const txD of txsDetail) {
+      let cached = this.cache.get(txD.hash);
+
+      if (!cached) {
+        this.cache.set(txD.hash, {
+          id: txD.tx.id,
+          confirmed: false,
+        });
+      } else if (!cached.confirmed) {
+        const res = await this.blockweave.transactions.getStatus(cached.id);
+        if (res.status === 200) {
+          cached = {
+            id: cached.id,
+            confirmed: true,
+          };
+
+          this.cache.set(txD.hash, cached);
+          txs.push(txD);
+        } else {
+          this.cache.set(txD.hash, {
+            id: txD.tx.id,
+            confirmed: false,
+          });
+        }
+      } else {
+        this.cache.set(txD.hash, {
+          id: txD.tx.id,
+          confirmed: true,
+        });
+        txs.push(txD);
+      }
+    }
+
+    this.cache.save();
     return txs;
   }
 }

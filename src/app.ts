@@ -8,7 +8,7 @@ import { setArweaveInstance } from './utils/utils';
 const argv = minimist(process.argv.slice(2));
 const config = new Conf();
 const debug = !!argv.debug;
-const arweave = setArweaveInstance(argv, debug);
+const blockweave = setArweaveInstance(argv, debug);
 
 const cliCommands = new CliCommands();
 cliCommands
@@ -16,7 +16,7 @@ cliCommands
     argv,
     config,
     debug,
-    arweave,
+    blockweave,
   })
   .then(() => {
     process.exit(0);

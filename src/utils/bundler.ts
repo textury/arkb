@@ -1,17 +1,17 @@
 import fs from 'fs';
 import { ArweaveSigner } from 'ans104';
 import { createData, bundleAndSignData, FileDataItem } from 'ans104/file';
-import { JWKInterface } from 'arweave/node/lib/wallet';
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 import { AxiosResponse } from 'axios';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 export default class Bundler {
   private signer: ArweaveSigner;
-  private arweave: Arweave;
+  private blockweave: Blockweave;
 
-  constructor(wallet: JWKInterface, arweave: Arweave) {
+  constructor(wallet: JWKInterface, blockweave: Blockweave) {
     this.signer = new ArweaveSigner(wallet);
-    this.arweave = arweave;
+    this.blockweave = blockweave;
   }
 
   async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<FileDataItem> {
@@ -32,7 +32,7 @@ export default class Bundler {
   }
 
   async post(tx: FileDataItem, bundler: string): Promise<AxiosResponse<any>> {
-    return this.arweave.api.request().post(`${bundler}/tx`, fs.createReadStream(tx.filename), {
+    return this.blockweave.api.request().post(`${bundler}/tx`, fs.createReadStream(tx.filename), {
       headers: {
         'content-type': 'application/octet-stream',
       },

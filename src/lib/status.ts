@@ -1,15 +1,15 @@
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 
 export async function status(
   txid: string,
-  arweave: Arweave,
+  blockweave: Blockweave,
 ): Promise<{ status: number; blockHeight: number; blockHash: string; confirmations: number; errorMessage?: string }> {
-  const res = await arweave.api.get(txid);
+  const res = await blockweave.api.get(txid);
   if (res.status !== 200 && res.status !== 202) {
     return { status: res.status, blockHeight: -1, blockHash: '', confirmations: -1, errorMessage: res.data };
   }
 
-  const { data } = await arweave.api.get(`tx/${txid}/status`);
+  const { data } = await blockweave.api.get(`tx/${txid}/status`);
   return {
     blockHeight: data.block_height,
     blockHash: data.block_indep_hash,

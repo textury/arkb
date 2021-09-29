@@ -84,7 +84,7 @@ export default class CliCommands {
 
     const args: ArgumentsInterface = {
       argv: partialArgs.argv,
-      arweave: partialArgs.arweave,
+      blockweave: partialArgs.blockweave,
       debug: partialArgs.debug,
       config: partialArgs.config,
       walletPath: partialArgs.argv.wallet,

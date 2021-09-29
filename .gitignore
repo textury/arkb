@@ -107,3 +107,4 @@ testwallet.json
 bin/
 tests
 .DS_Store
+cached.json

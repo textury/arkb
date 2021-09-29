@@ -800,24 +800,6 @@ arconnect@^0.2.8, arconnect@^0.2.9:
   dependencies:
     arweave "^1.10.13"
 
-ardb@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/ardb/-/ardb-1.1.6.tgz#2e894e03ddb0095fa713495ec419323b7552247b"
-  integrity sha512-7W59+X7G+G4KA2JrVF1/1ptnxCD599r3tYov/tm3bwbcAKrhOvI1PIE3VULKW0ir57FIHOkhvQkQXUkGc5Z6PQ==
-  dependencies:
-    arweave "^1.10.15"
-
-ardk@^1.0.6:
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/ardk/-/ardk-1.0.10.tgz#99f50f63862d04194c62cbe417074b787552a534"
-  integrity sha512-qTWrTAiO6XnNJ6oWTgdl9Xfq3Q1ptH2MiKA8OQ5MT/gEpcOvdGkG53S4Z5ChkR2xMquNOJsfgacVY0smq0F57A==
-  dependencies:
-    arconnect "^0.2.9"
-    axios "^0.21.4"
-    bignumber.js "^9.0.1"
-    redstone-smartweave "^0.3.10-alpha.3"
-    util "^0.12.4"
-
 arg@^4.1.0:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
@@ -1024,6 +1006,28 @@ blob-to-it@^1.0.1:
   integrity sha512-yD8tikfTlUGEOSHExz4vDCIQFLaBPXIL0KcxGQt9RbwMVXBEh+jokdJyStvTXPgWrdKfwgk7RX8GPsgrYzsyng==
   dependencies:
     browser-readablestream-to-it "^1.0.2"
+
+blockweave@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/blockweave/-/blockweave-1.0.15.tgz#65de262696ec10795fd0b92f5cc269958f426714"
+  integrity sha512-SbFmNrZ8mQ7qDae7TFdEmRAvoUKJm7E+eR1PcpWGUBMjWJxiivnh3hwjbDxoAOGxiWTw317Dd9RLs8yJMgT1jw==
+  dependencies:
+    arconnect "^0.2.9"
+    axios "^0.21.4"
+    bignumber.js "^9.0.1"
+    redstone-smartweave "^0.3.10-alpha.3"
+    util "^0.12.4"
+
+blockweave@^1.0.16:
+  version "1.0.16"
+  resolved "https://registry.yarnpkg.com/blockweave/-/blockweave-1.0.16.tgz#0cd7f5bf8fdad71324c0ffe5dfc88b1411697fd6"
+  integrity sha512-fwr5AL6jSHrHmf14X0GzvKOQfSNwNje/ASl8+Iu/8W8RAHiVgu2A3YkBQ15QRC6arB6bgMY5SS+ZleGFXIIpGg==
+  dependencies:
+    arconnect "^0.2.9"
+    axios "^0.21.4"
+    bignumber.js "^9.0.1"
+    redstone-smartweave "^0.3.10-alpha.3"
+    util "^0.12.4"
 
 bluebird@^2.6.2, bluebird@^2.8.1:
   version "2.11.0"
@@ -1411,14 +1415,14 @@ commander@^2.12.1:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
 
-community-js@^1.1.67:
-  version "1.1.67"
-  resolved "https://registry.yarnpkg.com/community-js/-/community-js-1.1.67.tgz#4d4480c2ddeaf09e76bce535552b728bb341182c"
-  integrity sha512-oolzq0nbqU+1aSnPfjnu1L84Eppzhnix7bPsR/v2yoNN6XyC1OME804IWEbKRtCPHfKtxR27IS0bY8IjeldomA==
+community-js@^1.1.68:
+  version "1.1.68"
+  resolved "https://registry.yarnpkg.com/community-js/-/community-js-1.1.68.tgz#f6ce3d3d2ec312493811e0158e42e3b6e7173d8c"
+  integrity sha512-xcTss0c2tvkOe9qYgoA5TYYdSu1cOyLAVpFlmdsmFV427Eadd/5VFHigONPItP69pfuyAHHxRaVBbbn6BgluxQ==
   dependencies:
-    ardk "^1.0.6"
     arweave "^1.10.16"
     axios "^0.21.1"
+    blockweave "^1.0.16"
     esbuild-node-builtins "^0.1.0"
     redstone-api "^0.4.6"
     redstone-smartweave "^0.3.10-alpha.6"
