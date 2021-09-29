@@ -20,6 +20,7 @@ import { getPackageVersion, pause } from '../utils/utils';
 import { createTransactionAsync } from '../utils/createTransactionAsync';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
+import { uploadTransactionAsync } from '../utils/uploadTransactionAsync';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -49,7 +50,7 @@ export default class Deploy {
       this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
   }
 
   getBundler(): Bundler {
@@ -128,7 +129,8 @@ export default class Deploy {
       await pRetry(async () => go(f), {
         onFailedAttempt: async (error) => {
           console.log(
-            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error}`),
+            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error:`),
+            error.stack,
           );
           await pause(300);
         },
@@ -159,9 +161,9 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-          clc.cyan(
-            `${this.blockweave.api.getConfig().protocol}://${this.blockweave.api.getConfig().host}/${txs[0].id}`,
-          ),
+            clc.cyan(
+              `${this.blockweave.api.getConfig().protocol}://${this.blockweave.api.getConfig().host}/${txs[0].id}`,
+            ),
         );
         return;
       }
@@ -232,17 +234,13 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {
         await this.bundler.post(txData.tx as FileDataItem, useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
-        // @ts-ignore
-        const uploader = await this.blockweave.transactions.getUploader(txData.tx as Transaction);
-        while (!uploader.isComplete) {
-          await uploader.uploadChunk();
-        }
+        await (txData.tx as Transaction).post();
       } else {
         await pipeline(
           createReadStream(txData.filePath),
@@ -257,9 +255,7 @@ export default class Deploy {
       await pRetry(() => go(txData), {
         onFailedAttempt: async (error) => {
           console.log(
-            clc.blackBright(
-              `Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error: ${error.message}`,
-            ),
+            clc.blackBright(`Attempt ${error.attemptNumber} failed, ${error.retriesLeft} left. Error:`, error.stack),
           );
           await pause(300);
         },
@@ -375,7 +371,7 @@ export default class Deploy {
 
     try {
       while (hashes.length) {
-        chunk = hashes.splice(0, 500);
+        chunk = hashes.splice(0, 100);
         txs = (await this.ardb
           .search('transactions')
           .from(ownerKey)
@@ -395,7 +391,4 @@ export default class Deploy {
 
     return txs;
   }
-}
-function uploadTransactionAsync(arg0: Transaction, blockweave: Blockweave): any {
-  throw new Error('Function not implemented.');
 }

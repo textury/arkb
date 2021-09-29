@@ -54,7 +54,7 @@ export default class Transfer {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     const txid = tx.id;
     await this.blockweave.transactions.post(tx);
