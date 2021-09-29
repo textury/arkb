@@ -39,7 +39,10 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
-    this.cache = new Cache(debug);
+    this.cache = new Cache(
+      debug,
+      this.arweave.getConfig().api.host === 'localhost' || this.arweave.getConfig().api.host === '127.0.0.1',
+    );
     this.bundler = new Bundler(wallet, this.blockweave);
 
     this.arweave = Arweave.init({

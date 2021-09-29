@@ -9,12 +9,9 @@ export interface CacheDataInterface {
 
 export default class Cache {
   private cache: Map<string, CacheDataInterface>;
-  private debug: boolean;
   private cacheFile: string = path.join(__dirname, '..', '..', 'cached.json');
 
-  constructor(debug: boolean = false) {
-    this.debug = debug;
-
+  constructor(public readonly debug: boolean = false, public readonly isArLocal: boolean) {
     this.cache = new Map();
     if (fs.existsSync(this.cacheFile)) {
       const entries = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
@@ -55,6 +52,10 @@ export default class Cache {
   }
 
   public save(): Promise<void> {
+    if (this.isArLocal) {
+      return;
+    }
+
     if (this.debug) {
       console.log(clc.green('Cache SAVE...'));
     }
