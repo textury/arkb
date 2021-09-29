@@ -2,7 +2,7 @@ import clc from 'cli-color';
 import { debug } from 'console';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
-import { getArweaveUri, numbersForHumans, snakeCaseToTitleCase } from '../utils/utils';
+import { numbersForHumans, snakeCaseToTitleCase } from '../utils/utils';
 import gatewayOption from '../options/gateway';
 import timeoutOption from '../options/timeout';
 import debugOption from '../options/debug';
@@ -18,7 +18,7 @@ const command: CommandInterface = {
 
     try {
       const net = await blockweave.network.getInfo();
-      console.log(clc.green(`Network Details for ${getArweaveUri(blockweave)}\n`));
+      console.log(clc.green(`Network Details for ${blockweave.config.url}\n`));
       Object.keys(net).forEach((key) => {
         const value = net[key];
         console.log(
@@ -26,7 +26,7 @@ const command: CommandInterface = {
         );
       });
     } catch (err) {
-      console.log(clc.red(`Unable to reach ${getArweaveUri(blockweave)} - ${err.message}`));
+      console.log(clc.red(`Unable to reach ${blockweave.config.url} - ${err.message}`));
       if (debug) console.log(err);
     }
   },

@@ -7,10 +7,6 @@ import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
 
-export function getArweaveUri(blockweave: Blockweave) {
-  return blockweave.config.protocol + '://' + blockweave.config.host + ':' + blockweave.config.port;
-}
-
 export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Blockweave {
   const timeout = argv.timeout || 20000;
   const gateway = argv.gateway || 'https://arweave.net';
