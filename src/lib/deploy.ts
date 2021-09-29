@@ -49,7 +49,7 @@ export default class Deploy {
       this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
   }
 
   getBundler(): Bundler {
@@ -159,9 +159,9 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(
-              `${this.blockweave.api.getConfig().protocol}://${this.blockweave.api.getConfig().host}/${txs[0].id}`,
-            ),
+          clc.cyan(
+            `${this.blockweave.api.getConfig().protocol}://${this.blockweave.api.getConfig().host}/${txs[0].id}`,
+          ),
         );
         return;
       }
@@ -200,7 +200,7 @@ export default class Deploy {
 
     const prevConsole = console;
     try {
-      await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
+      await this.community.setCommunityTx('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
       const target = await this.community.selectWeightedHolder();
 
       if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
@@ -232,7 +232,7 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     const go = async (txData: TxDetail) => {
       if (useBundler) {

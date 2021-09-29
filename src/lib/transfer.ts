@@ -31,9 +31,8 @@ export default class Transfer {
       tx.reward = (feeMultiplier * +tx.reward).toString();
     }
 
-    const prevConsole = console;
     try {
-      await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
+      await this.community.setCommunityTx('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
       const feeTarget = await this.community.selectWeightedHolder();
 
       if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== feeTarget) {
@@ -55,7 +54,7 @@ export default class Transfer {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     const txid = tx.id;
     await this.blockweave.transactions.post(tx);
