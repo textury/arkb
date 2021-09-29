@@ -1,4 +1,3 @@
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
@@ -8,6 +7,7 @@ import timeoutOption from '../options/timeout';
 import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 const command: CommandInterface = {
   name: 'balance',
@@ -15,7 +15,7 @@ const command: CommandInterface = {
   description: 'Get the current balance of your wallet',
   options: [gatewayOption, timeoutOption, walletOption, debugOption, helpOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { walletPath, config, debug, arweave } = args;
+    const { walletPath, config, debug, blockweave } = args;
 
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 
@@ -25,11 +25,11 @@ const command: CommandInterface = {
     }
 
     try {
-      const addy = await arweave.wallets.jwkToAddress(wallet);
-      const bal = await arweave.wallets.getBalance(addy);
+      const addy = await blockweave.wallets.jwkToAddress(wallet);
+      const bal = await blockweave.wallets.getBalance(addy);
       console.log(
         `${clc.cyan(addy)} has a balance of ${clc.yellow(
-          `AR ${arweave.ar.winstonToAr(bal, { formatted: true, decimals: 12, trim: true })}`,
+          `AR ${blockweave.ar.winstonToAr(bal, { formatted: true, decimals: 12, trim: true })}`,
         )}`,
       );
     } catch (e) {

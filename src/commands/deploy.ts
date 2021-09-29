@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import fg from 'fast-glob';
 import Deploy from '../lib/deploy';
@@ -23,6 +22,7 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import forceOption from '../options/force';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 const command: CommandInterface = {
   name: 'deploy',
@@ -50,7 +50,7 @@ const command: CommandInterface = {
       walletPath,
       config,
       debug,
-      arweave,
+      blockweave,
       tags,
       ipfsPublish,
       useBundler,
@@ -92,7 +92,7 @@ const command: CommandInterface = {
       isFile = false;
     }
 
-    const deploy = new Deploy(wallet, arweave, debug);
+    const deploy = new Deploy(wallet, blockweave, debug);
 
     if (!args.index) {
       args.index = 'index.html';
@@ -108,7 +108,7 @@ const command: CommandInterface = {
       feeMultiplier,
       forceRedeploy,
     );
-    const balAfter = await showDeployDetails(txs, wallet, isFile, dir, arweave, useBundler, deploy.getBundler());
+    const balAfter = await showDeployDetails(txs, wallet, isFile, dir, blockweave, useBundler, deploy.getBundler());
 
     if (balAfter < 0) {
       console.log(clc.red("You don't have enough balance for this deploy."));
@@ -143,13 +143,7 @@ const command: CommandInterface = {
     } else {
       console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
     }
-    console.log(
-      clc.cyan(
-        `${arweave.api.getConfig().protocol}://${arweave.api.getConfig().host}:${
-          arweave.api.getConfig().port
-        }/${manifestTx}`,
-      ),
-    );
+    console.log(clc.cyan(`${blockweave.config.url}/${manifestTx}`));
   },
 };
 

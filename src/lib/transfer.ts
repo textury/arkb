@@ -1,4 +1,4 @@
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import Community from 'community-js';
@@ -7,15 +7,16 @@ import { getPackageVersion } from '../utils/utils';
 export default class Transfer {
   private community: Community;
 
-  constructor(private readonly wallet: JWKInterface, private readonly arweave: Arweave) {
-    this.community = new Community(arweave, wallet);
+  constructor(private readonly wallet: JWKInterface, private readonly blockweave: Blockweave) {
+    // @ts-ignore
+    this.community = new Community(blockweave, wallet);
   }
 
   async execute(target: string, amount: string, feeMultiplier: number = 1): Promise<string> {
-    const tx = await this.arweave.createTransaction(
+    const tx = await this.blockweave.createTransaction(
       {
         target,
-        quantity: this.arweave.ar.arToWinston(amount),
+        quantity: this.blockweave.ar.arToWinston(amount),
       },
       this.wallet,
     );
@@ -24,7 +25,7 @@ export default class Transfer {
     tx.addTag('User-Agent-Version', getPackageVersion());
     tx.addTag('Type', 'transfer');
 
-    await this.arweave.transactions.sign(tx, this.wallet);
+    await this.blockweave.transactions.sign(tx, this.wallet);
 
     if (feeMultiplier && feeMultiplier > 1) {
       tx.reward = (feeMultiplier * +tx.reward).toString();
@@ -35,10 +36,10 @@ export default class Transfer {
       await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
       const feeTarget = await this.community.selectWeightedHolder();
 
-      if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== feeTarget) {
+      if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== feeTarget) {
         const quantity = parseInt((+tx.reward * 0.1).toString(), 10).toString();
         if (feeTarget.length) {
-          const feeTx = await this.arweave.createTransaction({
+          const feeTx = await this.blockweave.createTransaction({
             target: feeTarget,
             quantity,
           });
@@ -49,15 +50,15 @@ export default class Transfer {
           feeTx.addTag('App-Name', 'arkb');
           feeTx.addTag('App-Version', getPackageVersion());
 
-          await this.arweave.transactions.sign(feeTx, this.wallet);
-          await this.arweave.transactions.post(feeTx);
+          await this.blockweave.transactions.sign(feeTx, this.wallet);
+          await this.blockweave.transactions.post(feeTx);
         }
       }
       // tslint:disable-next-line: no-empty
     } catch {}
 
     const txid = tx.id;
-    await this.arweave.transactions.post(tx);
+    await this.blockweave.transactions.post(tx);
 
     return txid;
   }

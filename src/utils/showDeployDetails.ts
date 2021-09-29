@@ -1,20 +1,20 @@
 import CLI from 'clui';
 import clc from 'cli-color';
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import { FileDataItem } from 'ans104/file';
-import Transaction from 'arweave/node/lib/transaction';
 import path from 'path';
 import { TxDetail } from '../faces/txDetail';
 import Bundler from './bundler';
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 import { bytesForHumans } from './utils';
+import Transaction from 'blockweave/dist/lib/transaction';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 export async function showDeployDetails(
   txs: TxDetail[],
   wallet: JWKInterface,
   isFile: boolean = false,
   dir: string,
-  arweave: Arweave,
+  blockweave: Blockweave,
   useBundler?: string,
   bundler?: Bundler,
 ): Promise<number> {
@@ -37,7 +37,7 @@ export async function showDeployDetails(
     let ar = '-';
     const reward = (tx.tx as Transaction).reward;
     if (reward) {
-      ar = arweave.ar.winstonToAr(reward);
+      ar = blockweave.ar.winstonToAr(reward);
       deployFee += +reward;
     }
 
@@ -69,16 +69,17 @@ export async function showDeployDetails(
 
   if (useBundler) {
     const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
-    const txBundle = await bundled.toTransaction(arweave, wallet);
+    // @ts-ignore
+    const txBundle = await bundled.toTransaction(blockweave, wallet);
     deployFee = +txBundle.reward;
     totalSize = +txBundle.data_size;
   }
 
   const fee = parseInt((deployFee * 0.1).toString(), 10);
 
-  const arFee = arweave.ar.winstonToAr(deployFee.toString());
-  const serviceFee = arweave.ar.winstonToAr(fee.toString());
-  const totalFee = arweave.ar.winstonToAr((deployFee + fee).toString());
+  const arFee = blockweave.ar.winstonToAr(deployFee.toString());
+  const serviceFee = blockweave.ar.winstonToAr(fee.toString());
+  const totalFee = blockweave.ar.winstonToAr((deployFee + fee).toString());
 
   console.log('');
   console.log(clc.cyan('Summary'));
@@ -91,9 +92,9 @@ export async function showDeployDetails(
   console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee)`);
   console.log(`Total fee: ${totalFee}`);
 
-  const addy = await arweave.wallets.jwkToAddress(wallet);
-  const winston = await arweave.wallets.getBalance(addy);
-  const bal = arweave.ar.winstonToAr(winston);
+  const addy = await blockweave.wallets.jwkToAddress(wallet);
+  const winston = await blockweave.wallets.getBalance(addy);
+  const bal = blockweave.ar.winstonToAr(winston);
   const balAfter = +bal - +totalFee;
 
   console.log('');

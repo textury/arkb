@@ -1,11 +1,9 @@
 import fs, { createReadStream } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import Arweave from 'arweave';
+import Blockweave from 'blockweave';
 import mime from 'mime';
 import clui from 'clui';
-import Transaction from 'arweave/node/lib/transaction';
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import Ardb from 'ardb';
 import IPFS from '../utils/ipfs';
@@ -13,17 +11,19 @@ import Community from 'community-js';
 import pRetry from 'p-retry';
 import PromisePool from '@supercharge/promise-pool';
 import { pipeline } from 'stream/promises';
-import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import ArdbTransaction from 'ardb/lib/models/transaction';
 import { TxDetail } from '../faces/txDetail';
 import { FileDataItem } from 'ans104/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
 import { getPackageVersion, pause } from '../utils/utils';
+import { createTransactionAsync } from '../utils/createTransactionAsync';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+import Transaction from 'blockweave/dist/lib/transaction';
 
 export default class Deploy {
   private wallet: JWKInterface;
-  private arweave: Arweave;
+  private blockweave: Blockweave;
   private ardb: Ardb;
   private bundler: Bundler;
   private ipfs: IPFS = new IPFS();
@@ -34,18 +34,19 @@ export default class Deploy {
 
   private community: Community;
 
-  constructor(wallet: JWKInterface, arweave: Arweave, debug: boolean = false, logs: boolean = true) {
+  constructor(wallet: JWKInterface, blockweave: Blockweave, debug: boolean = false, logs: boolean = true) {
     this.wallet = wallet;
-    this.arweave = arweave;
+    this.blockweave = blockweave;
     this.debug = debug;
     this.logs = logs;
 
+    this.bundler = new Bundler(wallet, this.blockweave);
     // @ts-ignore
-    this.bundler = new Bundler(wallet, this.arweave);
-    this.ardb = new Ardb(arweave, debug ? 1 : 2);
+    this.ardb = new Ardb(blockweave, debug ? 1 : 2);
 
     try {
-      this.community = new Community(arweave, wallet);
+      // @ts-ignore
+      this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
     } catch {}
@@ -158,7 +159,9 @@ export default class Deploy {
 
         console.log(
           'Arweave: ' +
-            clc.cyan(`${this.arweave.api.getConfig().protocol}://${this.arweave.api.getConfig().host}/${txs[0].id}`),
+            clc.cyan(
+              `${this.blockweave.api.getConfig().protocol}://${this.blockweave.api.getConfig().host}/${txs[0].id}`,
+            ),
         );
         return;
       }
@@ -200,19 +203,20 @@ export default class Deploy {
       await this.community.setCommunityTx('mzvUgNc8YFk0w5K5H7c8pyT-FC5Y_ba0r7_8766Kx74');
       const target = await this.community.selectWeightedHolder();
 
-      if ((await this.arweave.wallets.jwkToAddress(this.wallet)) !== target) {
+      if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler) {
           const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
-          txBundle = await bundled.toTransaction(this.arweave, this.wallet);
-          fee = +(await this.arweave.ar.winstonToAr(txBundle.reward));
+          // @ts-ignore
+          txBundle = await bundled.toTransaction(this.blockweave, this.wallet);
+          fee = +(await this.blockweave.ar.winstonToAr(txBundle.reward));
         } else {
           fee = this.txs.reduce((a, txData) => a + +(txData.tx as Transaction).reward, 0);
         }
 
         const quantity = parseInt((fee * 0.1).toString(), 10).toString();
         if (target.length) {
-          const tx = await this.arweave.createTransaction({
+          const tx = await this.blockweave.createTransaction({
             target,
             quantity,
           });
@@ -223,8 +227,8 @@ export default class Deploy {
           tx.addTag('App-Name', 'arkb');
           tx.addTag('App-Version', getPackageVersion());
 
-          await this.arweave.transactions.sign(tx, this.wallet);
-          await this.arweave.transactions.post(tx);
+          await this.blockweave.transactions.sign(tx, this.wallet);
+          await this.blockweave.transactions.post(tx);
         }
       }
       // tslint:disable-next-line: no-empty
@@ -234,14 +238,15 @@ export default class Deploy {
       if (useBundler) {
         await this.bundler.post(txData.tx as FileDataItem, useBundler);
       } else if (txData.filePath === '' && txData.hash === '') {
-        const uploader = await this.arweave.transactions.getUploader(txData.tx as Transaction);
+        // @ts-ignore
+        const uploader = await this.blockweave.transactions.getUploader(txData.tx as Transaction);
         while (!uploader.isComplete) {
           await uploader.uploadChunk();
         }
       } else {
         await pipeline(
           createReadStream(txData.filePath),
-          uploadTransactionAsync(txData.tx as Transaction, this.arweave),
+          uploadTransactionAsync(txData.tx as Transaction, this.blockweave),
         );
       }
       if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
@@ -275,9 +280,10 @@ export default class Deploy {
   }
 
   private async buildTransaction(filePath: string, tags: Tags): Promise<Transaction> {
-    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.arweave, this.wallet));
+    const tx = await pipeline(createReadStream(filePath), createTransactionAsync({}, this.blockweave, this.wallet));
     tags.addTagsToTransaction(tx);
-    await this.arweave.transactions.sign(tx, this.wallet);
+    await tx.sign();
+
     return tx;
   }
 
@@ -338,14 +344,17 @@ export default class Deploy {
     if (useBundler) {
       tx = await this.bundler.createItem(JSON.stringify(data), tags.tags);
     } else {
-      tx = await this.arweave.createTransaction({
-        data: JSON.stringify(data),
-      });
-      tags.addTagsToTransaction(tx);
+      tx = await this.blockweave.createTransaction(
+        {
+          data: JSON.stringify(data),
+        },
+        this.wallet,
+      );
+      tags.addTagsToTransaction(tx as Transaction);
       if (feeMultiplier) {
         (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
       }
-      await this.arweave.transactions.sign(tx, this.wallet);
+      await tx.sign();
     }
 
     this.txs.push({ filePath: '', hash: '', tx, type: 'application/x.arweave-manifest+json' });
@@ -362,7 +371,7 @@ export default class Deploy {
   private async queryGQLPaths(hashes: string[]): Promise<ArdbTransaction[]> {
     let txs: ArdbTransaction[] = [];
     let chunk: string[];
-    const ownerKey = await this.arweave.wallets.jwkToAddress(this.wallet);
+    const ownerKey = await this.blockweave.wallets.jwkToAddress(this.wallet);
 
     try {
       while (hashes.length) {
@@ -379,11 +388,14 @@ export default class Deploy {
           .findAll()) as ArdbTransaction[];
       }
     } catch (e) {
-      console.log(clc.red(`Unable to query ${this.arweave.getConfig().api.host}`));
+      console.log(clc.red(`Unable to query ${this.blockweave.getConfig().api.host}`));
       if (this.debug) console.log(e);
       return [];
     }
 
     return txs;
   }
+}
+function uploadTransactionAsync(arg0: Transaction, blockweave: Blockweave): any {
+  throw new Error('Function not implemented.');
 }

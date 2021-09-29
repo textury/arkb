@@ -1,4 +1,3 @@
-import { JWKInterface } from 'arweave/node/lib/wallet';
 import clc from 'cli-color';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
@@ -10,6 +9,7 @@ import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import { isValidWalletAddress } from '../utils/utils';
 import Transfer from '../lib/transfer';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 const command: CommandInterface = {
   name: 'transfer',
@@ -18,7 +18,7 @@ const command: CommandInterface = {
   args: ['address', 'amount'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1 0.01'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, walletPath, feeMultiplier, arweave, config, debug } = args;
+    const { commandValues, walletPath, feeMultiplier, blockweave, config, debug } = args;
 
     try {
       const target = commandValues[0].toString();
@@ -44,14 +44,14 @@ const command: CommandInterface = {
       }
 
       // Check if the wallet has enough balance
-      const addy = await arweave.wallets.jwkToAddress(wallet);
-      const bal = await arweave.wallets.getBalance(addy);
+      const addy = await blockweave.wallets.jwkToAddress(wallet);
+      const bal = await blockweave.wallets.getBalance(addy);
       if (+bal < amount) {
         console.log(clc.redBright('Insufficient balance'));
         return;
       }
 
-      const transfer = new Transfer(wallet, arweave);
+      const transfer = new Transfer(wallet, blockweave);
       const txid = await transfer.execute(target, amount.toString(), feeMultiplier);
 
       console.log(clc.greenBright(`Transfer successful! Transaction ID: ${txid}`));

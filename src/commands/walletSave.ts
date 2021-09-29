@@ -25,7 +25,6 @@ const command: CommandInterface = {
       const wallet = fs.readFileSync(walletPath, 'utf8');
       const res = await cliQuestions.askWalletPassword('Set a password for your wallet');
 
-      // @ts-ignore
       const crypter = new Crypter(res.password);
       const encWallet = crypter.encrypt(Buffer.from(wallet)).toString('base64');
 
