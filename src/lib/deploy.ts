@@ -110,13 +110,14 @@ export default class Deploy {
       if (!forceRedeploy && this.cache.has(hash)) {
         const cached = this.cache.get(hash);
         let confirmed = cached.confirmed;
+
         if (!confirmed) {
           let res: any;
           try {
             res = await this.arweave.api.get(`tx/${cached.id}/status`);
             // tslint:disable-next-line: no-empty
           } catch (e) {}
-          if (res.data && res.data.number_of_confirmations) {
+          if (res && res.data && res.data.number_of_confirmations) {
             confirmed = true;
           }
         }
