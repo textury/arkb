@@ -59,7 +59,7 @@ export default class Deploy {
       this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
   }
 
   getBundler(): Bundler {
@@ -91,6 +91,8 @@ export default class Deploy {
     }
 
     for (const filePath of files) {
+      if (this.logs) countdown.message(`Preparing ${leftToPrepare--} files...`);
+
       let data: Buffer;
       try {
         data = fs.readFileSync(filePath);
@@ -111,11 +113,10 @@ export default class Deploy {
         if (!confirmed) {
           let res: any;
           try {
-            res = await this.arweave.api.request().head(cached.id);
-          } catch (e) {
-            res = { status: e.response?.status };
-          }
-          if (res.status === 200) {
+            res = await this.arweave.api.get(`tx/${cached.id}/status`);
+            // tslint:disable-next-line: no-empty
+          } catch (e) { }
+          if (res.data && res.data.number_of_confirmations) {
             confirmed = true;
           }
         }
@@ -162,8 +163,6 @@ export default class Deploy {
       });
 
       this.txs.push({ filePath, hash, tx, type });
-
-      if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
     }
 
     await this.cache.save();
@@ -249,7 +248,7 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     for (const txData of this.txs) {
       let deployed = false;
