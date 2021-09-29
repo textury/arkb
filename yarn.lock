@@ -800,25 +800,6 @@ arconnect@^0.2.8, arconnect@^0.2.9:
   dependencies:
     arweave "^1.10.13"
 
-ardb@^1.1.7:
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/ardb/-/ardb-1.1.7.tgz#6ca88e13497b646cba6808dc60955e6bc382d1e5"
-  integrity sha512-G4El1u2V9PLpMpRuEtuSxARMrVC0XB47JMSMRC51H65Ir6u945CGa09AZsfjNO9eJmgtclC5bhbPBhR3KQhvzg==
-  dependencies:
-    ardk "^1.0.10"
-    arweave "^1.10.15"
-
-ardk@^1.0.10:
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/ardk/-/ardk-1.0.10.tgz#99f50f63862d04194c62cbe417074b787552a534"
-  integrity sha512-qTWrTAiO6XnNJ6oWTgdl9Xfq3Q1ptH2MiKA8OQ5MT/gEpcOvdGkG53S4Z5ChkR2xMquNOJsfgacVY0smq0F57A==
-  dependencies:
-    arconnect "^0.2.9"
-    axios "^0.21.4"
-    bignumber.js "^9.0.1"
-    redstone-smartweave "^0.3.10-alpha.3"
-    util "^0.12.4"
-
 arg@^4.1.0:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
