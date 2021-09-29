@@ -12,12 +12,20 @@ export default class Cache {
   private cacheFile: string = path.join(__dirname, '..', '..', 'cached.json');
 
   constructor(public readonly debug: boolean = false, public readonly isArLocal: boolean) {
+    if (this.isArLocal) {
+      this.cacheFile = path.join(__dirname, '..', '..', 'cached-arlocal.json');
+    }
+
     this.cache = new Map();
+
     if (fs.existsSync(this.cacheFile)) {
-      const entries = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
-      for (const [key, value] of entries) {
-        this.cache.set(key, value);
-      }
+      try {
+        const entries = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
+        for (const [key, value] of entries) {
+          this.cache.set(key, value);
+        }
+        // tslint:disable-next-line: no-empty
+      } catch (e) {}
     }
   }
 
@@ -52,10 +60,6 @@ export default class Cache {
   }
 
   public save(): Promise<void> {
-    if (this.isArLocal) {
-      return;
-    }
-
     if (this.debug) {
       console.log(clc.green('Cache SAVE...'));
     }

@@ -15,9 +15,9 @@ import Tags from '../lib/tags';
 import { getPackageVersion, pause } from '../utils/utils';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
-import Cache from '../utils/cache';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import Arweave from 'arweave';
+import Cache from '../utils/cache';
 
 export default class Deploy {
   private wallet: JWKInterface;
@@ -27,6 +27,7 @@ export default class Deploy {
   private ipfs: IPFS = new IPFS();
   private cache: Cache;
   private txs: TxDetail[];
+  private duplicates: { hash: string; id: string; filePath: string }[] = [];
 
   private debug: boolean = false;
   private logs: boolean = true;
@@ -39,12 +40,6 @@ export default class Deploy {
     this.debug = debug;
     this.logs = logs;
 
-    this.cache = new Cache(
-      debug,
-      this.arweave.getConfig().api.host === 'localhost' || this.arweave.getConfig().api.host === '127.0.0.1',
-    );
-    this.bundler = new Bundler(wallet, this.blockweave);
-
     this.arweave = Arweave.init({
       host: blockweave.config.host,
       port: blockweave.config.port,
@@ -52,6 +47,12 @@ export default class Deploy {
       timeout: blockweave.config.timeout,
       logging: blockweave.config.logging,
     });
+
+    this.cache = new Cache(
+      debug,
+      this.arweave.getConfig().api.host === 'localhost' || this.arweave.getConfig().api.host === '127.0.0.1',
+    );
+    this.bundler = new Bundler(wallet, this.blockweave);
 
     try {
       // @ts-ignore
@@ -103,6 +104,35 @@ export default class Deploy {
       }
 
       const hash = await this.toHash(data);
+
+      if (!forceRedeploy && this.cache.has(hash)) {
+        const cached = this.cache.get(hash);
+        let confirmed = cached.confirmed;
+        if (!confirmed) {
+          let res: any;
+          try {
+            res = await this.arweave.api.request().head(cached.id);
+          } catch (e) {
+            res = { status: e.response?.status };
+          }
+          if (res.status === 200) {
+            confirmed = true;
+          }
+        }
+
+        if (confirmed) {
+          this.cache.set(hash, { ...cached, confirmed: true });
+
+          this.duplicates.push({
+            hash,
+            id: cached.id,
+            filePath,
+          });
+        }
+
+        continue;
+      }
+
       const type = mime.getType(filePath) || 'application/octet-stream';
 
       // Add/replace default tags
@@ -125,22 +155,22 @@ export default class Deploy {
           (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
         }
       }
+
+      this.cache.set(hash, {
+        id: tx.id,
+        confirmed: false,
+      });
+
       this.txs.push({ filePath, hash, tx, type });
 
       if (this.logs) countdown.message(`Preparing ${--leftToPrepare} files...`);
     }
-    if (this.logs) countdown.stop();
 
-    // Query to find all the files previously deployed
-    if (this.logs) {
-      countdown = new clui.Spinner('Removing duplicates...', ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
-      countdown.start();
-    }
-    const txs: TxDetail[] = await this.deduplicate(this.txs, forceRedeploy, countdown);
+    await this.cache.save();
     if (this.logs) countdown.stop();
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
-    if (isFile && txs.length) {
+    if (isFile && this.duplicates.length) {
       console.log(clc.red('File already deployed:'));
 
       if (toIpfs) {
@@ -149,7 +179,7 @@ export default class Deploy {
         console.log(`IPFS: ${clc.cyan(cid)}`);
       }
 
-      console.log('Arweave: ' + clc.cyan(`${this.blockweave.config.url}/${txs[0].tx.id}`));
+      console.log('Arweave: ' + clc.cyan(`${this.blockweave.config.url}/${this.duplicates[0].id}`));
       return;
     } else {
       if (this.logs) {
@@ -157,7 +187,7 @@ export default class Deploy {
         countdown.start();
       }
 
-      await this.buildManifest(dir, index, tags, txs, useBundler, feeMultiplier, forceRedeploy);
+      await this.buildManifest(dir, index, tags, useBundler, feeMultiplier, forceRedeploy);
       if (this.logs) countdown.stop();
     }
 
@@ -290,26 +320,19 @@ export default class Deploy {
     dir: string,
     index: string = null,
     tags: Tags,
-    txs: TxDetail[],
     useBundler: string,
     feeMultiplier: number,
     forceRedeploy: boolean,
   ) {
     const paths: { [key: string]: { id: string } } = {};
 
-    if (!forceRedeploy) {
-      this.txs = this.txs.filter((t) => {
-        const filePath = t.filePath.split(`${dir}${path.sep}`)[1];
-        paths[filePath] = { id: t.tx.id };
-
-        const remoteTx = txs.find((txD) => txD.hash === t.hash);
-        if (!remoteTx) {
-          return true;
-        }
-
-        paths[filePath] = { id: remoteTx.tx.id };
-        return false;
-      });
+    for (const txD of this.duplicates) {
+      const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
+      paths[filePath] = { id: txD.id };
+    }
+    for (const txD of this.txs) {
+      const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
+      paths[filePath] = { id: txD.tx.id };
     }
 
     if (!index) {
@@ -362,60 +385,5 @@ export default class Deploy {
     const hash = crypto.createHash('sha256');
     hash.update(data);
     return hash.digest('hex');
-  }
-
-  private async deduplicate(txsDetail: TxDetail[], forceRedeploy: boolean = false, countdown): Promise<TxDetail[]> {
-    const txs: TxDetail[] = [];
-
-    if (forceRedeploy) {
-      for (const txD of txsDetail) {
-        this.cache.set(txD.hash, {
-          id: txD.tx.id,
-          confirmed: false,
-        });
-      }
-      this.cache.save();
-      return txs;
-    }
-
-    let files = txsDetail.length;
-
-    // Lets check on cache to see if we have deployed these hashes
-    for (const txD of txsDetail) {
-      if (this.logs) countdown.message(`Deploying ${--files} files...`);
-      let cached = this.cache.get(txD.hash);
-
-      if (!cached) {
-        this.cache.set(txD.hash, {
-          id: txD.tx.id,
-          confirmed: false,
-        });
-      } else if (!cached.confirmed) {
-        const res = await this.blockweave.transactions.getStatus(cached.id);
-        if (res.status === 200) {
-          cached = {
-            id: cached.id,
-            confirmed: true,
-          };
-
-          this.cache.set(txD.hash, cached);
-          txs.push(txD);
-        } else {
-          this.cache.set(txD.hash, {
-            id: txD.tx.id,
-            confirmed: false,
-          });
-        }
-      } else {
-        this.cache.set(txD.hash, {
-          id: txD.tx.id,
-          confirmed: true,
-        });
-        txs.push(txD);
-      }
-    }
-
-    this.cache.save();
-    return txs;
   }
 }
