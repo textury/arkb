@@ -38,6 +38,7 @@ Usage: arkb [options] [command]
 
 Options                                 Description
 --auto-confirm                          Skips the confirm screen
+--concurrency -c <number>               Multi thread, default is 5
 --debug                                 Display log messages
 --fee-multiplier -m <number>            Set the fee multiplier for all transactions
 --force -f                              Force a redeploy of all the files
