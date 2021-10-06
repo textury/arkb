@@ -30,16 +30,10 @@ export default class Cache {
   }
 
   public get(key: string): CacheDataInterface {
-    if (this.debug) {
-      console.log(clc.green('Cache GET: ' + key));
-    }
     return this.cache.get(key);
   }
 
   public set(key: string, value: CacheDataInterface): void {
-    if (this.debug) {
-      console.log(clc.green('Cache SET: ' + key));
-    }
     this.cache.set(key, value);
   }
 
@@ -60,9 +54,6 @@ export default class Cache {
   }
 
   public save(): Promise<void> {
-    if (this.debug) {
-      console.log(clc.green('Cache SAVE...'));
-    }
     return new Promise((resolve, reject) => {
       fs.writeFile(this.cacheFile, JSON.stringify(this.entries()), 'utf8', (err) => {
         if (err) {
@@ -70,10 +61,6 @@ export default class Cache {
             console.log(clc.red('Error saving cache: ' + err.message));
             reject(err);
           }
-        }
-
-        if (this.debug) {
-          console.log(clc.green('Cache SAVED.'));
         }
 
         resolve();

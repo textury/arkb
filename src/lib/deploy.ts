@@ -121,6 +121,9 @@ export default class Deploy {
               res = await this.arweave.api.get(`tx/${cached.id}/status`);
               // tslint:disable-next-line: no-empty
             } catch (e) {}
+
+            console.log(cached.id, res.data);
+
             if (res && res.data && res.data.number_of_confirmations) {
               confirmed = true;
             }
@@ -134,9 +137,8 @@ export default class Deploy {
               id: cached.id,
               filePath,
             });
+            return;
           }
-
-          return;
         }
 
         const type = mime.getType(filePath) || 'application/octet-stream';
@@ -170,7 +172,6 @@ export default class Deploy {
         this.txs.push({ filePath, hash, tx, type });
       });
 
-    await this.cache.save();
     if (this.logs) countdown.stop();
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
@@ -308,6 +309,7 @@ export default class Deploy {
       });
 
     if (this.logs) countdown.stop();
+    await this.cache.save();
 
     return txid;
   }
@@ -368,10 +370,6 @@ export default class Deploy {
       },
       paths,
     };
-
-    if (this.debug) {
-      console.log('manifest:', JSON.stringify(data));
-    }
 
     tags.addTag('Type', 'manifest');
     tags.addTag('Content-Type', 'application/x.arweave-manifest+json');
