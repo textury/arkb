@@ -22,6 +22,7 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import forceOption from '../options/force';
+import concurrencyOption from '../options/concurrency';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 const command: CommandInterface = {
@@ -38,6 +39,8 @@ const command: CommandInterface = {
     ipfsPublishOption,
     autoConfirmOption,
     timeoutOption,
+    concurrencyOption,
+    forceOption,
     debugOption,
     helpOption,
   ],
@@ -58,7 +61,8 @@ const command: CommandInterface = {
       autoConfirm,
     } = args;
 
-    const forceRedeploy = argv.force || false;
+    const concurrency = argv.concurrency || argv.c || 5;
+    const forceRedeploy = argv.force || argv.f || false;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
@@ -92,7 +96,7 @@ const command: CommandInterface = {
       isFile = false;
     }
 
-    const deploy = new Deploy(wallet, blockweave, debug);
+    const deploy = new Deploy(wallet, blockweave, debug, concurrency);
 
     if (!args.index) {
       args.index = 'index.html';

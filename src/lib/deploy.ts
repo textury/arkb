@@ -5,6 +5,7 @@ import Blockweave from 'blockweave';
 import mime from 'mime';
 import clui from 'clui';
 import clc from 'cli-color';
+import PromisePool from '@supercharge/promise-pool';
 import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import { pipeline } from 'stream/promises';
@@ -29,16 +30,17 @@ export default class Deploy {
   private txs: TxDetail[];
   private duplicates: { hash: string; id: string; filePath: string }[] = [];
 
-  private debug: boolean = false;
-  private logs: boolean = true;
-
   private community: Community;
 
-  constructor(wallet: JWKInterface, blockweave: Blockweave, debug: boolean = false, logs: boolean = true) {
+  constructor(
+    wallet: JWKInterface,
+    blockweave: Blockweave,
+    public readonly debug: boolean = false,
+    public readonly threads: number = 0,
+    public readonly logs: boolean = true,
+  ) {
     this.wallet = wallet;
     this.blockweave = blockweave;
-    this.debug = debug;
-    this.logs = logs;
 
     this.arweave = Arweave.init({
       host: blockweave.config.host,
@@ -90,81 +92,83 @@ export default class Deploy {
       countdown.start();
     }
 
-    for (const filePath of files) {
-      if (this.logs) countdown.message(`Preparing ${leftToPrepare--} files...`);
+    await PromisePool.for(files)
+      .withConcurrency(this.threads)
+      .process(async (filePath: string) => {
+        if (this.logs) countdown.message(`Preparing ${leftToPrepare--} files...`);
 
-      let data: Buffer;
-      try {
-        data = fs.readFileSync(filePath);
-      } catch (e) {
-        console.log('Unable to read file ' + filePath);
-        throw new Error(`Unable to read file: ${filePath}`);
-      }
+        let data: Buffer;
+        try {
+          data = fs.readFileSync(filePath);
+        } catch (e) {
+          console.log('Unable to read file ' + filePath);
+          throw new Error(`Unable to read file: ${filePath}`);
+        }
 
-      if (!data || !data.length) {
-        continue;
-      }
+        if (!data || !data.length) {
+          return;
+        }
 
-      const hash = await this.toHash(data);
+        const hash = await this.toHash(data);
 
-      if (!forceRedeploy && this.cache.has(hash)) {
-        const cached = this.cache.get(hash);
-        let confirmed = cached.confirmed;
+        if (!forceRedeploy && this.cache.has(hash)) {
+          const cached = this.cache.get(hash);
+          let confirmed = cached.confirmed;
 
-        if (!confirmed) {
-          let res: any;
-          try {
-            res = await this.arweave.api.get(`tx/${cached.id}/status`);
-            // tslint:disable-next-line: no-empty
-          } catch (e) {}
-          if (res && res.data && res.data.number_of_confirmations) {
-            confirmed = true;
+          if (!confirmed) {
+            let res: any;
+            try {
+              res = await this.arweave.api.get(`tx/${cached.id}/status`);
+              // tslint:disable-next-line: no-empty
+            } catch (e) {}
+            if (res && res.data && res.data.number_of_confirmations) {
+              confirmed = true;
+            }
+          }
+
+          if (confirmed) {
+            this.cache.set(hash, { ...cached, confirmed: true });
+
+            this.duplicates.push({
+              hash,
+              id: cached.id,
+              filePath,
+            });
+          }
+
+          return;
+        }
+
+        const type = mime.getType(filePath) || 'application/octet-stream';
+
+        // Add/replace default tags
+        if (toIpfs) {
+          const ipfsHash = await this.ipfs.hash(data);
+          tags.addTag('IPFS-Add', ipfsHash);
+        }
+        tags.addTag('User-Agent', `arkb`);
+        tags.addTag('User-Agent-Version', getPackageVersion());
+        tags.addTag('Type', 'file');
+        if (type) tags.addTag('Content-Type', type);
+        tags.addTag('File-Hash', hash);
+
+        let tx: Transaction | FileDataItem;
+        if (useBundler) {
+          tx = await this.bundler.createItem(data, tags.tags);
+        } else {
+          tx = await this.buildTransaction(filePath, tags);
+          if (feeMultiplier && feeMultiplier > 1) {
+            (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
           }
         }
 
-        if (confirmed) {
-          this.cache.set(hash, { ...cached, confirmed: true });
+        this.cache.set(hash, {
+          id: tx.id,
+          confirmed: false,
+        });
 
-          this.duplicates.push({
-            hash,
-            id: cached.id,
-            filePath,
-          });
-        }
-
-        continue;
-      }
-
-      const type = mime.getType(filePath) || 'application/octet-stream';
-
-      // Add/replace default tags
-      if (toIpfs) {
-        const ipfsHash = await this.ipfs.hash(data);
-        tags.addTag('IPFS-Add', ipfsHash);
-      }
-      tags.addTag('User-Agent', `arkb`);
-      tags.addTag('User-Agent-Version', getPackageVersion());
-      tags.addTag('Type', 'file');
-      if (type) tags.addTag('Content-Type', type);
-      tags.addTag('File-Hash', hash);
-
-      let tx: Transaction | FileDataItem;
-      if (useBundler) {
-        tx = await this.bundler.createItem(data, tags.tags);
-      } else {
-        tx = await this.buildTransaction(filePath, tags);
-        if (feeMultiplier && feeMultiplier > 1) {
-          (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
-        }
-      }
-
-      this.cache.set(hash, {
-        id: tx.id,
-        confirmed: false,
+        this.txs.push({ filePath, hash, tx, type });
       });
-
-      this.txs.push({ filePath, hash, tx, type });
-    }
 
     await this.cache.save();
     if (this.logs) countdown.stop();
@@ -187,7 +191,7 @@ export default class Deploy {
         countdown.start();
       }
 
-      await this.buildManifest(dir, index, tags, useBundler, feeMultiplier, forceRedeploy);
+      await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
       if (this.logs) countdown.stop();
     }
 
@@ -251,56 +255,57 @@ export default class Deploy {
       // tslint:disable-next-line: no-empty
     } catch {}
 
-    for (const txData of this.txs) {
-      let deployed = false;
+    await PromisePool.for(this.txs)
+      .withConcurrency(this.threads)
+      .process(async (txData) => {
+        if (this.logs) countdown.message(`Deploying ${cTotal--} files...`);
+        let deployed = false;
 
-      if (useBundler) {
-        try {
-          await this.bundler.post(txData.tx as FileDataItem, useBundler);
-          deployed = true;
-        } catch (e) {
-          console.log(e);
-          console.log(clc.red('Failed to deploy data item:', txData.filePath));
-        }
-      }
-
-      if (txData.filePath === '' && txData.hash === '') {
-        await (txData.tx as Transaction).post(0);
-        deployed = true;
-      }
-
-      if (!deployed) {
-        try {
-          await pipeline(
-            createReadStream(txData.filePath),
-            // @ts-ignore
-            uploadTransactionAsync(txData.tx as Transaction, this.blockweave),
-          );
-          deployed = true;
-        } catch (e) {
-          if (this.debug) {
+        if (useBundler) {
+          try {
+            await this.bundler.post(txData.tx as FileDataItem, useBundler);
+            deployed = true;
+          } catch (e) {
             console.log(e);
-            console.log(
-              clc.red(`Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`),
-            );
+            console.log(clc.red('Failed to deploy data item:', txData.filePath));
           }
         }
-      }
 
-      if (!deployed) {
-        try {
+        if (txData.filePath === '' && txData.hash === '') {
           await (txData.tx as Transaction).post(0);
           deployed = true;
-        } catch (e) {
-          if (this.debug) {
-            console.log(e);
-            console.log(clc.red(`Failed to upload ${txData.filePath} using normal post!`));
+        }
+
+        if (!deployed) {
+          try {
+            await pipeline(
+              createReadStream(txData.filePath),
+              // @ts-ignore
+              uploadTransactionAsync(txData.tx as Transaction, this.blockweave),
+            );
+            deployed = true;
+          } catch (e) {
+            if (this.debug) {
+              console.log(e);
+              console.log(
+                clc.red(`Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`),
+              );
+            }
           }
         }
-      }
 
-      if (this.logs) countdown.message(`Deploying ${--cTotal} files...`);
-    }
+        if (!deployed) {
+          try {
+            await (txData.tx as Transaction).post(0);
+            deployed = true;
+          } catch (e) {
+            if (this.debug) {
+              console.log(e);
+              console.log(clc.red(`Failed to upload ${txData.filePath} using normal post!`));
+            }
+          }
+        }
+      });
 
     if (this.logs) countdown.stop();
 
@@ -322,18 +327,26 @@ export default class Deploy {
     tags: Tags,
     useBundler: string,
     feeMultiplier: number,
-    forceRedeploy: boolean,
   ) {
-    const paths: { [key: string]: { id: string } } = {};
+    const { results: pDuplicates } = await PromisePool.for(this.duplicates)
+      .withConcurrency(this.threads)
+      .process(async (txD) => {
+        const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
+        return [filePath, { id: txD.id }];
+      });
 
-    for (const txD of this.duplicates) {
-      const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
-      paths[filePath] = { id: txD.id };
-    }
-    for (const txD of this.txs) {
-      const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
-      paths[filePath] = { id: txD.tx.id };
-    }
+    const { results: pTxs } = await PromisePool.for(this.txs)
+      .withConcurrency(this.threads)
+      .process(async (txD) => {
+        const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
+        return [filePath, { id: txD.tx.id }];
+      });
+
+    const paths = pDuplicates.concat(pTxs).reduce((acc, cur) => {
+      // @ts-ignore
+      acc[cur[0]] = cur[1];
+      return acc;
+    }, {});
 
     if (!index) {
       if (Object.keys(paths).includes('index.html')) {
@@ -355,6 +368,10 @@ export default class Deploy {
       },
       paths,
     };
+
+    if (this.debug) {
+      console.log('manifest:', JSON.stringify(data));
+    }
 
     tags.addTag('Type', 'manifest');
     tags.addTag('Content-Type', 'application/x.arweave-manifest+json');
