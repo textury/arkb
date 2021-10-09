@@ -10,7 +10,7 @@ import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import { pipeline } from 'stream/promises';
 import { TxDetail } from '../faces/txDetail';
-import { FileDataItem } from 'ans104/file';
+import { FileDataItem } from 'arbundles/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
 import { getPackageVersion, pause } from '../utils/utils';

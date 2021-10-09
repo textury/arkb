@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { ArweaveSigner } from 'ans104';
-import { createData, bundleAndSignData, FileDataItem } from 'ans104/file';
+import { ArweaveSigner } from 'arbundles';
+import { createData, bundleAndSignData, FileDataItem } from 'arbundles/file';
 import Blockweave from 'blockweave';
 import { AxiosResponse } from 'axios';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
@@ -15,13 +15,7 @@ export default class Bundler {
   }
 
   async createItem(data: Buffer | string, tags: { name: string; value: string }[] = []): Promise<FileDataItem> {
-    const item = await createData(
-      {
-        data,
-        tags,
-      },
-      this.signer,
-    );
+    const item = await createData(data, this.signer, { tags });
 
     await item.sign(this.signer);
     return item;
