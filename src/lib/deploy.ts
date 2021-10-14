@@ -141,7 +141,10 @@ export default class Deploy {
           }
         }
 
-        const type = mime.getType(filePath) || 'application/octet-stream';
+        const fileDetails = {
+          type: mime.getType(filePath) || 'application/octet-stream',
+          filePath
+        };
 
         // Add/replace default tags
         if (toIpfs) {
@@ -151,7 +154,7 @@ export default class Deploy {
         tags.addTag('User-Agent', `arkb`);
         tags.addTag('User-Agent-Version', getPackageVersion());
         tags.addTag('Type', 'file');
-        if (type) tags.addTag('Content-Type', type);
+        if (fileDetails.type && fileDetails.filePath === filePath) tags.addTag('Content-Type', fileDetails.type);
         tags.addTag('File-Hash', hash);
 
         let tx: Transaction | FileDataItem;
@@ -169,7 +172,7 @@ export default class Deploy {
           confirmed: false,
         });
 
-        this.txs.push({ filePath, hash, tx, type });
+        this.txs.push({ filePath, hash, tx, type: fileDetails.type });
       });
 
     if (this.logs) countdown.stop();
