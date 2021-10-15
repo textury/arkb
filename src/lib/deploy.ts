@@ -61,7 +61,7 @@ export default class Deploy {
       this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
   }
 
   getBundler(): Bundler {
@@ -120,7 +120,7 @@ export default class Deploy {
             try {
               res = await this.arweave.api.get(`tx/${cached.id}/status`);
               // tslint:disable-next-line: no-empty
-            } catch (e) { }
+            } catch (e) {}
 
             console.log(cached.id, res.data);
 
@@ -258,7 +258,7 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     await PromisePool.for(this.txs)
       .withConcurrency(this.threads)
