@@ -61,7 +61,7 @@ export default class Deploy {
       this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
   }
 
   getBundler(): Bundler {
@@ -120,7 +120,7 @@ export default class Deploy {
             try {
               res = await this.arweave.api.get(`tx/${cached.id}/status`);
               // tslint:disable-next-line: no-empty
-            } catch (e) {}
+            } catch (e) { }
 
             console.log(cached.id, res.data);
 
@@ -141,27 +141,28 @@ export default class Deploy {
           }
         }
 
-        const fileDetails = {
-          type: mime.getType(filePath) || 'application/octet-stream',
-          filePath
-        };
+        const type = mime.getType(filePath) || 'application/octet-stream';
+        const newTags = new Tags();
+        for (const tag of newTags.tags) {
+          newTags.addTag(tag.name, tag.value);
+        }
 
         // Add/replace default tags
         if (toIpfs) {
           const ipfsHash = await this.ipfs.hash(data);
-          tags.addTag('IPFS-Add', ipfsHash);
+          newTags.addTag('IPFS-Add', ipfsHash);
         }
-        tags.addTag('User-Agent', `arkb`);
-        tags.addTag('User-Agent-Version', getPackageVersion());
-        tags.addTag('Type', 'file');
-        if (fileDetails.type && fileDetails.filePath === filePath) tags.addTag('Content-Type', fileDetails.type);
-        tags.addTag('File-Hash', hash);
+        newTags.addTag('User-Agent', `arkb`);
+        newTags.addTag('User-Agent-Version', getPackageVersion());
+        newTags.addTag('Type', 'file');
+        if (type) newTags.addTag('Content-Type', type);
+        newTags.addTag('File-Hash', hash);
 
         let tx: Transaction | FileDataItem;
         if (useBundler) {
-          tx = await this.bundler.createItem(data, tags.tags);
+          tx = await this.bundler.createItem(data, newTags.tags);
         } else {
-          tx = await this.buildTransaction(filePath, tags);
+          tx = await this.buildTransaction(filePath, newTags);
           if (feeMultiplier && feeMultiplier > 1) {
             (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
           }
@@ -172,7 +173,7 @@ export default class Deploy {
           confirmed: false,
         });
 
-        this.txs.push({ filePath, hash, tx, type: fileDetails.type });
+        this.txs.push({ filePath, hash, tx, type });
       });
 
     if (this.logs) countdown.stop();
@@ -257,7 +258,7 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch {}
+    } catch { }
 
     await PromisePool.for(this.txs)
       .withConcurrency(this.threads)
