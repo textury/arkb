@@ -65,6 +65,16 @@ export default class CliCommands {
       }
     }
 
+    // Get the options aliases and set the option value to the alias value
+    for (const option of this.options.values()) {
+      if (option.alias) {
+        const alias = partialArgs.argv[option.alias];
+        if (alias) {
+          partialArgs.argv[option.name] = alias;
+        }
+      }
+    }
+
     let feeMultiplier = 1;
     if (partialArgs.argv['fee-multiplier']) {
       try {
@@ -121,7 +131,7 @@ export default class CliCommands {
   }
 
   private showHelp(commandObj: CommandInterface, command: string, partialArgs: Partial<ArgumentsInterface>): boolean {
-    if (commandObj.name === 'help' || (!partialArgs.argv.help && !partialArgs.argv.h)) {
+    if (commandObj.name === 'help' || !partialArgs.argv.help) {
       return false;
     }
 
