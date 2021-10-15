@@ -61,8 +61,8 @@ const command: CommandInterface = {
       autoConfirm,
     } = args;
 
-    const concurrency = argv.concurrency || argv.c || 5;
-    const forceRedeploy = argv.force || argv.f || false;
+    const concurrency = argv.concurrency || 5;
+    const forceRedeploy = argv.force;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
