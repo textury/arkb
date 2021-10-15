@@ -10,10 +10,10 @@ import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import { pipeline } from 'stream/promises';
 import { TxDetail } from '../faces/txDetail';
-import { FileDataItem } from 'ans104/file';
+import { FileDataItem } from 'arbundles/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
-import { getPackageVersion, pause } from '../utils/utils';
+import { getPackageVersion } from '../utils/utils';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
@@ -82,7 +82,7 @@ export default class Deploy {
 
     if (useBundler) {
       tags.addTag('Bundler', useBundler);
-      tags.addTag('Bundle', 'arbundles');
+      tags.addTag('Bundle', 'ans104');
     }
 
     let leftToPrepare = files.length;

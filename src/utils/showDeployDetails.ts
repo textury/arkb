@@ -1,6 +1,6 @@
 import CLI from 'clui';
 import clc from 'cli-color';
-import { FileDataItem } from 'ans104/file';
+import { FileDataItem } from 'arbundles/file';
 import path from 'path';
 import { TxDetail } from '../faces/txDetail';
 import Bundler from './bundler';
