@@ -116,14 +116,8 @@ export default class Deploy {
           let confirmed = cached.confirmed;
 
           if (!confirmed) {
-            let res: any;
-            try {
-              res = await this.arweave.api.get(`tx/${cached.id}/status`);
-              // tslint:disable-next-line: no-empty
-            } catch (e) {}
-
-            console.log(cached.id, res.data);
-
+            // tslint:disable-next-line: no-empty
+            const res = await this.arweave.api.get(`tx/${cached.id}/status`).catch(() => {});
             if (res && res.data && res.data.number_of_confirmations) {
               confirmed = true;
             }
@@ -224,10 +218,15 @@ export default class Deploy {
     }
 
     try {
+      const res = await this.arweave.api.get('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
+      if (!res || res.status !== 200) {
+        throw new Error('Unable to get cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
+      }
+
       await this.community.setCommunityTx('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
       const target = await this.community.selectWeightedHolder();
 
-      if ((await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
+      if (target && (await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler) {
           const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
