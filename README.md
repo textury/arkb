@@ -10,11 +10,21 @@ Arweave Deploy that saves you data costs.
 arkb runs using NodeJS and NPM. You must have both installed on your machine for it to work.
 
 Install arkb:
+
+```
+yarn global add arkb # recommended
+```
+
+or
+
 ```
 npm install -g arkb
 ```
 
+> **Note:** The installation of arkb needs that node >=15.11.0 or you will get an error even you successfully have the arkb installed.  For managing multiple active nodejs, we recommend you have [nvm](https://github.com/nvm-sh/nvm) installed on your computer, then you can switch different node in a simple command. 
+
 And run:
+
 ```
 arkb help
 ```
