@@ -158,7 +158,10 @@ export default class Deploy {
         } else {
           tx = await this.buildTransaction(filePath, newTags);
           if (feeMultiplier && feeMultiplier > 1) {
-            (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
+            (tx as Transaction).reward = parseInt(
+              (feeMultiplier * +(tx as Transaction).reward).toString(),
+              10,
+            ).toString();
           }
         }
 
@@ -389,7 +392,7 @@ export default class Deploy {
       );
       tags.addTagsToTransaction(tx as Transaction);
       if (feeMultiplier) {
-        (tx as Transaction).reward = (feeMultiplier * +(tx as Transaction).reward).toString();
+        (tx as Transaction).reward = parseInt((feeMultiplier * +(tx as Transaction).reward).toString(), 10).toString();
       }
       await tx.sign();
     }
