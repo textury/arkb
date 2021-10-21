@@ -31,7 +31,7 @@ export default class Transfer {
     await this.blockweave.transactions.sign(tx, this.wallet);
 
     if (feeMultiplier && feeMultiplier > 1) {
-      tx.reward = (feeMultiplier * +tx.reward).toString();
+      tx.reward = parseInt((feeMultiplier * +tx.reward).toString(), 10).toString();
     }
 
     try {
