@@ -21,7 +21,7 @@ or
 npm install -g arkb
 ```
 
-> **Note:** The installation of arkb needs that node >=15.11.0 or you will get an error even you successfully have the arkb installed.  For managing multiple active nodejs, we recommend you have [nvm](https://github.com/nvm-sh/nvm) installed on your computer, then you can switch different node in a simple command. 
+> **Note:** The installation of arkb needs node >=15.11.0 or you will get an error when using `arkb`.  To manage multiple active nodejs, we recommend you have [nvm](https://github.com/nvm-sh/nvm) installed on your computer, then you can switch different node in a simple command. 
 
 And run:
 
