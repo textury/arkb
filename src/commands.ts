@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import clc from 'cli-color';
+import spdx from 'spdx-license-ids';
+import Fuse from 'fuse.js';
 import Tags from './lib/tags';
 import CommandInterface from './faces/command';
 import ArgumentsInterface from './faces/arguments';
@@ -92,6 +94,25 @@ export default class CliCommands {
       feeMultiplier = 1;
     }
 
+    let license = '';
+
+    if (partialArgs.argv.license) {
+      license = partialArgs.argv.license;
+      if (!spdx.includes(license)) {
+        // help the user
+        const fuse = new Fuse(spdx);
+        const spdxCandidates = fuse.search(license);
+        console.log(clc.red(`\n"${license}" is not a valid spdx license identifier`));
+        if (spdxCandidates.length > 0) {
+          console.log(clc.yellow('Did you mean?'));
+          spdxCandidates.slice(0, 5).map((cand) => console.log(clc.blue(` ${cand.item}`)));
+        } else {
+          console.log(clc.yellow(`A list of valid spdx identifiers can be found at https://spdx.org/licenses/`));
+        }
+        process.exit(1);
+      }
+    }
+
     const args: ArgumentsInterface = {
       argv: partialArgs.argv,
       blockweave: partialArgs.blockweave,
@@ -103,6 +124,7 @@ export default class CliCommands {
       tags,
       feeMultiplier,
       useBundler,
+      license,
       index: partialArgs.argv.index,
       autoConfirm: partialArgs.argv['auto-confirm'],
       ipfsPublish: partialArgs.argv['ipfs-publish'],

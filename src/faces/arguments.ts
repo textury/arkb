@@ -15,6 +15,7 @@ export default interface ArgumentsInterface {
   walletPath: string;
   index: string;
   ipfsPublish: boolean;
+  license: string;
   autoConfirm: boolean;
   tags: Tags;
   useBundler: string;

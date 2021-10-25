@@ -74,11 +74,16 @@ export default class Deploy {
     index: string = 'index.html',
     tags: Tags = new Tags(),
     toIpfs: boolean = false,
+    license?: string,
     useBundler?: string,
     feeMultiplier?: number,
     forceRedeploy: boolean = false,
   ) {
     this.txs = [];
+
+    if (typeof license === 'string' && license.length > 0) {
+      tags.addTag('License', license);
+    }
 
     if (useBundler) {
       tags.addTag('Bundler', useBundler);
