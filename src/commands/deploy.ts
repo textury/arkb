@@ -13,6 +13,7 @@ import ArgumentsInterface from '../faces/arguments';
 import gatewayOption from '../options/gateway';
 import ipfsPublishOption from '../options/ipfsPublish';
 import useBundlerOption from '../options/useBundler';
+import licenseOption from '../options/license';
 import autoConfirmOption from '../options/autoConfirm';
 import feeMultiplierOption from '../options/feeMultiplier';
 import timeoutOption from '../options/timeout';
@@ -35,6 +36,7 @@ const command: CommandInterface = {
     feeMultiplierOption,
     tagNameOption,
     tagValueOption,
+    licenseOption,
     walletOption,
     ipfsPublishOption,
     autoConfirmOption,
@@ -56,6 +58,7 @@ const command: CommandInterface = {
       blockweave,
       tags,
       ipfsPublish,
+      license,
       useBundler,
       feeMultiplier,
       autoConfirm,
@@ -108,11 +111,21 @@ const command: CommandInterface = {
       args.index,
       tags,
       ipfsPublish,
+      license,
       useBundler,
       feeMultiplier,
       forceRedeploy,
     );
-    const balAfter = await showDeployDetails(txs, wallet, isFile, dir, blockweave, useBundler, deploy.getBundler());
+    const balAfter = await showDeployDetails(
+      txs,
+      wallet,
+      isFile,
+      dir,
+      blockweave,
+      useBundler,
+      deploy.getBundler(),
+      license,
+    );
 
     if (balAfter < 0) {
       console.log(clc.red("You don't have enough balance for this deploy."));

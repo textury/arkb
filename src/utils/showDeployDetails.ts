@@ -17,6 +17,7 @@ export async function showDeployDetails(
   blockweave: Blockweave,
   useBundler?: string,
   bundler?: Bundler,
+  license?: string,
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;
@@ -83,6 +84,9 @@ export async function showDeployDetails(
 
   console.log('');
   console.log(clc.cyan('Summary'));
+  if (license) {
+    console.log(`License: ${license}`);
+  }
   if (useBundler) {
     console.log(`Data items to deploy: ${txs.length - 1} + 1 manifest`);
   } else {
