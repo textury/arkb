@@ -11,7 +11,7 @@ const command: CommandInterface = {
   aliases: ['ws'],
   description: `Saves a wallet, removes the need of the --wallet option`,
   args: ['wallet_path'],
-  usage: [`folder/${path.sep}keyfile.json`],
+  usage: [`folder${path.sep}keyfile.json`],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { commandValues, config, debug } = args;
 
