@@ -50,8 +50,8 @@ export async function showDeployDetails(
     }
 
     let filePath = tx.filePath;
-    if (filePath.startsWith(`${dir}${path.sep}`)) {
-      filePath = filePath.split(`${dir}${path.sep}`)[1];
+    if (filePath.startsWith(`${dir}/`)) {
+      filePath = filePath.split(`${dir}/`)[1];
     }
 
     if (!filePath) {
