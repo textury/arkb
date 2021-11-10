@@ -99,7 +99,6 @@ const command: CommandInterface = {
     let isFile = true;
     if (fs.lstatSync(dir).isDirectory()) {
       files = await fg([`${dir}/**/*`], { dot: false });
-      console.log(files);
       isFile = false;
     }
 
