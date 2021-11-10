@@ -344,14 +344,14 @@ export default class Deploy {
     const { results: pDuplicates } = await PromisePool.for(this.duplicates)
       .withConcurrency(this.threads)
       .process(async (txD) => {
-        const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
+        const filePath = txD.filePath.split(`${dir}/`)[1];
         return [filePath, { id: txD.id }];
       });
 
     const { results: pTxs } = await PromisePool.for(this.txs)
       .withConcurrency(this.threads)
       .process(async (txD) => {
-        const filePath = txD.filePath.split(`${dir}${path.sep}`)[1];
+        const filePath = txD.filePath.split(`${dir}/`)[1];
         return [filePath, { id: txD.tx.id }];
       });
 
