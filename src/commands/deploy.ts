@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import clc from 'cli-color';
 import fg from 'fast-glob';
+import normalize from 'normalize-path';
 import Deploy from '../lib/deploy';
 import cliQuestions from '../utils/cli-questions';
 import IPFS from '../utils/ipfs';
@@ -75,6 +76,8 @@ const command: CommandInterface = {
 
     const commandValue = commandValues[0];
     let dir = path.join(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
+    // Normalize for os differences
+    dir = normalize(dir);
 
     // Check if deploy dir exists
     if (!dirExists(dir)) {
@@ -96,6 +99,7 @@ const command: CommandInterface = {
     let isFile = true;
     if (fs.lstatSync(dir).isDirectory()) {
       files = await fg([`${dir}/**/*`], { dot: false });
+      console.log(files);
       isFile = false;
     }
 
