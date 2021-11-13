@@ -15,7 +15,7 @@ const command: CommandInterface = {
   description: 'Get the current balance of your wallet',
   options: [gatewayOption, timeoutOption, walletOption, debugOption, helpOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { walletPath, config, debug, blockweave } = args;
+    const { walletPath, config, debug, blockweave, useBundler, bundler } = args;
 
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 
@@ -24,8 +24,32 @@ const command: CommandInterface = {
       return;
     }
 
+    let addy: string;
     try {
-      const addy = await blockweave.wallets.jwkToAddress(wallet);
+      addy = await blockweave.wallets.jwkToAddress(wallet);
+    } catch (e) {
+      console.log(clc.red('Unable to decrypt wallet address.'));
+      if (debug) console.log(e);
+    }
+
+    if (useBundler) {
+      try {
+        const res = await bundler.get(`/account/balance?address=${addy}`);
+
+        const bal: number = res.data.balance;
+        console.log(
+          `${clc.cyan(addy)} has a bundler balance of ${clc.yellow(
+            `AR ${blockweave.ar.winstonToAr(bal.toString(), { formatted: true, decimals: 12, trim: true })}`,
+          )}`,
+        );
+      } catch (e) {
+        console.log(clc.red('Unable to retrieve wallet balance.'));
+        if (debug) console.log(e);
+      }
+      return;
+    }
+
+    try {
       const bal = await blockweave.wallets.getBalance(addy);
       console.log(
         `${clc.cyan(addy)} has a balance of ${clc.yellow(
