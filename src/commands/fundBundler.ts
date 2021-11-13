@@ -13,23 +13,9 @@ const command: CommandInterface = {
   name: 'fund-bundler',
   aliases: ['fb'],
   description: 'Fund your bundler account',
-  options: [
-    walletOption,
-    debugOption,
-    helpOption,
-    timeoutOption,
-    amountOption
-  ],
+  options: [walletOption, debugOption, helpOption, timeoutOption, amountOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const {
-      walletPath,
-      bundler,
-      debug,
-      config,
-      blockweave,
-      commandValues,
-      argv,
-    } = args;
+    const { walletPath, bundler, debug, config, blockweave, commandValues, argv } = args;
 
     const amount = argv.amount;
 
@@ -55,7 +41,7 @@ const command: CommandInterface = {
     let bundlerAddress: string;
     try {
       const res = await bundler.get('/info');
-      bundlerAddress = res.data.address || res.data.addresses.arweave; 
+      bundlerAddress = res.data.address || res.data.addresses.arweave;
     } catch (e) {
       clc.red('Error getting bundler address, see more info with the --debug option.');
       if (debug) console.log(e);
@@ -66,10 +52,13 @@ const command: CommandInterface = {
     try {
       const addy = await blockweave.wallets.jwkToAddress(wallet);
 
-      const tx = await blockweave.createTransaction({
-        target: bundlerAddress,
-        quantity: amount.toString()
-      }, wallet);
+      const tx = await blockweave.createTransaction(
+        {
+          target: bundlerAddress,
+          quantity: amount.toString(),
+        },
+        wallet,
+      );
 
       tx.reward = parseInt(tx.reward, 10).toString();
       await blockweave.transactions.sign(tx, wallet);
@@ -81,7 +70,7 @@ const command: CommandInterface = {
         )}`,
       );
     } catch (e) {
-      clc.red('Error funding bundler address, see more info with the --debug option.')
+      clc.red('Error funding bundler address, see more info with the --debug option.');
       if (debug) console.log(e);
     }
   },
