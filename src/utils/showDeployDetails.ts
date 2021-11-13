@@ -19,7 +19,7 @@ export async function showDeployDetails(
   useBundler?: string,
   bundler?: Bundler,
   license?: string,
-  bundlerApi?: Api
+  bundlerApi?: Api,
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;
@@ -104,7 +104,7 @@ export async function showDeployDetails(
   if (useBundler) {
     const res = await bundlerApi.get(`/account/balance?address=${addy}`);
     const balance: number = res.data.balance;
-    winston = balance.toString()
+    winston = balance.toString();
   } else {
     winston = await blockweave.wallets.getBalance(addy);
   }

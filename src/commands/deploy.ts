@@ -63,7 +63,7 @@ const command: CommandInterface = {
       useBundler,
       feeMultiplier,
       autoConfirm,
-      bundler
+      bundler,
     } = args;
 
     const concurrency = argv.concurrency || 5;
