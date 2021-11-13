@@ -15,7 +15,7 @@
     "start": "node ./bin/app.js",
     "predev": "yarn build",
     "dev": "node ./bin/app.js",
-    "prebuild": "rimraf lib",
+    "prebuild": "rimraf bin",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
