@@ -63,6 +63,7 @@ const command: CommandInterface = {
       useBundler,
       feeMultiplier,
       autoConfirm,
+      bundler
     } = args;
 
     const concurrency = argv.concurrency || 5;
@@ -128,6 +129,7 @@ const command: CommandInterface = {
       useBundler,
       deploy.getBundler(),
       license,
+      bundler,
     );
 
     if (balAfter < 0) {

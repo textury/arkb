@@ -100,7 +100,7 @@ export default class CliCommands {
       } catch (e) {
         console.log(clc.red('[--use-bundler] Invalid url format'));
         if (partialArgs.debug) console.log(e);
-        process.exit(1)
+        process.exit(1);
       }
       this.bundler = new Api({ ...parsed, host: parsed.hostname });
     }

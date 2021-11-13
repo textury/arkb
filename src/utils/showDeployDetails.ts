@@ -8,6 +8,7 @@ import Blockweave from 'blockweave';
 import { bytesForHumans } from './utils';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+import Api from 'arweave/node/lib/api';
 
 export async function showDeployDetails(
   txs: TxDetail[],
@@ -18,6 +19,7 @@ export async function showDeployDetails(
   useBundler?: string,
   bundler?: Bundler,
   license?: string,
+  bundlerApi?: Api
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;
@@ -97,7 +99,16 @@ export async function showDeployDetails(
   console.log(`Total fee: ${totalFee}`);
 
   const addy = await blockweave.wallets.jwkToAddress(wallet);
-  const winston = await blockweave.wallets.getBalance(addy);
+  let winston: string;
+
+  if (useBundler) {
+    const res = await bundlerApi.get(`/account/balance?address=${addy}`);
+    const balance: number = res.data.balance;
+    winston = balance.toString()
+  } else {
+    winston = await blockweave.wallets.getBalance(addy);
+  }
+
   const bal = blockweave.ar.winstonToAr(winston);
   const balAfter = +bal - +totalFee;
 
