@@ -1,0 +1,90 @@
+import clc from 'cli-color';
+import ArgumentsInterface from '../faces/arguments';
+import { getWallet } from '../utils/wallet';
+import CommandInterface from '../faces/command';
+import walletOption from '../options/wallet';
+import amountOption from '../options/amount';
+import debugOption from '../options/debug';
+import helpOption from '../options/help';
+import timeoutOption from '../options/timeout';
+import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+
+const command: CommandInterface = {
+  name: 'fund-bundler',
+  aliases: ['fb'],
+  description: 'Fund your bundler account',
+  options: [
+    walletOption,
+    debugOption,
+    helpOption,
+    timeoutOption,
+    amountOption
+  ],
+  execute: async (args: ArgumentsInterface): Promise<void> => {
+    const {
+      walletPath,
+      bundler,
+      debug,
+      config,
+      blockweave,
+      commandValues,
+      argv,
+    } = args;
+
+    const amount = argv.amount;
+
+    // Check if we have received a command value
+    if (!commandValues || !commandValues.length) {
+      console.log(clc.red('You forgot to set the bundler network.'));
+      return;
+    }
+
+    const wallet: JWKInterface = await getWallet(walletPath, config, debug);
+
+    if (!wallet) {
+      console.log(clc.red('Please set a wallet or run with the --wallet option.'));
+      return;
+    }
+
+    if (!amount) {
+      console.log(clc.red('Please set an amount, with the --amount option.'));
+      return;
+    }
+
+    // Get the bundler address and make a non-data transaction to the address
+    let bundlerAddress: string;
+    try {
+      const res = await bundler.get('/info');
+      bundlerAddress = res.data.address || res.data.addresses.arweave; 
+    } catch (e) {
+      clc.red('Error getting bundler address, see more info with the --debug option.');
+      if (debug) console.log(e);
+      process.exit(1);
+    }
+
+    // Fund the bundler address
+    try {
+      const addy = await blockweave.wallets.jwkToAddress(wallet);
+
+      const tx = await blockweave.createTransaction({
+        target: bundlerAddress,
+        quantity: amount.toString()
+      }, wallet);
+
+      tx.reward = parseInt(tx.reward, 10).toString();
+      await blockweave.transactions.sign(tx, wallet);
+      await blockweave.transactions.post(tx);
+
+      console.log(
+        `${clc.cyan(addy)} bundler has been funded with ${clc.yellow(
+          `AR ${blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 12, trim: true })}`,
+        )}`,
+      );
+    } catch (e) {
+      clc.red('Error funding bundler address, see more info with the --debug option.')
+      if (debug) console.log(e);
+    }
+  },
+};
+
+export default command;

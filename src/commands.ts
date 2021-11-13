@@ -93,25 +93,19 @@ export default class CliCommands {
 
     const useBundler = partialArgs.argv['use-bundler'];
 
-    if (useBundler) {
+    const bundlerCriteria = command === 'fund-bundler' || command === 'withdraw-bundler';
+
+    if (useBundler || bundlerCriteria) {
       let parsed;
       try {
-        parsed = new URL(useBundler);
+        parsed = new URL(useBundler || commandValues[0]);
       } catch (e) {
-        console.log(clc.red('[--use-bundler] Invalid url format'));
+        console.log(clc.red(`${useBundler ? '[--use-bundler]' : '[' + command + ']'} Invalid url format`));
         if (partialArgs.debug) console.log(e);
         process.exit(1);
       }
       this.bundler = new Api({ ...parsed, host: parsed.hostname });
     }
-
-    // if (command === 'fund-bundler') {
-
-    // }
-
-    // if (command === 'withdraw-bundler') {
-
-    // }
 
     if (useBundler && feeMultiplier > 1) {
       console.log(clc.yellow('\nFee multiplier is ignored when using the bundler'));
