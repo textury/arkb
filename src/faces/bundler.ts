@@ -4,4 +4,4 @@ export interface BundlerWithdraw {
   amount: number;
   nonce: number;
   signature: unknown;
-};
+}

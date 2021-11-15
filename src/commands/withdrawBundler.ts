@@ -1,7 +1,7 @@
 import clc from 'cli-color';
 import { deepHash } from 'arbundles';
-import ArgumentsInterface from "../faces/arguments";
-import CommandInterface from "../faces/command";
+import ArgumentsInterface from '../faces/arguments';
+import CommandInterface from '../faces/command';
 import { getWallet } from '../utils/wallet';
 import walletOption from '../options/wallet';
 import amountOption from '../options/amount';
@@ -11,8 +11,6 @@ import timeoutOption from '../options/timeout';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import { stringToBuffer } from 'blockweave/dist/utils/buffer';
 import { BundlerWithdraw } from '../faces/bundler';
-
-
 
 const command: CommandInterface = {
   name: 'withdraw-bundler',
@@ -47,7 +45,7 @@ const command: CommandInterface = {
     let addy: string;
     try {
       addy = await blockweave.wallets.jwkToAddress(wallet);
-      const response = await bundler.get(`/account/withdrawals?address=${addy}`) 
+      const response = await bundler.get(`/account/withdrawals?address=${addy}`);
 
       nonce = response.data as number;
       if (!response) {
@@ -69,18 +67,26 @@ const command: CommandInterface = {
         currency: 'arweave',
         amount,
         nonce,
-        signature: undefined
+        signature: undefined,
       };
 
-      const hash = await deepHash([stringToBuffer(data.currency), stringToBuffer(data.amount.toString()), stringToBuffer(data.nonce.toString())]);
+      const hash = await deepHash([
+        stringToBuffer(data.currency),
+        stringToBuffer(data.amount.toString()),
+        stringToBuffer(data.nonce.toString()),
+      ]);
       data.signature = await blockweave.crypto.sign(wallet, hash);
 
-      await bundler.post('/account/withdraw' ,data);
+      await bundler.post('/account/withdraw', data);
 
       // Success response
       console.log(
         `${clc.cyan(addy)} has been funded with ${clc.yellow(
-          `AR ${blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 12, trim: true })} from bundler.`,
+          `AR ${blockweave.ar.winstonToAr(amount.toString(), {
+            formatted: true,
+            decimals: 12,
+            trim: true,
+          })} from bundler.`,
         )}`,
       );
     } catch (e) {
