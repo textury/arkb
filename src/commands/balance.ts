@@ -43,7 +43,7 @@ const command: CommandInterface = {
           )}`,
         );
       } catch (e) {
-        console.log(clc.red('Unable to retrieve wallet balance.'));
+        console.log(clc.red('Unable to retrieve bundler balance.'));
         if (debug) console.log(e);
       }
       return;
