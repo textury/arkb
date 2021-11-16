@@ -69,7 +69,7 @@ export default class Transfer {
 
     return txid;
   }
-  
+
   async withdrawBundler(bundler: Api, amount: number) {
     const addy = await this.blockweave.wallets.jwkToAddress(this.wallet);
 
@@ -94,5 +94,5 @@ export default class Transfer {
     await bundler.post('/account/withdraw', data);
 
     return addy;
-  };
+  }
 }
