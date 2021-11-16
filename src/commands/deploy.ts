@@ -133,7 +133,11 @@ const command: CommandInterface = {
     );
 
     if (balAfter < 0) {
-      console.log(useBundler ? clc.red("You don't have enough bundler balance for this deploy.") : clc.red("You don't have enough balance for this deploy."));
+      console.log(
+        useBundler
+          ? clc.red("You don't have enough bundler balance for this deploy.")
+          : clc.red("You don't have enough balance for this deploy."),
+      );
       return;
     }
 

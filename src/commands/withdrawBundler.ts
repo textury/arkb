@@ -17,7 +17,7 @@ const command: CommandInterface = {
   description: 'Withdraw from your bundler balance',
   options: [walletOption, debugOption, helpOption, timeoutOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler} = args;
+    const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler } = args;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {

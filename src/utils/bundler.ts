@@ -33,7 +33,7 @@ export default class Bundler {
   }
 
   static async getAddressBalance(bundler: Api, address: string): Promise<number> {
-    const res = await bundler.get(`/account/balance?address=${address}`)
+    const res = await bundler.get(`/account/balance?address=${address}`);
     return res.data.balance || 0;
   }
 }
