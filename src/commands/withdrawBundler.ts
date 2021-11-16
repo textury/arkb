@@ -8,8 +8,7 @@ import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import timeoutOption from '../options/timeout';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
-import { stringToBuffer } from 'blockweave/dist/utils/buffer';
-import { BundlerWithdraw } from '../faces/bundler';
+import Transfer from '../lib/transfer';
 
 const command: CommandInterface = {
   name: 'withdraw-bundler',
@@ -36,44 +35,15 @@ const command: CommandInterface = {
       return;
     }
 
-    // Get nonce
-    let nonce: number;
-    let addy: string;
+    // Initiate withdrawal
     try {
-      addy = await blockweave.wallets.jwkToAddress(wallet);
-      const response = await bundler.get(`/account/withdrawals?address=${addy}`);
+      const transfer = new Transfer(wallet, blockweave);
 
-      nonce = response.data as number;
-      if (!response) {
-        console.log(clc.red('Error fetching nonce'));
+      const addy = await transfer.withdrawBundler(bundler, amount);
+      if (!addy) {
+        console.log(clc.red('Error withdrawing to wallet'));
         return;
       }
-    } catch (e) {
-      console.log(clc.red('Error fetching nonce'));
-      if (debug) console.log(e);
-      return;
-    }
-
-    // Initiate the withdrawal
-    try {
-      // const publicKey: string = wallet.n;
-
-      const data: BundlerWithdraw = {
-        publicKey: addy,
-        currency: 'arweave',
-        amount,
-        nonce,
-        signature: undefined,
-      };
-
-      const hash = await deepHash([
-        stringToBuffer(data.currency),
-        stringToBuffer(data.amount.toString()),
-        stringToBuffer(data.nonce.toString()),
-      ]);
-      data.signature = await blockweave.crypto.sign(wallet, hash);
-
-      await bundler.post('/account/withdraw', data);
 
       // Success response
       console.log(

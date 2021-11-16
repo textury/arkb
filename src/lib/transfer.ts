@@ -1,8 +1,11 @@
 import Blockweave from 'blockweave';
-import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import Community from 'community-js';
 import { getPackageVersion } from '../utils/utils';
+import Api from 'arweave/node/lib/api';
+import { BundlerWithdraw } from '../faces/bundler';
+import { deepHash } from 'arbundles';
+import { stringToBuffer } from 'blockweave/dist/utils/buffer';
 
 export default class Transfer {
   private community: Community;
@@ -66,4 +69,30 @@ export default class Transfer {
 
     return txid;
   }
+  
+  async withdrawBundler(bundler: Api, amount: number) {
+    const addy = await this.blockweave.wallets.jwkToAddress(this.wallet);
+
+    const response = await bundler.get(`/account/withdrawals?address=${addy}`);
+    const nonce = response.data as number;
+
+    const data: BundlerWithdraw = {
+      publicKey: addy,
+      currency: 'arweave',
+      amount,
+      nonce,
+      signature: undefined,
+    };
+
+    const hash = await deepHash([
+      stringToBuffer(data.currency),
+      stringToBuffer(data.amount.toString()),
+      stringToBuffer(data.nonce.toString()),
+    ]);
+    data.signature = await this.blockweave.crypto.sign(this.wallet, hash);
+
+    await bundler.post('/account/withdraw', data);
+
+    return addy;
+  };
 }
