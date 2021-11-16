@@ -1,4 +1,5 @@
 import Blockweave from 'blockweave';
+import Api from 'arweave/node/lib/api';
 import Conf from 'conf';
 import minimist from 'minimist';
 import Tags from '../lib/tags';
@@ -22,4 +23,5 @@ export default interface ArgumentsInterface {
   feeMultiplier: number;
   commands: Map<string, CommandInterface>;
   options: Map<string, OptionInterface>;
+  bundler?: Api;
 }

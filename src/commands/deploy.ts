@@ -63,6 +63,7 @@ const command: CommandInterface = {
       useBundler,
       feeMultiplier,
       autoConfirm,
+      bundler,
     } = args;
 
     const concurrency = argv.concurrency || 5;
@@ -128,10 +129,15 @@ const command: CommandInterface = {
       useBundler,
       deploy.getBundler(),
       license,
+      bundler,
     );
 
     if (balAfter < 0) {
-      console.log(clc.red("You don't have enough balance for this deploy."));
+      console.log(
+        useBundler
+          ? clc.red("You don't have enough bundler balance for this deploy.")
+          : clc.red("You don't have enough balance for this deploy."),
+      );
       return;
     }
 

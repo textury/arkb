@@ -3,6 +3,8 @@ import path from 'path';
 import clc from 'cli-color';
 import spdx from 'spdx-license-ids';
 import Fuse from 'fuse.js';
+import { URL } from 'url';
+import Api from 'arweave/node/lib/api';
 import Tags from './lib/tags';
 import CommandInterface from './faces/command';
 import ArgumentsInterface from './faces/arguments';
@@ -11,6 +13,7 @@ import OptionInterface from './faces/option';
 export default class CliCommands {
   options: Map<string, OptionInterface> = new Map();
   commands: Map<string, CommandInterface> = new Map();
+  bundler: Api;
 
   constructor() {
     // Commands
@@ -89,6 +92,19 @@ export default class CliCommands {
     }
 
     const useBundler = partialArgs.argv['use-bundler'];
+
+    if (useBundler) {
+      let parsed;
+      try {
+        parsed = new URL(useBundler);
+      } catch (e) {
+        console.log(clc.red('[--use-bundler] Invalid url format'));
+        if (partialArgs.debug) console.log(e);
+        process.exit(1);
+      }
+      this.bundler = new Api({ ...parsed, host: parsed.hostname });
+    }
+
     if (useBundler && feeMultiplier > 1) {
       console.log(clc.yellow('\nFee multiplier is ignored when using the bundler'));
       feeMultiplier = 1;
@@ -130,6 +146,7 @@ export default class CliCommands {
       ipfsPublish: partialArgs.argv['ipfs-publish'],
       commands: this.commands,
       options: this.options,
+      bundler: this.bundler,
     };
 
     if (this.commands.has(command)) {

@@ -4,6 +4,7 @@ import { createData, bundleAndSignData, FileDataItem } from 'arbundles/file';
 import Blockweave from 'blockweave';
 import { AxiosResponse } from 'axios';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+import Api from 'arweave/node/lib/api';
 
 export default class Bundler {
   private signer: ArweaveSigner;
@@ -29,5 +30,10 @@ export default class Bundler {
 
   async post(tx: FileDataItem, bundler: string): Promise<AxiosResponse<any>> {
     return tx.sendToBundler(bundler);
+  }
+
+  static async getAddressBalance(bundler: Api, address: string): Promise<number> {
+    const res = await bundler.get(`/account/balance?address=${address}`);
+    return res.data.balance || 0;
   }
 }
