@@ -17,7 +17,7 @@ const command: CommandInterface = {
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
-      console.log(clc.red('You forgot to set the bundler network.'));
+      console.log(clc.red('You forgot to set the amount.'));
       return;
     }
 
