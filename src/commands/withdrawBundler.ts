@@ -13,7 +13,6 @@ import { BundlerWithdraw } from '../faces/bundler';
 
 const command: CommandInterface = {
   name: 'withdraw-bundler',
-  aliases: ['wb'],
   description: 'Withdraw from your bundler balance',
   options: [walletOption, debugOption, helpOption, timeoutOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
