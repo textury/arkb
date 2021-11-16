@@ -4,7 +4,6 @@ import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { getWallet } from '../utils/wallet';
 import walletOption from '../options/wallet';
-import amountOption from '../options/amount';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import timeoutOption from '../options/timeout';
@@ -16,11 +15,9 @@ const command: CommandInterface = {
   name: 'withdraw-bundler',
   aliases: ['wb'],
   description: 'Withdraw from your bundler balance',
-  options: [walletOption, debugOption, helpOption, timeoutOption, amountOption],
+  options: [walletOption, debugOption, helpOption, timeoutOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { walletPath, bundler, debug, config, blockweave, commandValues, argv } = args;
-
-    const amount = argv.amount;
+    const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler} = args;
 
     // Check if we have received a command value
     if (!commandValues || !commandValues.length) {
@@ -28,15 +25,15 @@ const command: CommandInterface = {
       return;
     }
 
+    const amount = parseInt(commandValues[0], 10);
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 
     if (!wallet) {
-      console.log(clc.red('Please set a wallet or run with the --wallet option.'));
       return;
     }
 
-    if (!amount) {
-      console.log(clc.red('Please set an amount, with the --amount option.'));
+    if (!useBundler) {
+      console.log(clc.red('Please set bundler address'));
       return;
     }
 
@@ -60,10 +57,10 @@ const command: CommandInterface = {
 
     // Initiate the withdrawal
     try {
-      const publicKey: string = wallet.n;
+      // const publicKey: string = wallet.n;
 
       const data: BundlerWithdraw = {
-        publicKey,
+        publicKey: addy,
         currency: 'arweave',
         amount,
         nonce,

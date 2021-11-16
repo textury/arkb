@@ -102,8 +102,7 @@ export async function showDeployDetails(
   let winston: string;
 
   if (useBundler) {
-    const res = await bundlerApi.get(`/account/balance?address=${addy}`);
-    const balance: number = res.data.balance;
+    const balance = await Bundler.getAddressBalance(bundlerApi, addy);
     winston = balance.toString();
   } else {
     winston = await blockweave.wallets.getBalance(addy);

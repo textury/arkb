@@ -93,14 +93,12 @@ export default class CliCommands {
 
     const useBundler = partialArgs.argv['use-bundler'];
 
-    const bundlerCriteria = command === 'fund-bundler' || command === 'withdraw-bundler';
-
-    if (useBundler || bundlerCriteria) {
+    if (useBundler) {
       let parsed;
       try {
-        parsed = new URL(useBundler || commandValues[0]);
+        parsed = new URL(useBundler);
       } catch (e) {
-        console.log(clc.red(`${useBundler ? '[--use-bundler]' : '[' + command + ']'} Invalid url format`));
+        console.log(clc.red('[--use-bundler] Invalid url format'));
         if (partialArgs.debug) console.log(e);
         process.exit(1);
       }

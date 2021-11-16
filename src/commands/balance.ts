@@ -8,6 +8,7 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+import Bundler from '../utils/bundler';
 
 const command: CommandInterface = {
   name: 'balance',
@@ -34,9 +35,8 @@ const command: CommandInterface = {
 
     if (useBundler) {
       try {
-        const res = await bundler.get(`/account/balance?address=${addy}`);
+        const bal: number = await Bundler.getAddressBalance(bundler, addy);
 
-        const bal: number = res.data.balance;
         console.log(
           `${clc.cyan(addy)} has a bundler balance of ${clc.yellow(
             `AR ${blockweave.ar.winstonToAr(bal.toString(), { formatted: true, decimals: 12, trim: true })}`,
