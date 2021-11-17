@@ -64,6 +64,7 @@ Options                                 Description
 Commands (alias)                        Description
 balance (b)                             Get the current balance of your wallet
 deploy (d) <folder_or_file>             Deploy a directory or file
+fund-bundler <amount>                   Fund your bundler account
 help (h)                                Show usage help for a command
 network (n)                             Get the current network info
 status (s) <txid>                       Check the status of a transaction ID
@@ -72,6 +73,7 @@ version (v)                             Show the current arkb version number
 wallet-export (we)                      Exports a previously saved wallet
 wallet-forget (wf)                      Removes a previously saved wallet
 wallet-save (ws) <wallet_path>          Saves a wallet, removes the need of the --wallet option
+withdraw-bundler <amount>               Withdraw from your bundler balance
 ```
 
 ## Contributing
