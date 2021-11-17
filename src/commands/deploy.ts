@@ -2,12 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import clc from 'cli-color';
 import fg from 'fast-glob';
-import normalize from 'normalize-path';
 import Deploy from '../lib/deploy';
 import cliQuestions from '../utils/cli-questions';
 import IPFS from '../utils/ipfs';
 import { getWallet } from '../utils/wallet';
-import { dirExists, getUserDirectory } from '../utils/utils';
 import { showDeployDetails } from '../utils/showDeployDetails';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
@@ -24,8 +22,10 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import forceOption from '../options/force';
+import bundleOption from '../options/bundle';
 import concurrencyOption from '../options/concurrency';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
+import { getDeployPath } from '../utils/deploy';
 
 const command: CommandInterface = {
   name: 'deploy',
@@ -34,6 +34,7 @@ const command: CommandInterface = {
   options: [
     gatewayOption,
     useBundlerOption,
+    bundleOption,
     feeMultiplierOption,
     tagNameOption,
     tagValueOption,
@@ -63,31 +64,9 @@ const command: CommandInterface = {
       useBundler,
       feeMultiplier,
       autoConfirm,
+      bundle,
       bundler,
     } = args;
-
-    const concurrency = argv.concurrency || 5;
-    const forceRedeploy = argv.force;
-
-    // Check if we have received a command value
-    if (!commandValues || !commandValues.length) {
-      console.log(clc.red('You forgot to set the directory or file that you want to deploy.'));
-      return;
-    }
-
-    const commandValue = commandValues[0];
-    let dir = path.join(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
-    // Normalize for os differences
-    dir = normalize(dir);
-
-    // Check if deploy dir exists
-    if (!dirExists(dir)) {
-      dir = commandValue.replace(/[\/\\]$/, '');
-      if (!dirExists(dir)) {
-        console.log(clc.red(`The directory or file does not exist.`));
-        return;
-      }
-    }
 
     // Get the wallet
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
@@ -96,6 +75,17 @@ const command: CommandInterface = {
       return;
     }
 
+    if (useBundler && bundle) {
+      console.log(clc.red('You can not use a bundler and locally bundle at the same time'));
+      return;
+    }
+
+    const concurrency = argv.concurrency || 5;
+    const forceRedeploy = argv.force;
+
+    // Check and get the specified directory or file
+    const dir = getDeployPath(commandValues);
+
     let files = [dir];
     let isFile = true;
     if (fs.lstatSync(dir).isDirectory()) {
@@ -103,7 +93,7 @@ const command: CommandInterface = {
       isFile = false;
     }
 
-    const deploy = new Deploy(wallet, blockweave, debug, concurrency);
+    const deploy = new Deploy(wallet, blockweave, debug, concurrency, true, bundle);
 
     if (!args.index) {
       args.index = 'index.html';
@@ -130,6 +120,7 @@ const command: CommandInterface = {
       deploy.getBundler(),
       license,
       bundler,
+      bundle,
     );
 
     if (balAfter < 0) {

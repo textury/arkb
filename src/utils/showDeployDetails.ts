@@ -20,6 +20,7 @@ export async function showDeployDetails(
   bundler?: Bundler,
   license?: string,
   bundlerApi?: Api,
+  bundle: boolean = false,
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;
@@ -70,7 +71,7 @@ export async function showDeployDetails(
       .output();
   }
 
-  if (useBundler) {
+  if (useBundler || bundle) {
     const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
     // @ts-ignore
     const txBundle = await bundled.toTransaction(blockweave, wallet);
@@ -89,11 +90,13 @@ export async function showDeployDetails(
   if (license) {
     console.log(`License: ${license}`);
   }
+
   if (useBundler) {
     console.log(`Data items to deploy: ${txs.length - 1} + 1 manifest`);
-  } else {
+  } else if (!bundle) {
     console.log(`Files to deploy: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
   }
+
   console.log(`Total size: ${bytesForHumans(totalSize)}`);
   console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee)`);
   console.log(`Total fee: ${totalFee}`);

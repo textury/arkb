@@ -88,7 +88,7 @@ export default class CliCommands {
           feeMultiplier = feeArgv;
         }
         // tslint:disable-next-line: no-empty
-      } catch {}
+      } catch { }
     }
 
     const useBundler = partialArgs.argv['use-bundler'];
@@ -140,6 +140,7 @@ export default class CliCommands {
       tags,
       feeMultiplier,
       useBundler,
+      bundle: partialArgs.argv.bundle,
       license,
       index: partialArgs.argv.index,
       autoConfirm: partialArgs.argv['auto-confirm'],
