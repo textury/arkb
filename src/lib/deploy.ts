@@ -1,5 +1,4 @@
 import fs, { createReadStream } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 import Blockweave from 'blockweave';
 import mime from 'mime';
@@ -10,7 +9,7 @@ import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import { pipeline } from 'stream/promises';
 import { TxDetail } from '../faces/txDetail';
-import { FileDataItem } from 'arbundles/file';
+import { FileBundle, FileDataItem } from 'arbundles/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
 import { getPackageVersion } from '../utils/utils';
@@ -32,12 +31,16 @@ export default class Deploy {
 
   private community: Community;
 
+  private bundle: FileBundle;
+  private bundledTx: Transaction;
+
   constructor(
     wallet: JWKInterface,
     blockweave: Blockweave,
     public readonly debug: boolean = false,
     public readonly threads: number = 0,
     public readonly logs: boolean = true,
+    public readonly localBundle: boolean = false,
   ) {
     this.wallet = wallet;
     this.blockweave = blockweave;
@@ -66,6 +69,14 @@ export default class Deploy {
 
   getBundler(): Bundler {
     return this.bundler;
+  }
+
+  getBundle(): FileBundle {
+    return this.bundle;
+  }
+
+  getBundledTx(): Transaction {
+    return this.bundledTx;
   }
 
   async prepare(
@@ -158,7 +169,7 @@ export default class Deploy {
         newTags.addTag('File-Hash', hash);
 
         let tx: Transaction | FileDataItem;
-        if (useBundler) {
+        if (useBundler || this.localBundle) {
           tx = await this.bundler.createItem(data, newTags.tags);
         } else {
           tx = await this.buildTransaction(filePath, newTags);
@@ -192,26 +203,44 @@ export default class Deploy {
 
       console.log('Arweave: ' + clc.cyan(`${this.blockweave.config.url}/${this.duplicates[0].id}`));
       return;
-    } else {
-      if (this.logs) {
-        countdown = new clui.Spinner(`Building manifest...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
-        countdown.start();
-      }
+    }
 
-      await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
-      if (this.logs) countdown.stop();
+    if (this.logs) {
+      countdown = new clui.Spinner(`Building manifest...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown.start();
+    }
+
+    await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
+    if (this.logs) countdown.stop();
+
+    if (useBundler || this.localBundle) {
+      this.bundle = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
+
+      // @ts-ignore
+      this.bundledTx = await this.bundle.toTransaction(this.arweave, this.wallet);
+
+      // @ts-ignore
+      await this.arweave.transactions.sign(this.bundledTx, this.wallet);
     }
 
     return this.txs;
   }
 
   async deploy(isFile: boolean = false, useBundler?: string): Promise<string> {
-    let cTotal = this.txs.length;
-    let txBundle: Transaction;
+    let cTotal = this.localBundle ? 1 : this.txs.length;
 
     let countdown: clui.Spinner;
     if (this.logs) {
-      countdown = new clui.Spinner(`Deploying ${cTotal} files...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown = new clui.Spinner(`Deploying ${cTotal} file${cTotal === 1 ? '' : 's'}...`, [
+        '⣾',
+        '⣽',
+        '⣻',
+        '⢿',
+        '⡿',
+        '⣟',
+        '⣯',
+        '⣷',
+      ]);
       countdown.start();
     }
 
@@ -236,11 +265,8 @@ export default class Deploy {
 
       if (target && (await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
-        if (useBundler) {
-          const bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
-          // @ts-ignore
-          txBundle = await bundled.toTransaction(this.blockweave, this.wallet);
-          fee = +(await this.blockweave.ar.winstonToAr(txBundle.reward));
+        if (useBundler || this.localBundle) {
+          fee = +this.bundledTx.reward;
         } else {
           fee = this.txs.reduce((a, txData) => a + +(txData.tx as Transaction).reward, 0);
         }
@@ -255,8 +281,18 @@ export default class Deploy {
             this.wallet,
           );
 
+          let files = `${cTotal} file${isFile ? '' : 's'}`;
+          if (useBundler) {
+            files = `${cTotal} data item${isFile ? '' : 's'}`;
+          }
+
+          let actionMessage = `Deployed ${files} on https://arweave.net/${txid}`;
+          if (this.localBundle) {
+            actionMessage = `Deployed a bundle with ${files}, bundle ID ${this.bundledTx.id} on https://arweave.net/${txid}`;
+          }
+
           tx.addTag('Action', 'Deploy');
-          tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
+          tx.addTag('Message', actionMessage);
           tx.addTag('Service', 'arkb');
           tx.addTag('App-Name', 'arkb');
           tx.addTag('App-Version', getPackageVersion());
@@ -267,7 +303,20 @@ export default class Deploy {
       // tslint:disable-next-line: no-empty
     } catch {}
 
-    await PromisePool.for(this.txs)
+    let toDeploy: TxDetail[] = this.txs;
+    if (this.localBundle) {
+      const hash = await this.toHash(await this.bundle.getRaw());
+      toDeploy = [
+        {
+          filePath: '',
+          hash,
+          tx: this.bundledTx,
+          type: 'Bundle',
+        },
+      ];
+    }
+
+    await PromisePool.for(toDeploy)
       .withConcurrency(this.threads)
       .process(async (txData) => {
         if (this.logs) countdown.message(`Deploying ${cTotal--} files...`);
@@ -281,6 +330,11 @@ export default class Deploy {
             console.log(e);
             console.log(clc.red('Failed to deploy data item:', txData.filePath));
           }
+        } else if (this.localBundle) {
+          console.log('inside');
+          const txRes = await this.bundle.signAndSubmit(this.arweave, this.wallet);
+          console.log(txRes);
+          deployed = true;
         }
 
         if (txData.filePath === '' && txData.hash === '') {
@@ -386,7 +440,7 @@ export default class Deploy {
     tags.addTag('Content-Type', 'application/x.arweave-manifest+json');
 
     let tx: Transaction | FileDataItem;
-    if (useBundler) {
+    if (useBundler || this.localBundle) {
       tx = await this.bundler.createItem(JSON.stringify(data), tags.tags);
     } else {
       tx = await this.blockweave.createTransaction(

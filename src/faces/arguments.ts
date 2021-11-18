@@ -19,6 +19,7 @@ export default interface ArgumentsInterface {
   license: string;
   autoConfirm: boolean;
   tags: Tags;
+  bundle: boolean;
   useBundler: string;
   feeMultiplier: number;
   commands: Map<string, CommandInterface>;

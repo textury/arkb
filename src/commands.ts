@@ -140,6 +140,7 @@ export default class CliCommands {
       tags,
       feeMultiplier,
       useBundler,
+      bundle: partialArgs.argv.bundle,
       license,
       index: partialArgs.argv.index,
       autoConfirm: partialArgs.argv['auto-confirm'],

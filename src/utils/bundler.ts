@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { ArweaveSigner } from 'arbundles';
 import { createData, bundleAndSignData, FileDataItem } from 'arbundles/file';
 import Blockweave from 'blockweave';
