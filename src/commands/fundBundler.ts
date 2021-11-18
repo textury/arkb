@@ -60,7 +60,6 @@ const command: CommandInterface = {
       await blockweave.transactions.sign(tx, wallet);
       await blockweave.transactions.post(tx);
 
-
       console.log(
         `${clc.cyan(addy)} bundler has been funded with ${clc.yellow(
           `AR ${blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 12, trim: true })}`,
