@@ -21,8 +21,8 @@ export async function showDeployDetails(
   license?: string,
   bundlerApi?: Api,
   bundled?: {
-    tx: Transaction,
-    bundle: FileBundle,
+    tx: Transaction;
+    bundle: FileBundle;
   },
 ): Promise<number> {
   let totalSize = 0;

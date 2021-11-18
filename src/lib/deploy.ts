@@ -64,7 +64,7 @@ export default class Deploy {
       this.community = new Community(blockweave, wallet);
 
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
   }
 
   getBundler(): Bundler {
@@ -133,7 +133,7 @@ export default class Deploy {
 
           if (!confirmed) {
             // tslint:disable-next-line: no-empty
-            const res = await this.arweave.api.get(`tx/${cached.id}/status`).catch(() => { });
+            const res = await this.arweave.api.get(`tx/${cached.id}/status`).catch(() => {});
             if (res && res.data && res.data.number_of_confirmations) {
               confirmed = true;
             }
@@ -301,7 +301,7 @@ export default class Deploy {
         }
       }
       // tslint:disable-next-line: no-empty
-    } catch { }
+    } catch {}
 
     let toDeploy: TxDetail[] = this.txs;
     if (this.localBundle) {
