@@ -65,6 +65,8 @@ const command: CommandInterface = {
           `AR ${blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 12, trim: true })}`,
         )}`,
       );
+
+      console.log(clc.green(tx.id));
     } catch (e) {
       clc.red('Error funding bundler address, see more info with the --debug option.');
       if (debug) console.log(e);
