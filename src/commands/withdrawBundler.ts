@@ -1,5 +1,4 @@
 import clc from 'cli-color';
-import { deepHash } from 'arbundles';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { getWallet } from '../utils/wallet';
@@ -14,7 +13,7 @@ import Transfer from '../lib/transfer';
 const command: CommandInterface = {
   name: 'withdraw-bundler',
   description: 'Withdraw from your bundler balance',
-  args: ['amount_in_ar'],
+  args: ['amount'],
   usage: ['0.3'],
   options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {

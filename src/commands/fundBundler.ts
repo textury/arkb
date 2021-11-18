@@ -12,7 +12,7 @@ import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 const command: CommandInterface = {
   name: 'fund-bundler',
   description: 'Fund your bundler account',
-  args: ['amount_in_ar'],
+  args: ['amount'],
   usage: ['0.3'],
   options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
