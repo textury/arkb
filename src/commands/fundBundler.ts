@@ -60,11 +60,15 @@ const command: CommandInterface = {
       await blockweave.transactions.sign(tx, wallet);
       await blockweave.transactions.post(tx);
 
+      const url = `https://arweave.net/${tx.id}`;
+
       console.log(
         `${clc.cyan(addy)} bundler has been funded with ${clc.yellow(
           `AR ${blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 12, trim: true })}`,
         )}`,
       );
+
+      console.log(clc.green(url));
     } catch (e) {
       clc.red('Error funding bundler address, see more info with the --debug option.');
       if (debug) console.log(e);
