@@ -14,8 +14,8 @@ import Transfer from '../lib/transfer';
 const command: CommandInterface = {
   name: 'withdraw-bundler',
   description: 'Withdraw from your bundler balance',
-  args: ['amount_in_winston'],
-  usage: ['700000'],
+  args: ['amount_in_ar'],
+  usage: ['0.3'],
   options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler } = args;
@@ -26,7 +26,9 @@ const command: CommandInterface = {
       return;
     }
 
-    const amount = parseInt(commandValues[0], 10);
+    // amount in ar
+    const amnt = commandValues[0];
+    const amount = parseInt(blockweave.ar.arToWinston(amnt), 10);
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 
     if (!wallet) {
@@ -49,15 +51,7 @@ const command: CommandInterface = {
       }
 
       // Success response
-      console.log(
-        `${clc.cyan(addy)} has been funded with ${clc.yellow(
-          `AR ${blockweave.ar.winstonToAr(amount.toString(), {
-            formatted: true,
-            decimals: 12,
-            trim: true,
-          })} from bundler.`,
-        )}`,
-      );
+      console.log(`${clc.cyan(addy)} has been funded with ${clc.yellow(`AR ${amnt} from bundler.`)}`);
     } catch (e) {
       console.log(clc.red('Error withdrawing to wallet'));
       if (debug) console.log(e);

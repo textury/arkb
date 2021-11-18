@@ -12,8 +12,8 @@ import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 const command: CommandInterface = {
   name: 'fund-bundler',
   description: 'Fund your bundler account',
-  args: ['amount_in_winston'],
-  usage: ['70000'],
+  args: ['amount_in_ar'],
+  usage: ['0.3'],
   options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler } = args;
@@ -54,7 +54,7 @@ const command: CommandInterface = {
       const tx = await blockweave.createTransaction(
         {
           target: bundlerAddress,
-          quantity: amount.toString(),
+          quantity: blockweave.ar.arToWinston(amount.toString()),
         },
         wallet,
       );
@@ -63,9 +63,7 @@ const command: CommandInterface = {
       await blockweave.transactions.sign(tx, wallet);
       await blockweave.transactions.post(tx);
 
-      const ar = blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 5, trim: true });
-
-      console.log(clc.cyan(`Bundler funded with ${ar} AR, transaction ID: ${tx.id}`));
+      console.log(clc.cyan(`Bundler funded with ${amount.toString()} AR, transaction ID: ${tx.id}`));
     } catch (e) {
       clc.red('Error funding bundler address, see more info with the --debug option.');
       if (debug) console.log(e);
