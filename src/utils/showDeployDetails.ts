@@ -74,7 +74,7 @@ export async function showDeployDetails(
       .output();
   }
 
-  if (bundled) {
+  if (bundled.tx) {
     const size = bundled.tx.data_size;
     totalSize += +size;
 
