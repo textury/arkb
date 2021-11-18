@@ -60,13 +60,9 @@ const command: CommandInterface = {
       await blockweave.transactions.sign(tx, wallet);
       await blockweave.transactions.post(tx);
 
-      console.log(
-        `${clc.cyan(addy)} bundler has been funded with ${clc.yellow(
-          `AR ${blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 12, trim: true })}`,
-        )}`,
-      );
+      const ar = blockweave.ar.winstonToAr(amount.toString(), { formatted: true, decimals: 5, trim: true });
 
-      console.log(clc.green(tx.id));
+      console.log(clc.cyan(`Bundler funded with ${ar} AR, transaction ID: ${tx.id}`));
     } catch (e) {
       clc.red('Error funding bundler address, see more info with the --debug option.');
       if (debug) console.log(e);
