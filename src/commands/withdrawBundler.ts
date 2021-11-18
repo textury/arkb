@@ -1,5 +1,4 @@
 import clc from 'cli-color';
-import { deepHash } from 'arbundles';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { getWallet } from '../utils/wallet';
@@ -7,13 +6,16 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import timeoutOption from '../options/timeout';
+import useBundlerOption from '../options/useBundler';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transfer from '../lib/transfer';
 
 const command: CommandInterface = {
   name: 'withdraw-bundler',
   description: 'Withdraw from your bundler balance',
-  options: [walletOption, debugOption, helpOption, timeoutOption],
+  args: ['amount'],
+  usage: ['0.3'],
+  options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler } = args;
 
@@ -23,7 +25,9 @@ const command: CommandInterface = {
       return;
     }
 
-    const amount = parseInt(commandValues[0], 10);
+    // amount in ar
+    const amnt = commandValues[0];
+    const amount = parseInt(blockweave.ar.arToWinston(amnt), 10);
     const wallet: JWKInterface = await getWallet(walletPath, config, debug);
 
     if (!wallet) {
@@ -46,15 +50,7 @@ const command: CommandInterface = {
       }
 
       // Success response
-      console.log(
-        `${clc.cyan(addy)} has been funded with ${clc.yellow(
-          `AR ${blockweave.ar.winstonToAr(amount.toString(), {
-            formatted: true,
-            decimals: 12,
-            trim: true,
-          })} from bundler.`,
-        )}`,
-      );
+      console.log(`${clc.cyan(addy)} has been funded with ${clc.yellow(`AR ${amnt} from bundler.`)}`);
     } catch (e) {
       console.log(clc.red('Error withdrawing to wallet'));
       if (debug) console.log(e);

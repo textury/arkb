@@ -7,6 +7,7 @@ import timeoutOption from '../options/timeout';
 import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
+import useBundlerOption from '../options/useBundler';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Bundler from '../utils/bundler';
 
@@ -14,7 +15,7 @@ const command: CommandInterface = {
   name: 'balance',
   aliases: ['b'],
   description: 'Get the current balance of your wallet',
-  options: [gatewayOption, timeoutOption, walletOption, debugOption, helpOption],
+  options: [gatewayOption, timeoutOption, walletOption, debugOption, helpOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, config, debug, blockweave, useBundler, bundler } = args;
 
