@@ -334,6 +334,7 @@ export default class Deploy {
           console.log('inside');
           const txRes = await this.bundle.signAndSubmit(this.arweave, this.wallet);
           console.log(txRes);
+          deployed = true;
         }
 
         if (txData.filePath === '' && txData.hash === '') {
