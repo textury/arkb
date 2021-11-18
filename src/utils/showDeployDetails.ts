@@ -1,6 +1,6 @@
 import CLI from 'clui';
 import clc from 'cli-color';
-import { FileDataItem } from 'arbundles/file';
+import { FileBundle, FileDataItem } from 'arbundles/file';
 import path from 'path';
 import { TxDetail } from '../faces/txDetail';
 import Bundler from './bundler';
@@ -20,7 +20,10 @@ export async function showDeployDetails(
   bundler?: Bundler,
   license?: string,
   bundlerApi?: Api,
-  bundle: boolean = false,
+  bundled?: {
+    tx: Transaction,
+    bundle: FileBundle,
+  },
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;
@@ -71,12 +74,22 @@ export async function showDeployDetails(
       .output();
   }
 
-  if (useBundler || bundle) {
-    const bundled = await bundler.bundleAndSign(txs.map((t) => t.tx) as FileDataItem[]);
-    // @ts-ignore
-    const txBundle = await bundled.toTransaction(blockweave, wallet);
-    deployFee = +txBundle.reward;
-    totalSize = +txBundle.data_size;
+  if (bundled) {
+    const size = bundled.tx.data_size;
+    totalSize += +size;
+
+    const reward = bundled.tx.reward;
+    const ar = blockweave.ar.winstonToAr(reward);
+    deployFee += +reward;
+
+    new Line()
+      .column(bundled.tx.id, 45)
+      .column(bytesForHumans(+size), 15)
+      .column(ar, 17)
+      .column('Bundle', 30)
+      .column('-', 20)
+      .fill()
+      .output();
   }
 
   const fee = parseInt((deployFee * 0.1).toString(), 10);
@@ -93,7 +106,9 @@ export async function showDeployDetails(
 
   if (useBundler) {
     console.log(`Data items to deploy: ${txs.length - 1} + 1 manifest`);
-  } else if (!bundle) {
+  } else if (bundled) {
+    console.log(`All items will be deployed in a single bundle`);
+  } else {
     console.log(`Files to deploy: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
   }
 

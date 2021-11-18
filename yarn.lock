@@ -763,7 +763,7 @@ ar-gql@^0.0.6:
   dependencies:
     axios "^0.21.1"
 
-arbundles@^0.2.10:
+arbundles@^0.2.11:
   version "0.2.11"
   resolved "https://registry.yarnpkg.com/arbundles/-/arbundles-0.2.11.tgz#866d69c8769a6f150f6577736ac95b4a602a75eb"
   integrity sha512-tjMDE9oL4a3w1trsTp4dU0RrQnoVxK6XrJXzVdPyRn9XfIAJ48HjMaCA78LYXVfKhXrP7TU8opOHR4qYFRs5Gw==

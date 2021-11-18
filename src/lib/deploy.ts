@@ -31,6 +31,9 @@ export default class Deploy {
 
   private community: Community;
 
+  private bundle: FileBundle;
+  private bundledTx: Transaction;
+
   constructor(
     wallet: JWKInterface,
     blockweave: Blockweave,
@@ -66,6 +69,14 @@ export default class Deploy {
 
   getBundler(): Bundler {
     return this.bundler;
+  }
+
+  getBundle(): FileBundle {
+    return this.bundle;
+  }
+
+  getBundledTx(): Transaction {
+    return this.bundledTx;
   }
 
   async prepare(
@@ -202,6 +213,16 @@ export default class Deploy {
     await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
     if (this.logs) countdown.stop();
 
+    if (useBundler || this.localBundle) {
+      this.bundle = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
+
+      // @ts-ignore
+      this.bundledTx = await this.bundle.toTransaction(this.arweave, this.wallet);
+
+      // @ts-ignore
+      await this.arweave.transactions.sign(this.bundledTx, this.wallet);
+    }
+
     return this.txs;
   }
 
@@ -210,7 +231,16 @@ export default class Deploy {
 
     let countdown: clui.Spinner;
     if (this.logs) {
-      countdown = new clui.Spinner(`Deploying ${cTotal} file${cTotal === 1 ? '' : 's'}...`, ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']);
+      countdown = new clui.Spinner(`Deploying ${cTotal} file${cTotal === 1 ? '' : 's'}...`, [
+        '⣾',
+        '⣽',
+        '⣻',
+        '⢿',
+        '⡿',
+        '⣟',
+        '⣯',
+        '⣷',
+      ]);
       countdown.start();
     }
 
@@ -224,8 +254,6 @@ export default class Deploy {
       }
     }
 
-    let bundled: FileBundle;
-    let txBundle: Transaction;
     try {
       const res = await this.arweave.api.get('cEQLlWFkoeFuO7dIsdFbMhsGPvkmRI9cuBxv0mdn0xU');
       if (!res || res.status !== 200) {
@@ -238,10 +266,7 @@ export default class Deploy {
       if (target && (await this.blockweave.wallets.jwkToAddress(this.wallet)) !== target) {
         let fee: number;
         if (useBundler || this.localBundle) {
-          bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
-          // @ts-ignore
-          txBundle = await bundled.toTransaction(this.blockweave, this.wallet);
-          fee = +txBundle.reward;
+          fee = +this.bundledTx.reward;
         } else {
           fee = this.txs.reduce((a, txData) => a + +(txData.tx as Transaction).reward, 0);
         }
@@ -256,8 +281,18 @@ export default class Deploy {
             this.wallet,
           );
 
+          let files = `file${cTotal} ${isFile ? '' : 's'}`;
+          if (useBundler) {
+            files = `data item${cTotal} ${isFile ? '' : 's'}`;
+          }
+
+          let actionMessage = `Deployed ${files} on https://arweave.net/${txid}`;
+          if (this.localBundle) {
+            actionMessage = `Deployed a bundle with ${files}, bundle ID ${this.bundledTx.id} on https://arweave.net/${txid}`;
+          }
+
           tx.addTag('Action', 'Deploy');
-          tx.addTag('Message', `Deployed ${cTotal} ${isFile ? 'file' : 'files'} on https://arweave.net/${txid}`);
+          tx.addTag('Message', actionMessage);
           tx.addTag('Service', 'arkb');
           tx.addTag('App-Name', 'arkb');
           tx.addTag('App-Version', getPackageVersion());
@@ -270,19 +305,15 @@ export default class Deploy {
 
     let toDeploy: TxDetail[] = this.txs;
     if (this.localBundle) {
-      if (!txBundle) {
-        bundled = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
-        // @ts-ignore
-        txBundle = await bundled.toTransaction(this.blockweave, this.wallet);
-      }
-
-      const hash = await this.toHash(await bundled.getRaw());
-      toDeploy = [{
-        filePath: '',
-        hash,
-        tx: txBundle,
-        type: 'Bundle'
-      }];
+      const hash = await this.toHash(await this.bundle.getRaw());
+      toDeploy = [
+        {
+          filePath: '',
+          hash,
+          tx: this.bundledTx,
+          type: 'Bundle',
+        },
+      ];
     }
 
     await PromisePool.for(toDeploy)
@@ -299,6 +330,10 @@ export default class Deploy {
             console.log(e);
             console.log(clc.red('Failed to deploy data item:', txData.filePath));
           }
+        } else if (this.localBundle) {
+          console.log('inside');
+          const txRes = await this.bundle.signAndSubmit(this.arweave, this.wallet);
+          console.log(txRes);
         }
 
         if (txData.filePath === '' && txData.hash === '') {

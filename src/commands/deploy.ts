@@ -110,6 +110,7 @@ const command: CommandInterface = {
       feeMultiplier,
       forceRedeploy,
     );
+
     const balAfter = await showDeployDetails(
       txs,
       wallet,
@@ -120,7 +121,10 @@ const command: CommandInterface = {
       deploy.getBundler(),
       license,
       bundler,
-      bundle,
+      {
+        tx: deploy.getBundledTx(),
+        bundle: deploy.getBundle(),
+      },
     );
 
     if (balAfter < 0) {
