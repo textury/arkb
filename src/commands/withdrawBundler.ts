@@ -7,13 +7,16 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import timeoutOption from '../options/timeout';
+import useBundlerOption from '../options/useBundler';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transfer from '../lib/transfer';
 
 const command: CommandInterface = {
   name: 'withdraw-bundler',
   description: 'Withdraw from your bundler balance',
-  options: [walletOption, debugOption, helpOption, timeoutOption],
+  args: ['amount_in_winston'],
+  usage: ['700000'],
+  options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler } = args;
 

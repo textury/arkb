@@ -6,12 +6,15 @@ import walletOption from '../options/wallet';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
 import timeoutOption from '../options/timeout';
+import useBundlerOption from '../options/useBundler';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 
 const command: CommandInterface = {
   name: 'fund-bundler',
   description: 'Fund your bundler account',
-  options: [walletOption, debugOption, helpOption, timeoutOption],
+  args: ['amount_in_winston'],
+  usage: ['70000'],
+  options: [walletOption, debugOption, helpOption, timeoutOption, useBundlerOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, bundler, debug, config, blockweave, commandValues, useBundler } = args;
 
