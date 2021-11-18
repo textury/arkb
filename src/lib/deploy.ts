@@ -281,9 +281,9 @@ export default class Deploy {
             this.wallet,
           );
 
-          let files = `file${cTotal} ${isFile ? '' : 's'}`;
+          let files = `${cTotal} file${isFile ? '' : 's'}`;
           if (useBundler) {
-            files = `data item${cTotal} ${isFile ? '' : 's'}`;
+            files = `${cTotal} data item${isFile ? '' : 's'}`;
           }
 
           let actionMessage = `Deployed ${files} on https://arweave.net/${txid}`;
