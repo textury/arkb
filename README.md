@@ -58,7 +58,8 @@ Options                                 Description
 --tag-name <name>                       Set a tag name
 --tag-value <value>                     Set a tag value
 --timeout -t <number>                   Set the request timeout
---use-bundler <host_or_ip>              Use an ans104 bundler
+--bundle                                Locally bundle your files and deploy to Arweave
+--use-bundler <host_or_ip>              Use an ans104 bundler service
 --wallet -w <wallet_path>               Set the key file path
 
 Commands (alias)                        Description
