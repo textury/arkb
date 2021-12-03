@@ -49,6 +49,7 @@
     "inquirer": "^8.1.2",
     "ipfs-http-client": "^52.0.1",
     "ipfs-only-hash": "^4.0.0",
+    "it-last": "^1.0.6",
     "mime": "^2.5.2",
     "minimist": "^1.2.5",
     "normalize-path": "^3.0.0",
