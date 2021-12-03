@@ -5,6 +5,8 @@ import fg from 'fast-glob';
 import Deploy from '../lib/deploy';
 import cliQuestions from '../utils/cli-questions';
 import IPFS from '../utils/ipfs';
+import { globSource } from 'ipfs-http-client';
+import last from 'it-last';
 import { getWallet } from '../utils/wallet';
 import { showDeployDetails } from '../utils/showDeployDetails';
 import CommandInterface from '../faces/command';
@@ -148,12 +150,29 @@ const command: CommandInterface = {
 
     if (ipfsPublish) {
       const ipfs = new IPFS();
-      const ipfsHash = await ipfs.deploy(dir);
+      let ipf;
+      let ipfsHash: string;
+      const buffer = [];
+      let buf: Buffer;
+      try {
+        ipf = await last(globSource(dir, { recursive: true }));
 
-      console.log('');
-      console.log(clc.green('IPFS deployed! Main CID:'));
+        ipf.content.on('data', (chunk) => {
+          buffer.push(chunk);
+        });
 
-      console.log(clc.cyan(ipfsHash.cid));
+        ipf.content.on('end', async () => {
+          buf = Buffer.concat(buffer);
+          // Generate the ipfs cid
+          ipfsHash = await ipfs.hash(buf);
+          console.log('');
+          console.log(clc.green('IPFS deployed! Main CID:'));
+
+          console.log(clc.cyan(ipfsHash));
+        });
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     const manifestTx: string = await deploy.deploy(isFile, useBundler);
