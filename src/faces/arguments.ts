@@ -25,4 +25,5 @@ export default interface ArgumentsInterface {
   commands: Map<string, CommandInterface>;
   options: Map<string, OptionInterface>;
   bundler?: Api;
+  colors: boolean;
 }

@@ -148,6 +148,7 @@ export default class CliCommands {
       commands: this.commands,
       options: this.options,
       bundler: this.bundler,
+      colors: partialArgs.argv.colors,
     };
 
     if (this.commands.has(command)) {
