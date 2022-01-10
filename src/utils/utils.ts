@@ -6,6 +6,7 @@ import Blockweave from 'blockweave';
 import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
+import clc from 'cli-color';
 
 export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Blockweave {
   const timeout = argv.timeout || 20000;
@@ -78,3 +79,18 @@ export function snakeCaseToTitleCase(snake_case: string): string {
 
   return sentence.join(' ');
 }
+
+/**
+ *
+ * @param colors colors option (--colors) set in cli
+ * @param text text to parsed
+ * @param color color to be parsed to
+ * @returns parsed
+ */
+export const parseColor = (colors: boolean, text: string, color?: string): string => {
+  if (colors === false) {
+    return text;
+  } else {
+    return clc[color](text);
+  }
+};
