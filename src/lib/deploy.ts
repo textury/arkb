@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import Blockweave from 'blockweave';
 import mime from 'mime';
 import clui from 'clui';
-import clc from 'cli-color';
 import PromisePool from '@supercharge/promise-pool';
 import IPFS from '../utils/ipfs';
 import Community from 'community-js';
@@ -12,7 +11,7 @@ import { TxDetail } from '../faces/txDetail';
 import { FileBundle, FileDataItem } from 'arbundles/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
-import { getPackageVersion } from '../utils/utils';
+import { getPackageVersion, parseColor } from '../utils/utils';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
@@ -89,6 +88,7 @@ export default class Deploy {
     useBundler?: string,
     feeMultiplier?: number,
     forceRedeploy: boolean = false,
+    colors: boolean = true
   ) {
     this.txs = [];
 
@@ -193,15 +193,15 @@ export default class Deploy {
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
     if (isFile && this.duplicates.length) {
-      console.log(clc.red('File already deployed:'));
+      console.log(parseColor(colors, 'File already deployed:', 'red'));
 
       if (toIpfs) {
         const data = fs.readFileSync(files[0]);
         const cid = await this.ipfs.hash(data);
-        console.log(`IPFS: ${clc.cyan(cid)}`);
+        console.log(`IPFS: ${parseColor(colors, cid, 'cyan')}`);
       }
 
-      console.log('Arweave: ' + clc.cyan(`${this.blockweave.config.url}/${this.duplicates[0].id}`));
+      console.log('Arweave: ' + parseColor(colors, `${this.blockweave.config.url}/${this.duplicates[0].id}`, 'cyan'));
       return;
     }
 
@@ -226,7 +226,7 @@ export default class Deploy {
     return this.txs;
   }
 
-  async deploy(isFile: boolean = false, useBundler?: string): Promise<string> {
+  async deploy(isFile: boolean = false, useBundler?: string, colors: boolean = true): Promise<string> {
     let cTotal = this.localBundle ? 1 : this.txs.length;
 
     let countdown: clui.Spinner;
@@ -328,7 +328,7 @@ export default class Deploy {
             deployed = true;
           } catch (e) {
             console.log(e);
-            console.log(clc.red('Failed to deploy data item:', txData.filePath));
+            console.log(parseColor(colors, 'Failed to deploy data item: ' + txData.filePath, 'red'));
           }
         } else if (this.localBundle) {
           console.log('inside');
@@ -354,7 +354,7 @@ export default class Deploy {
             if (this.debug) {
               console.log(e);
               console.log(
-                clc.red(`Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`),
+                parseColor(colors, `Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`, 'red'),
               );
             }
           }
@@ -367,14 +367,14 @@ export default class Deploy {
           } catch (e) {
             if (this.debug) {
               console.log(e);
-              console.log(clc.red(`Failed to upload ${txData.filePath} using normal post!`));
+              console.log(parseColor(colors, `Failed to upload ${txData.filePath} using normal post!`, 'red'));
             }
           }
         }
       });
 
     if (this.logs) countdown.stop();
-    await this.cache.save();
+    await this.cache.save(colors);
 
     return txid;
   }

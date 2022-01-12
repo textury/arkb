@@ -87,9 +87,9 @@ export function snakeCaseToTitleCase(snake_case: string): string {
  * @param color color to be parsed to
  * @returns parsed
  */
-export const parseColor = (colors: boolean, text: string, color?: string): string => {
+export const parseColor = (colors: boolean, text: string | number, color?: string): string => {
   if (colors === false) {
-    return text;
+    return text as string;
   } else {
     return clc[color](text);
   }

@@ -5,7 +5,7 @@ import path from 'path';
 import { TxDetail } from '../faces/txDetail';
 import Bundler from './bundler';
 import Blockweave from 'blockweave';
-import { bytesForHumans } from './utils';
+import { bytesForHumans, parseColor } from './utils';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Api from 'arweave/node/lib/api';
@@ -24,17 +24,18 @@ export async function showDeployDetails(
     tx: Transaction;
     bundle: FileBundle;
   },
+  colors?: boolean
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;
 
   const Line = CLI.Line;
   new Line()
-    .column('ID', 45, [clc.cyan])
-    .column('Size', 15, [clc.cyan])
-    .column('Fee', 17, [clc.cyan])
-    .column('Type', 30, [clc.cyan])
-    .column('Path', 20, [clc.cyan])
+    .column('ID', 45, colors !== false ? [clc.cyan] : undefined)
+    .column('Size', 15, colors !== false ? [clc.cyan] : undefined)
+    .column('Fee', 17, colors !== false ? [clc.cyan] : undefined)
+    .column('Type', 30, colors !== false ? [clc.cyan] : undefined)
+    .column('Path', 20, colors !== false ? [clc.cyan] : undefined)
     .fill()
     .output();
 
@@ -99,7 +100,7 @@ export async function showDeployDetails(
   const totalFee = blockweave.ar.winstonToAr((deployFee + fee).toString());
 
   console.log('');
-  console.log(clc.cyan('Summary'));
+  console.log(parseColor(colors, 'Summary', 'cyan'));
   if (license) {
     console.log(`License: ${license}`);
   }
@@ -130,7 +131,7 @@ export async function showDeployDetails(
   const balAfter = +bal - +totalFee;
 
   console.log('');
-  console.log(clc.cyan('Wallet'));
+  console.log(parseColor(colors, 'Wallet', 'cyan'));
   console.log(`Address: ${addy}`);
   console.log(`Current balance: ${bal}`);
   console.log(`Balance after deploy: ${balAfter}`);

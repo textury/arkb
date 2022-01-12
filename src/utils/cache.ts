@@ -1,6 +1,6 @@
-import clc from 'cli-color';
 import fs from 'fs';
 import path from 'path';
+import { parseColor } from './utils';
 
 export interface CacheDataInterface {
   id: string;
@@ -53,12 +53,12 @@ export default class Cache {
     return this.cache.size;
   }
 
-  public save(): Promise<void> {
+  public save(colors?: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       fs.writeFile(this.cacheFile, JSON.stringify(this.entries()), 'utf8', (err) => {
         if (err) {
           if (this.debug) {
-            console.log(clc.red('Error saving cache: ' + err.message));
+            console.log(parseColor(colors, 'Error saving cache: ' + err.message, 'red'));
             reject(err);
           }
         }

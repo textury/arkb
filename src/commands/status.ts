@@ -1,4 +1,3 @@
-import clc from 'cli-color';
 import ArgumentsInterface from '../faces/arguments';
 import CommandInterface from '../faces/command';
 import { status } from '../lib/status';
@@ -6,19 +5,21 @@ import gatewayOption from '../options/gateway';
 import timeoutOption from '../options/timeout';
 import debugOption from '../options/debug';
 import helpOption from '../options/help';
+import noColorsOption from '../options/noColors';
+import { parseColor } from '../utils/utils';
 
 const command: CommandInterface = {
   name: 'status',
   aliases: ['s'],
   description: 'Check the status of a transaction ID',
-  options: [gatewayOption, timeoutOption, debugOption, helpOption],
+  options: [gatewayOption, timeoutOption, debugOption, helpOption, noColorsOption],
   args: ['txid'],
   usage: ['am2NyCEGnxXBqhUGKL8cAv6wbkGKVtgIcdtv9g9QKG1'],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, blockweave, debug } = args;
+    const { commandValues, blockweave, debug, colors } = args;
 
     if (!commandValues || !commandValues.length) {
-      console.log(clc.redBright('Error: Missing transaction ID'));
+      console.log(parseColor(colors, 'Error: Missing transaction ID', 'redBright'));
       return;
     }
 
@@ -32,38 +33,38 @@ const command: CommandInterface = {
       let responseStatus = '';
       switch (res.status) {
         case 200:
-          responseStatus = clc.green('200 - Accepted');
+          responseStatus = parseColor(colors, '200 - Accepted', 'green');
           break;
         case 202:
-          responseStatus = clc.yellow('202 - Pending');
+          responseStatus = parseColor(colors, '202 - Pending', 'yellow');
           break;
         case 400:
-          responseStatus = clc.red(`400 - ${res.errorMessage}`);
+          responseStatus = parseColor(colors, `400 - ${res.errorMessage}`, 'red');
           break;
         case 404:
-          responseStatus = clc.red(`404 - Not Found`);
+          responseStatus = parseColor(colors, `404 - Not Found`, 'red');
           break;
         default:
-          responseStatus = clc.red(`${res.status} - ${res.errorMessage}`);
+          responseStatus = parseColor(colors, `${res.status} - ${res.errorMessage}`, 'red');
           break;
       }
-      console.log(`Trasaction ID: ${clc.blue(txid)}
+      console.log(`Trasaction ID: ${parseColor(colors, txid, 'blue')}
 
 Status: ${responseStatus}`);
 
       if (res.status === 200) {
-        console.log(` - Block: ${clc.cyan(res.blockHeight)}
- - Block hash: ${clc.cyan(res.blockHash)}
- - Confirmations: ${clc.cyan(res.confirmations)}
+        console.log(` - Block: ${parseColor(colors, res.blockHeight, 'cyan')}
+ - Block hash: ${parseColor(colors, res.blockHash, 'cyan')}
+ - Confirmations: ${parseColor(colors, res.confirmations, 'cyan')}
 
-Transaction URL: ${clc.cyan(`${arweaveUri}/${txid}`)}
-Block URL: ${clc.cyan(`${arweaveUri}/block/hash/${res.blockHash}`)}
+Transaction URL: ${parseColor(colors, `${arweaveUri}/${txid}`, 'cyan')}
+Block URL: ${parseColor(colors, `${arweaveUri}/block/hash/${res.blockHash}`, 'cyan')}
 
-Transaction explorer URL: ${clc.cyan(`https://viewblock.io/arweave/tx/${txid}`)}
-Block explorer URL: ${clc.cyan(`https://viewblock.io/arweave/block/${res.blockHeight}`)}`);
+Transaction explorer URL: ${parseColor(colors, `https://viewblock.io/arweave/tx/${txid}`, 'cyan')}
+Block explorer URL: ${parseColor(colors, `https://viewblock.io/arweave/block/${res.blockHeight}`)}`, 'cyan');
       }
     } catch (e) {
-      console.log(clc.red(`Unable to reach ${blockweave.config.url} - ${e.message}`));
+      console.log(parseColor(colors, `Unable to reach ${blockweave.config.url} - ${e.message}`, 'red'));
       if (debug) console.log(e);
     }
   },

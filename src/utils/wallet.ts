@@ -1,24 +1,24 @@
 import fs from 'fs';
 import { JWKInterface } from 'arweave/node/lib/wallet';
-import clc from 'cli-color';
 import cliQuestions from './cli-questions';
 import Crypter from './crypter';
 import Conf from 'conf';
+import { parseColor } from './utils';
 
-export async function getWallet(walletPath: string, config: Conf, debug: boolean) {
+export async function getWallet(walletPath: string, config: Conf, debug: boolean, colors?: boolean) {
   let wallet: JWKInterface;
   const walletEncr: string = config.get('wallet') as string;
 
   if (walletPath) {
     if (typeof walletPath !== 'string') {
-      console.log(clc.red('The wallet must be specified.'));
+      console.log(parseColor(colors, 'The wallet must be specified.', 'red'));
       return;
     }
 
     try {
       wallet = JSON.parse(fs.readFileSync(walletPath, 'utf8'));
     } catch (e) {
-      console.log(clc.red('Invalid wallet path.'));
+      console.log(parseColor(colors, 'Invalid wallet path.', 'red'));
       if (debug) console.log(e);
       return;
     }
@@ -32,7 +32,7 @@ export async function getWallet(walletPath: string, config: Conf, debug: boolean
         const decrypted = crypter.decrypt(Buffer.from(walletEncr, 'base64'));
         wallet = JSON.parse(decrypted.toString());
       } catch (e) {
-        console.log(clc.red('Invalid password.'));
+        console.log(parseColor(colors, 'Invalid password.', 'red'));
         if (debug) console.log(e);
         return;
       }
@@ -40,7 +40,7 @@ export async function getWallet(walletPath: string, config: Conf, debug: boolean
   }
 
   if (!wallet) {
-    console.log(clc.red('Save a wallet with `arkb wallet-save file-path.json`.'));
+    console.log(parseColor(colors, 'Save a wallet with `arkb wallet-save file-path.json`.', 'red'));
     return;
   }
 

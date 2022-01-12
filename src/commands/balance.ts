@@ -20,7 +20,7 @@ const command: CommandInterface = {
   execute: async (args: ArgumentsInterface): Promise<void> => {
     const { walletPath, config, debug, blockweave, useBundler, bundler, colors } = args;
 
-    const wallet: JWKInterface = await getWallet(walletPath, config, debug);
+    const wallet: JWKInterface = await getWallet(walletPath, config, debug, colors);
 
     if (!wallet) {
       console.log(parseColor(colors, 'Please set a wallet or run with the --wallet option.', 'red'));

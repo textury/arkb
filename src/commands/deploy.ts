@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import clc from 'cli-color';
 import fg from 'fast-glob';
 import Deploy from '../lib/deploy';
 import cliQuestions from '../utils/cli-questions';
@@ -24,8 +23,10 @@ import helpOption from '../options/help';
 import forceOption from '../options/force';
 import bundleOption from '../options/bundle';
 import concurrencyOption from '../options/concurrency';
+import noColorsOption from '../options/noColors';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import { getDeployPath } from '../utils/deploy';
+import { parseColor } from '../utils/utils';
 
 const command: CommandInterface = {
   name: 'deploy',
@@ -47,6 +48,7 @@ const command: CommandInterface = {
     forceOption,
     debugOption,
     helpOption,
+    noColorsOption
   ],
   args: ['folder_or_file'],
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
@@ -66,25 +68,26 @@ const command: CommandInterface = {
       autoConfirm,
       bundle,
       bundler,
+      colors
     } = args;
 
     // Get the wallet
-    const wallet: JWKInterface = await getWallet(walletPath, config, debug);
+    const wallet: JWKInterface = await getWallet(walletPath, config, debug, colors);
     if (!wallet) {
-      console.log(clc.red('Please save a wallet or run with the --wallet option.'));
+      console.log(parseColor(colors, 'Please save a wallet or run with the --wallet option.', 'red'));
       return;
     }
 
     if (useBundler && bundle) {
-      console.log(clc.red('You can not use a bundler and locally bundle at the same time'));
+      console.log(parseColor(colors, 'You can not use a bundler and locally bundle at the same time', 'red'));
       return;
     }
 
     const concurrency = argv.concurrency || 5;
     const forceRedeploy = argv.force;
-
+ 
     // Check and get the specified directory or file
-    const dir = getDeployPath(commandValues);
+    const dir = getDeployPath(commandValues, colors);
 
     let files = [dir];
     let isFile = true;
@@ -109,6 +112,7 @@ const command: CommandInterface = {
       useBundler,
       feeMultiplier,
       forceRedeploy,
+      colors
     );
 
     const balAfter = await showDeployDetails(
@@ -125,13 +129,14 @@ const command: CommandInterface = {
         tx: deploy.getBundledTx(),
         bundle: deploy.getBundle(),
       },
+      colors
     );
 
     if (balAfter < 0) {
       console.log(
         useBundler
-          ? clc.red("You don't have enough bundler balance for this deploy.")
-          : clc.red("You don't have enough balance for this deploy."),
+          ? parseColor(colors, "You don't have enough bundler balance for this deploy.", 'red')
+          : parseColor(colors, "You don't have enough balance for this deploy.", 'red'),
       );
       return;
     }
@@ -142,7 +147,7 @@ const command: CommandInterface = {
       res = await cliQuestions.showConfirm();
     }
     if (!res.confirm) {
-      console.log(clc.red('Rejected!'));
+      console.log(parseColor(colors, 'Rejected!', 'red'));
       return;
     }
 
@@ -151,20 +156,20 @@ const command: CommandInterface = {
       const ipfsHash = await ipfs.deploy(dir);
 
       console.log('');
-      console.log(clc.green('IPFS deployed! Main CID:'));
+      console.log(parseColor(colors, 'IPFS deployed! Main CID:', 'green'));
 
-      console.log(clc.cyan(ipfsHash.cid));
+      console.log(parseColor(colors, ipfsHash.cid.toString(), 'cyan'));
     }
 
-    const manifestTx: string = await deploy.deploy(isFile, useBundler);
+    const manifestTx: string = await deploy.deploy(isFile, useBundler, colors);
 
     console.log('');
     if (useBundler) {
-      console.log(clc.green('Data items deployed! Visit the following URL to see your deployed content:'));
+      console.log(parseColor(colors, 'Data items deployed! Visit the following URL to see your deployed content:', 'green'));
     } else {
-      console.log(clc.green('Files deployed! Visit the following URL to see your deployed content:'));
+      console.log(parseColor(colors, 'Files deployed! Visit the following URL to see your deployed content:', 'green'));
     }
-    console.log(clc.cyan(`${blockweave.config.url}/${manifestTx}`));
+    console.log(parseColor(colors, `${blockweave.config.url}/${manifestTx}`, 'cyan'));
   },
 };
 
