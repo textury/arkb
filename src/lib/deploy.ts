@@ -88,7 +88,7 @@ export default class Deploy {
     useBundler?: string,
     feeMultiplier?: number,
     forceRedeploy: boolean = false,
-    colors: boolean = true
+    colors: boolean = true,
   ) {
     this.txs = [];
 
@@ -354,7 +354,11 @@ export default class Deploy {
             if (this.debug) {
               console.log(e);
               console.log(
-                parseColor(colors, `Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`, 'red'),
+                parseColor(
+                  colors,
+                  `Failed to upload ${txData.filePath} using uploadTransactionAsync, trying normal upload...`,
+                  'red',
+                ),
               );
             }
           }

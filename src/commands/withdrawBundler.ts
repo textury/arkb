@@ -51,7 +51,10 @@ const command: CommandInterface = {
       }
 
       // Success response
-      console.log(`${parseColor(colors, addy, 'cyan')} has been funded with ${parseColor(colors, `AR ${amnt} from bundler.`)}`, 'yellow');
+      console.log(
+        `${parseColor(colors, addy, 'cyan')} has been funded with ${parseColor(colors, `AR ${amnt} from bundler.`)}`,
+        'yellow',
+      );
     } catch (e) {
       console.log(parseColor(colors, 'Error withdrawing to wallet', 'red'));
       if (debug) console.log(e);

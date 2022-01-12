@@ -24,7 +24,7 @@ export async function showDeployDetails(
     tx: Transaction;
     bundle: FileBundle;
   },
-  colors?: boolean
+  colors?: boolean,
 ): Promise<number> {
   let totalSize = 0;
   let deployFee = 0;

@@ -48,7 +48,7 @@ const command: CommandInterface = {
     forceOption,
     debugOption,
     helpOption,
-    noColorsOption
+    noColorsOption,
   ],
   args: ['folder_or_file'],
   usage: [`folder${path.sep}filename.json`, `.${path.sep}folder`],
@@ -68,7 +68,7 @@ const command: CommandInterface = {
       autoConfirm,
       bundle,
       bundler,
-      colors
+      colors,
     } = args;
 
     // Get the wallet
@@ -85,7 +85,7 @@ const command: CommandInterface = {
 
     const concurrency = argv.concurrency || 5;
     const forceRedeploy = argv.force;
- 
+
     // Check and get the specified directory or file
     const dir = getDeployPath(commandValues, colors);
 
@@ -112,7 +112,7 @@ const command: CommandInterface = {
       useBundler,
       feeMultiplier,
       forceRedeploy,
-      colors
+      colors,
     );
 
     const balAfter = await showDeployDetails(
@@ -129,7 +129,7 @@ const command: CommandInterface = {
         tx: deploy.getBundledTx(),
         bundle: deploy.getBundle(),
       },
-      colors
+      colors,
     );
 
     if (balAfter < 0) {
@@ -165,7 +165,9 @@ const command: CommandInterface = {
 
     console.log('');
     if (useBundler) {
-      console.log(parseColor(colors, 'Data items deployed! Visit the following URL to see your deployed content:', 'green'));
+      console.log(
+        parseColor(colors, 'Data items deployed! Visit the following URL to see your deployed content:', 'green'),
+      );
     } else {
       console.log(parseColor(colors, 'Files deployed! Visit the following URL to see your deployed content:', 'green'));
     }

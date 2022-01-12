@@ -124,7 +124,9 @@ export default class CliCommands {
           console.log(parseColor(colors, 'Did you mean?', 'yellow'));
           spdxCandidates.slice(0, 5).map((cand) => console.log(parseColor(colors, ` ${cand.item}`, 'blue')));
         } else {
-          console.log(parseColor(colors, `A list of valid spdx identifiers can be found at https://spdx.org/licenses/`, 'yellow'));
+          console.log(
+            parseColor(colors, `A list of valid spdx identifiers can be found at https://spdx.org/licenses/`, 'yellow'),
+          );
         }
         process.exit(1);
       }

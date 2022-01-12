@@ -22,7 +22,11 @@ const command: CommandInterface = {
     console.log(`Usage: arkb ${parseColor(colors, '[options]', 'cyan')} ${parseColor(colors, '[command]', 'green')}\n`);
 
     const Line = CLI.Line;
-    new Line().column('Options', 40, colors !== false ? [clc.cyan] : undefined).column('Description', 20, colors !== false ? [clc.blackBright] : undefined).fill().output();
+    new Line()
+      .column('Options', 40, colors !== false ? [clc.cyan] : undefined)
+      .column('Description', 20, colors !== false ? [clc.blackBright] : undefined)
+      .fill()
+      .output();
 
     const opts = Array.from(options)
       .filter(([key, opt]) => key !== opt.alias)
@@ -53,7 +57,11 @@ const command: CommandInterface = {
 
     console.log('');
 
-    new Line().column('Commands (alias)', 40, colors !== false ? [clc.green] : undefined).column('Description', 20, colors !== false ? [clc.blackBright] : undefined).fill().output();
+    new Line()
+      .column('Commands (alias)', 40, colors !== false ? [clc.green] : undefined)
+      .column('Description', 20, colors !== false ? [clc.blackBright] : undefined)
+      .fill()
+      .output();
 
     for (let i = 0, j = cmds.length; i < j; i++) {
       new Line().column(cmds[i][0], 40).column(cmds[i][1], 60).fill().output();

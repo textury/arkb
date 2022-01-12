@@ -22,7 +22,11 @@ const command: CommandInterface = {
       Object.keys(net).forEach((key) => {
         const value = net[key];
         console.log(
-          `${parseColor(colors, snakeCaseToTitleCase(key), 'yellow')}: ${parseColor(colors, isNaN(value) ? value : numbersForHumans(value), 'cyan')}`,
+          `${parseColor(colors, snakeCaseToTitleCase(key), 'yellow')}: ${parseColor(
+            colors,
+            isNaN(value) ? value : numbersForHumans(value),
+            'cyan',
+          )}`,
         );
       });
     } catch (err) {

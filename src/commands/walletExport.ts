@@ -23,7 +23,9 @@ const command: CommandInterface = {
     try {
       const address = await blockweave.wallets.jwkToAddress(wallet);
       fs.writeFileSync(`${address}.json`, JSON.stringify(wallet), 'utf8');
-      console.log(parseColor(colors, `Wallet "${parseColor(colors, `${address}.json`, 'bold')}" exported successfully.`, 'green'));
+      console.log(
+        parseColor(colors, `Wallet "${parseColor(colors, `${address}.json`, 'bold')}" exported successfully.`, 'green'),
+      );
     } catch (e) {
       console.log(parseColor(colors, 'Unable to export the wallet file.', 'red'));
       if (debug) console.log(e);
