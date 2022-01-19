@@ -1,12 +1,11 @@
 import path from 'path';
 import normalize from 'normalize-path';
-import clc from 'cli-color';
-import { dirExists, getUserDirectory } from './utils';
+import { dirExists, getUserDirectory, parseColor } from './utils';
 
-export function getDeployPath(commandValues: string[]): string {
+export function getDeployPath(commandValues: string[], colors?: boolean): string {
   // Check if we have received a command value
   if (!commandValues || !commandValues.length) {
-    console.log(clc.red('You forgot to set the directory or file that you want to deploy.'));
+    console.log(parseColor(colors, 'You forgot to set the directory or file that you want to deploy.', 'red'));
     process.exit(0);
   }
 
@@ -19,7 +18,7 @@ export function getDeployPath(commandValues: string[]): string {
   if (!dirExists(dir)) {
     dir = commandValue.replace(/[\/\\]$/, '');
     if (!dirExists(dir)) {
-      console.log(clc.red(`The directory or file does not exist.`));
+      console.log(parseColor(colors, `The directory or file does not exist.`, 'red'));
       process.exit(0);
     }
   }

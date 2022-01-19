@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import clc from 'cli-color';
 import spdx from 'spdx-license-ids';
 import Fuse from 'fuse.js';
 import { URL } from 'url';
@@ -9,6 +8,7 @@ import Tags from './lib/tags';
 import CommandInterface from './faces/command';
 import ArgumentsInterface from './faces/arguments';
 import OptionInterface from './faces/option';
+import { parseColor } from './utils/utils';
 
 export default class CliCommands {
   options: Map<string, OptionInterface> = new Map();
@@ -92,13 +92,14 @@ export default class CliCommands {
     }
 
     const useBundler = partialArgs.argv['use-bundler'];
+    const colors = partialArgs.argv.colors;
 
     if (useBundler) {
       let parsed;
       try {
         parsed = new URL(useBundler);
       } catch (e) {
-        console.log(clc.red('[--use-bundler] Invalid url format'));
+        console.log(parseColor(colors, '[--use-bundler] Invalid url format', 'red'));
         if (partialArgs.debug) console.log(e);
         process.exit(1);
       }
@@ -106,7 +107,7 @@ export default class CliCommands {
     }
 
     if (useBundler && feeMultiplier > 1) {
-      console.log(clc.yellow('\nFee multiplier is ignored when using the bundler'));
+      console.log(parseColor(colors, '\nFee multiplier is ignored when using the bundler', 'yellow'));
       feeMultiplier = 1;
     }
 
@@ -118,12 +119,14 @@ export default class CliCommands {
         // help the user
         const fuse = new Fuse(spdx);
         const spdxCandidates = fuse.search(license);
-        console.log(clc.red(`\n"${license}" is not a valid spdx license identifier`));
+        console.log(parseColor(colors, `\n"${license}" is not a valid spdx license identifier`, 'red'));
         if (spdxCandidates.length > 0) {
-          console.log(clc.yellow('Did you mean?'));
-          spdxCandidates.slice(0, 5).map((cand) => console.log(clc.blue(` ${cand.item}`)));
+          console.log(parseColor(colors, 'Did you mean?', 'yellow'));
+          spdxCandidates.slice(0, 5).map((cand) => console.log(parseColor(colors, ` ${cand.item}`, 'blue')));
         } else {
-          console.log(clc.yellow(`A list of valid spdx identifiers can be found at https://spdx.org/licenses/`));
+          console.log(
+            parseColor(colors, `A list of valid spdx identifiers can be found at https://spdx.org/licenses/`, 'yellow'),
+          );
         }
         process.exit(1);
       }
@@ -148,6 +151,7 @@ export default class CliCommands {
       commands: this.commands,
       options: this.options,
       bundler: this.bundler,
+      colors: partialArgs.argv.colors,
     };
 
     if (this.commands.has(command)) {
@@ -156,7 +160,7 @@ export default class CliCommands {
         await commandObj.execute(args);
       }
     } else {
-      console.log(clc.red(`\nCommand not found: ${command}`));
+      console.log(parseColor(colors, `\nCommand not found: ${command}`, 'red'));
     }
   }
 
@@ -175,13 +179,14 @@ export default class CliCommands {
       return false;
     }
 
-    console.log(clc.bold(`\nExample usage of ${clc.green(command)}:\n`));
+    const colors = partialArgs.argv.colors;
+    console.log(parseColor(colors, `\nExample usage of ${parseColor(colors, command, 'green')}:\n`, 'bold'));
     for (const option of commandObj.options) {
       const usage =
         commandObj.usage && commandObj.usage.length > 0
           ? ` ${commandObj.usage[Math.floor(Math.random() * commandObj.usage.length)]}`
           : '';
-      console.log(`${clc.blackBright(`${option.description}:`)}
+      console.log(`${parseColor(colors, `${option.description}:`, 'blackBright')}
 arkb ${command + usage} --${option.name}${option.arg ? `=${option.usage}` : ''}\n`);
     }
 

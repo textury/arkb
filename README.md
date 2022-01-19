@@ -55,6 +55,8 @@ Options                                 Description
 --gateway -g <host_or_ip>               Set the gateway hostname or ip address
 --help -h                               Show usage help for a command
 --ipfs-publish                          Publish to Arweave+IPFS
+--license                               Specify the license of your upload with an spdx li
+--no-colors                             Print to terminal without fancy colors
 --tag-name <name>                       Set a tag name
 --tag-value <value>                     Set a tag value
 --timeout -t <number>                   Set the request timeout

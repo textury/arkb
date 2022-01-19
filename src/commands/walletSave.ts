@@ -1,10 +1,11 @@
 import fs from 'fs';
-import clc from 'cli-color';
 import cliQuestions from '../utils/cli-questions';
 import Crypter from '../utils/crypter';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
+import noColorsOption from '../options/noColors';
 import path from 'path';
+import { parseColor } from '../utils/utils';
 
 const command: CommandInterface = {
   name: 'wallet-save',
@@ -12,11 +13,12 @@ const command: CommandInterface = {
   description: `Saves a wallet, removes the need of the --wallet option`,
   args: ['wallet_path'],
   usage: [`folder${path.sep}keyfile.json`],
+  options: [noColorsOption],
   execute: async (args: ArgumentsInterface): Promise<void> => {
-    const { commandValues, config, debug } = args;
+    const { commandValues, config, debug, colors } = args;
 
     if (!commandValues || !commandValues.length) {
-      console.log(clc.redBright('Wallet path is required.'));
+      console.log(parseColor(colors, 'Wallet path is required.', 'redBright'));
       return;
     }
 
@@ -29,9 +31,9 @@ const command: CommandInterface = {
       const encWallet = crypter.encrypt(Buffer.from(wallet)).toString('base64');
 
       config.set('wallet', encWallet);
-      console.log(clc.green('Wallet saved!'));
+      console.log(parseColor(colors, 'Wallet saved!', 'green'));
     } catch (e) {
-      console.log(clc.red('Invalid wallet file.'));
+      console.log(parseColor(colors, 'Invalid wallet file.', 'red'));
       if (debug) console.log(e);
     }
   },
