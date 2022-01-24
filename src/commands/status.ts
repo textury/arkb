@@ -62,8 +62,7 @@ Transaction URL: ${parseColor(colors, `${arweaveUri}/${txid}`, 'cyan')}
 Block URL: ${parseColor(colors, `${arweaveUri}/block/hash/${res.blockHash}`, 'cyan')}
 
 Transaction explorer URL: ${parseColor(colors, `https://viewblock.io/arweave/tx/${txid}`, 'cyan')}
-Block explorer URL: ${parseColor(colors, `https://viewblock.io/arweave/block/${res.blockHeight}`)}`,
-          'cyan',
+Block explorer URL: ${parseColor(colors, `https://viewblock.io/arweave/block/${res.blockHeight}`, 'cyan')}`,
         );
       }
     } catch (e) {
