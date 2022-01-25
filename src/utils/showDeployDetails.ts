@@ -105,7 +105,7 @@ export async function showDeployDetails(
     console.log(`License: ${license}`);
   }
 
-  if (useBundler) {
+  if (useBundler && !isFile) {
     console.log(`Data items to deploy: ${txs.length - 1} + 1 manifest`);
   } else if (bundled) {
     console.log(`All items will be deployed in a single bundle`);

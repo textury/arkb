@@ -192,6 +192,12 @@ export default class Deploy {
     if (this.logs) countdown.stop();
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
+
+    // Don't allow manifest build
+    if (isFile && !this.duplicates.length) {
+      return this.txs;
+    }
+
     if (isFile && this.duplicates.length) {
       console.log(parseColor(colors, 'File already deployed:', 'red'));
 
