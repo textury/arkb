@@ -10,13 +10,14 @@ export function getDeployPath(commandValues: string[], colors?: boolean): string
   }
 
   const commandValue = commandValues[0];
-  let dir = path.join(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
+  // Use resolve instead of join to get orignal path
+  let dir = path.resolve(getUserDirectory(), commandValue.replace(/[\/\\]$/, ''));
   // Normalize for os differences
   dir = normalize(dir);
 
   // Check if deploy dir exists
   if (!dirExists(dir)) {
-    dir = commandValue.replace(/[\/\\]$/, '');
+    dir = normalize(commandValue.replace(/[\/\\]$/, ''));
     if (!dirExists(dir)) {
       console.log(parseColor(colors, `The directory or file does not exist.`, 'red'));
       process.exit(0);
