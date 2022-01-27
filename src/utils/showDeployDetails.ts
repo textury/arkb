@@ -106,11 +106,11 @@ export async function showDeployDetails(
   }
 
   if (useBundler) {
-    console.log(`Data items to deploy: ${txs.length - 1} + 1 manifest`);
+    console.log(`Data items to deploy: ${isFile ? '1' : `${txs.length - 1} + 1 manifest`}`);
   } else if (bundled) {
     console.log(`All items will be deployed in a single bundle`);
   } else {
-    console.log(`Files to deploy: ${isFile ? txs.length : `${txs.length - 1} + 1 manifest`}`);
+    console.log(`Files to deploy: ${isFile ? '1' : `${txs.length - 1} + 1 manifest`}`);
   }
 
   console.log(`Total size: ${bytesForHumans(totalSize)}`);

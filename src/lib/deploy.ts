@@ -192,6 +192,7 @@ export default class Deploy {
     if (this.logs) countdown.stop();
 
     const isFile = this.txs.length === 1 && this.txs[0].filePath === dir;
+
     if (isFile && this.duplicates.length) {
       console.log(parseColor(colors, 'File already deployed:', 'red'));
 
@@ -210,7 +211,9 @@ export default class Deploy {
       countdown.start();
     }
 
-    await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
+    // Don't allow manifest build
+    if (!isFile) await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
+
     if (this.logs) countdown.stop();
 
     if (useBundler || this.localBundle) {
