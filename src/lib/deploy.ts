@@ -213,7 +213,7 @@ export default class Deploy {
 
     // Don't allow manifest build
     if (!isFile) await this.buildManifest(dir, index, tags, useBundler, feeMultiplier);
-    
+
     if (this.logs) countdown.stop();
 
     if (useBundler || this.localBundle) {
