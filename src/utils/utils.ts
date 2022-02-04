@@ -10,7 +10,7 @@ import clc from 'cli-color';
 
 export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Blockweave {
   const timeout = argv.timeout || 20000;
-  const gateway = argv.gateway || 'https://arweave.net';
+  const gateway = argv.gateway || argv.g || 'https://arweave.net';
 
   return new Blockweave(
     {
