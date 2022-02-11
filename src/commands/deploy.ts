@@ -72,7 +72,12 @@ const command: CommandInterface = {
     } = args;
 
     // Get the wallet
-    const wallet: JWKInterface = await getWallet(walletPath, config, debug, colors);
+    let wallet: JWKInterface = await getWallet(walletPath, config, debug, colors);
+
+    if (useBundler && !wallet) {
+      wallet = await blockweave.wallets.generate();
+    }
+
     if (!wallet) {
       console.log(parseColor(colors, 'Please save a wallet or run with the --wallet option.', 'red'));
       return;
