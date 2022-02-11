@@ -91,11 +91,17 @@ export default class CliCommands {
       } catch {}
     }
 
-    const useBundler = partialArgs.argv['use-bundler'];
+    let useBundler = partialArgs.argv['use-bundler'];
     const colors = partialArgs.argv.colors;
 
     if (useBundler) {
       let parsed;
+      if (typeof useBundler === 'boolean' && useBundler === true) {
+        // reassign useBundler arg for all instances that use it
+        partialArgs.argv['use-bundler'] = 'https://bundler.arweave.net';
+        useBundler = 'https://bundler.arweave.net';
+      }
+
       try {
         parsed = new URL(useBundler);
       } catch (e) {
