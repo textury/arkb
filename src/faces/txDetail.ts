@@ -6,4 +6,5 @@ export interface TxDetail {
   hash: string;
   tx: Transaction | FileDataItem;
   type: string;
+  fileSize?: number;
 }
