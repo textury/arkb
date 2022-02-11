@@ -30,7 +30,7 @@ import { parseColor } from '../utils/utils';
 
 const command: CommandInterface = {
   name: 'deploy',
-  aliases: ['d'],
+  aliases: ['d', 'upload'],
   description: 'Deploy a directory or file',
   options: [
     gatewayOption,
