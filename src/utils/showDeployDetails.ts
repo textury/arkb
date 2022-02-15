@@ -29,6 +29,11 @@ export async function showDeployDetails(
   let totalSize = 0;
   let deployFee = 0;
 
+  // check if all files satisfy for free bundler deploy
+  // is free bundler deploy variable
+  const ifd = !txs.some((tx) => tx.fileSize > 100 * 1000);
+  console.log(ifd);
+
   const Line = CLI.Line;
   new Line()
     .column('ID', 45, colors !== false ? [clc.cyan] : undefined)
@@ -50,7 +55,7 @@ export async function showDeployDetails(
     }
 
     let size = '-';
-    const dataSize = (tx.tx as Transaction).data_size;
+    const dataSize = tx.fileSize || (tx.tx as Transaction).data_size;
     if (dataSize) {
       size = bytesForHumans(+dataSize);
       totalSize += +dataSize;
@@ -128,7 +133,10 @@ export async function showDeployDetails(
   }
 
   const bal = blockweave.ar.winstonToAr(winston);
-  const balAfter = +bal - +totalFee;
+  let balAfter = +bal - +totalFee;
+  if (useBundler && ifd) {
+    balAfter = +bal;
+  }
 
   console.log('');
   console.log(parseColor(colors, 'Wallet', 'cyan'));

@@ -169,10 +169,14 @@ export default class Deploy {
         newTags.addTag('File-Hash', hash);
 
         let tx: Transaction | FileDataItem;
+        let fileSize: number;
         if (useBundler || this.localBundle) {
           tx = await this.bundler.createItem(data, newTags.tags);
+          // get file size since bundler doesn't contain data_size
+          ({ size: fileSize } = fs.statSync(filePath));
         } else {
           tx = await this.buildTransaction(filePath, newTags);
+          fileSize = parseInt(tx.data_size, 10);
           if (feeMultiplier && feeMultiplier > 1) {
             (tx as Transaction).reward = parseInt(
               (feeMultiplier * +(tx as Transaction).reward).toString(),
@@ -186,7 +190,7 @@ export default class Deploy {
           confirmed: false,
         });
 
-        this.txs.push({ filePath, hash, tx, type });
+        this.txs.push({ filePath, hash, tx, type, fileSize });
       });
 
     if (this.logs) countdown.stop();
