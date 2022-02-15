@@ -90,7 +90,7 @@ export async function showDeployDetails(
     new Line()
       .column(bundled.tx.id, 45)
       .column(bytesForHumans(+size), 15)
-      .column(ifd? '-' : ar, 17)
+      .column(ifd ? '-' : ar, 17)
       .column('Bundle', 30)
       .column('-', 20)
       .fill()
@@ -104,9 +104,9 @@ export async function showDeployDetails(
   let totalFee = blockweave.ar.winstonToAr((deployFee + fee).toString());
 
   if (useBundler && ifd) {
-    arFee = '0'
-    serviceFee = '0'
-    totalFee = '0'
+    arFee = '0';
+    serviceFee = '0';
+    totalFee = '0';
   }
 
   console.log('');
