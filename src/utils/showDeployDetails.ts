@@ -32,7 +32,6 @@ export async function showDeployDetails(
   // check if all files satisfy for free bundler deploy
   // is free bundler deploy variable
   const ifd = !txs.some((tx) => tx.fileSize > 100 * 1000);
-  console.log(ifd);
 
   const Line = CLI.Line;
   new Line()
@@ -91,7 +90,7 @@ export async function showDeployDetails(
     new Line()
       .column(bundled.tx.id, 45)
       .column(bytesForHumans(+size), 15)
-      .column(ar, 17)
+      .column(ifd? '-' : ar, 17)
       .column('Bundle', 30)
       .column('-', 20)
       .fill()
@@ -100,9 +99,15 @@ export async function showDeployDetails(
 
   const fee = parseInt((deployFee * 0.1).toString(), 10);
 
-  const arFee = blockweave.ar.winstonToAr(deployFee.toString());
-  const serviceFee = blockweave.ar.winstonToAr(fee.toString());
-  const totalFee = blockweave.ar.winstonToAr((deployFee + fee).toString());
+  let arFee = blockweave.ar.winstonToAr(deployFee.toString());
+  let serviceFee = blockweave.ar.winstonToAr(fee.toString());
+  let totalFee = blockweave.ar.winstonToAr((deployFee + fee).toString());
+
+  if (useBundler && ifd) {
+    arFee = '0'
+    serviceFee = '0'
+    totalFee = '0'
+  }
 
   console.log('');
   console.log(parseColor(colors, 'Summary', 'cyan'));
@@ -133,10 +138,7 @@ export async function showDeployDetails(
   }
 
   const bal = blockweave.ar.winstonToAr(winston);
-  let balAfter = +bal - +totalFee;
-  if (useBundler && ifd) {
-    balAfter = +bal;
-  }
+  const balAfter = +bal - +totalFee;
 
   console.log('');
   console.log(parseColor(colors, 'Wallet', 'cyan'));
