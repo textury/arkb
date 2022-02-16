@@ -88,7 +88,7 @@ export async function showDeployDetails(
     const reward = bundled.tx.reward;
     const ar = blockweave.ar.winstonToAr(reward);
 
-    // deployFee should be only reward of bundle 
+    // deployFee should be only reward of bundle
     // not accumulated
     deployFee = +reward;
 
