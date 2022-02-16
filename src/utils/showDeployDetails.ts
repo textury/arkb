@@ -81,11 +81,16 @@ export async function showDeployDetails(
 
   if (bundled.tx) {
     const size = bundled.tx.data_size;
-    totalSize += +size;
+    // total size should be size of bundle
+    // not accumulated
+    totalSize = +size;
 
     const reward = bundled.tx.reward;
     const ar = blockweave.ar.winstonToAr(reward);
-    deployFee += +reward;
+
+    // deployFee should be only reward of bundle 
+    // not accumulated
+    deployFee = +reward;
 
     new Line()
       .column(bundled.tx.id, 45)
