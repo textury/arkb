@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import minimist from 'minimist';
 import clc from 'cli-color';
+import tempDirectory from 'temp-dir';
 
 export function setArweaveInstance(argv: minimist.ParsedArgs, debug: boolean): Blockweave {
   const timeout = argv.timeout || 20000;
@@ -94,3 +95,14 @@ export const parseColor = (colors: boolean, text: string | number, color?: strin
     return clc[color](text);
   }
 };
+
+export function getTempDir(): string {
+  // arkb temp dir
+  const dir = path.join(tempDirectory, '.arkb');
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+
+  return dir;
+}

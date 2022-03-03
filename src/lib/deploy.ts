@@ -1,4 +1,5 @@
 import fs, { createReadStream } from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import Blockweave from 'blockweave';
 import mime from 'mime';
@@ -11,7 +12,7 @@ import { TxDetail } from '../faces/txDetail';
 import { FileBundle, FileDataItem } from 'arbundles/file';
 import Bundler from '../utils/bundler';
 import Tags from '../lib/tags';
-import { getPackageVersion, parseColor } from '../utils/utils';
+import { getPackageVersion, parseColor, getTempDir } from '../utils/utils';
 import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
@@ -108,7 +109,8 @@ export default class Deploy {
       countdown.start();
     }
 
-    await PromisePool.for(files)
+    // ignore arkb manifest file
+    await PromisePool.for(files.filter((f) => !f.includes('manifest.arkb')))
       .withConcurrency(this.threads)
       .process(async (filePath: string) => {
         if (this.logs) countdown.message(`Preparing ${leftToPrepare--} files...`);
@@ -387,6 +389,23 @@ export default class Deploy {
     if (this.logs) countdown.stop();
     await this.cache.save(colors);
 
+    // save manifest.arkb to user dir
+    if (!isFile) {
+      const dir = this.txs[0].filePath || this.txs[1].filePath;
+      const {
+        tx: { id },
+      } = this.txs.find((i) => i.type === 'application/x.arweave-manifest+json');
+      // non-necessary: but add check incase of funny/unexpected behavior
+      if (id) {
+        // find manifest json from temp dir
+        const mPath = path.resolve(getTempDir(), `${id}.manifest.json`);
+        try {
+          fs.copyFileSync(mPath, path.join(path.dirname(dir), 'manifest.arkb'));
+        } catch (e) {
+          /* */
+        }
+      }
+    }
     return txid;
   }
 
@@ -468,6 +487,13 @@ export default class Deploy {
     }
 
     this.txs.push({ filePath: '', hash: '', tx, type: 'application/x.arweave-manifest+json' });
+
+    // store manifest in temp folder for later reuse
+    try {
+      fs.writeFileSync(path.join(getTempDir(), `${tx.id}.manifest.json`), JSON.stringify(data));
+    } catch (e) {
+      /* */
+    }
 
     return true;
   }
