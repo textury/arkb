@@ -105,7 +105,7 @@ export async function showDeployDetails(
   let fee = parseInt((deployFee * 0.1).toString(), 10);
   if (useBundler) {
     // calculate fee with 30% + 10%
-    fee = parseInt((deployFee * 0.4).toString(), 10)
+    fee = parseInt((deployFee * 0.4).toString(), 10);
   }
 
   let arFee = blockweave.ar.winstonToAr(deployFee.toString());
@@ -133,7 +133,7 @@ export async function showDeployDetails(
   }
 
   console.log(`Total size: ${bytesForHumans(totalSize)}`);
-  console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee ${useBundler? '+ 30% Bundlr fee': ''})`);
+  console.log(`Fees: ${arFee} + ${serviceFee} (10% arkb fee ${useBundler ? '+ 30% Bundlr fee' : ''})`);
   console.log(`Total fee: ${totalFee}`);
 
   const addy = await blockweave.wallets.jwkToAddress(wallet);
