@@ -81,7 +81,7 @@ const command: CommandInterface = {
     console.log(`  arkb deploy folder${path.sep}path --index custom.html`);
 
     console.log('\nUsing Bundles:');
-    console.log('  arkb deploy folder --use-bundler https://node1.bundlr.network');
+    console.log('  arkb deploy folder --use-bundler https://node2.bundlr.network');
   },
 };
 
