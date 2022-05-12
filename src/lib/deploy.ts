@@ -155,7 +155,7 @@ export default class Deploy {
 
         const type = mime.getType(filePath) || 'application/octet-stream';
         const newTags = new Tags();
-        for (const tag of newTags.tags) {
+        for (const tag of tags.tags) {
           newTags.addTag(tag.name, tag.value);
         }
 
