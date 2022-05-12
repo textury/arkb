@@ -98,8 +98,8 @@ export default class CliCommands {
       let parsed;
       if (typeof useBundler === 'boolean' && useBundler === true) {
         // reassign useBundler arg for all instances that use it
-        partialArgs.argv['use-bundler'] = 'https://bundler.arweave.net';
-        useBundler = 'https://bundler.arweave.net';
+        partialArgs.argv['use-bundler'] = 'https://node2.bundlr.network';
+        useBundler = 'https://node2.bundlr.network';
       }
 
       try {
