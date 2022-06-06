@@ -1,4 +1,4 @@
-import { ArweaveSigner } from 'arbundles';
+import { ArweaveSigner } from 'arbundles/src/signing';
 import { createData, bundleAndSignData, FileDataItem } from 'arbundles/file';
 import Blockweave from 'blockweave';
 import { AxiosResponse } from 'axios';
