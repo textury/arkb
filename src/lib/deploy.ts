@@ -17,6 +17,7 @@ import { JWKInterface } from 'blockweave/dist/faces/lib/wallet';
 import Transaction from 'blockweave/dist/lib/transaction';
 import { createTransactionAsync, uploadTransactionAsync } from 'arweave-stream-tx';
 import Arweave from 'arweave';
+import ArweaveTransaction from 'arweave/node/lib/transaction';
 import Cache from '../utils/cache';
 
 export default class Deploy {
@@ -225,11 +226,9 @@ export default class Deploy {
     if (useBundler || this.localBundle) {
       this.bundle = await this.bundler.bundleAndSign(this.txs.map((t) => t.tx) as FileDataItem[]);
 
-      // @ts-ignore
-      this.bundledTx = await this.bundle.toTransaction(this.arweave, this.wallet);
+      this.bundledTx = (await this.bundle.toTransaction({}, this.arweave, this.wallet)) as any;
 
-      // @ts-ignore
-      await this.arweave.transactions.sign(this.bundledTx, this.wallet);
+      await this.arweave.transactions.sign(this.bundledTx as unknown as ArweaveTransaction, this.wallet);
     }
 
     return this.txs;
