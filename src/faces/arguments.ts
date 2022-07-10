@@ -15,7 +15,6 @@ export default interface ArgumentsInterface {
   commandValues: string[];
   walletPath: string;
   index: string;
-  ipfsPublish: boolean;
   license: string;
   autoConfirm: boolean;
   tags: Tags;

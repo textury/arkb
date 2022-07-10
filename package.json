@@ -47,8 +47,6 @@
     "figlet": "^1.5.2",
     "fuse.js": "^6.4.6",
     "inquirer": "^8.1.2",
-    "ipfs-http-client": "^52.0.1",
-    "ipfs-only-hash": "^4.0.0",
     "mime": "^2.5.2",
     "minimist": "^1.2.5",
     "normalize-path": "^3.0.0",

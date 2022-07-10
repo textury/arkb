@@ -3,13 +3,11 @@ import path from 'path';
 import fg from 'fast-glob';
 import Deploy from '../lib/deploy';
 import cliQuestions from '../utils/cli-questions';
-import IPFS from '../utils/ipfs';
 import { getWallet } from '../utils/wallet';
 import { showDeployDetails } from '../utils/showDeployDetails';
 import CommandInterface from '../faces/command';
 import ArgumentsInterface from '../faces/arguments';
 import gatewayOption from '../options/gateway';
-import ipfsPublishOption from '../options/ipfsPublish';
 import useBundlerOption from '../options/useBundler';
 import licenseOption from '../options/license';
 import autoConfirmOption from '../options/autoConfirm';
@@ -41,7 +39,6 @@ const command: CommandInterface = {
     tagValueOption,
     licenseOption,
     walletOption,
-    ipfsPublishOption,
     autoConfirmOption,
     timeoutOption,
     concurrencyOption,
@@ -61,7 +58,6 @@ const command: CommandInterface = {
       debug,
       blockweave,
       tags,
-      ipfsPublish,
       license,
       useBundler,
       feeMultiplier,
@@ -112,7 +108,6 @@ const command: CommandInterface = {
       files,
       args.index,
       tags,
-      ipfsPublish,
       license,
       useBundler,
       feeMultiplier,
@@ -154,16 +149,6 @@ const command: CommandInterface = {
     if (!res.confirm) {
       console.log(parseColor(colors, 'Rejected!', 'red'));
       return;
-    }
-
-    if (ipfsPublish) {
-      const ipfs = new IPFS();
-      const ipfsHash = await ipfs.deploy(dir);
-
-      console.log('');
-      console.log(parseColor(colors, 'IPFS deployed! Main CID:', 'green'));
-
-      console.log(parseColor(colors, ipfsHash.cid.toString(), 'cyan'));
     }
 
     const manifestTx: string = await deploy.deploy(isFile, useBundler, colors);

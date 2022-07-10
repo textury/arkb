@@ -5,7 +5,6 @@ import Blockweave from 'blockweave';
 import mime from 'mime';
 import clui from 'clui';
 import PromisePool from '@supercharge/promise-pool';
-import IPFS from '../utils/ipfs';
 import Community from 'community-js';
 import { pipeline } from 'stream/promises';
 import { TxDetail } from '../faces/txDetail';
@@ -25,7 +24,6 @@ export default class Deploy {
   private blockweave: Blockweave;
   private arweave: Arweave;
   private bundler: Bundler;
-  private ipfs: IPFS = new IPFS();
   private cache: Cache;
   private txs: TxDetail[];
   private duplicates: { hash: string; id: string; filePath: string }[] = [];
@@ -85,7 +83,6 @@ export default class Deploy {
     files: string[],
     index: string = 'index.html',
     tags: Tags = new Tags(),
-    toIpfs: boolean = false,
     license?: string,
     useBundler?: string,
     feeMultiplier?: number,
@@ -160,11 +157,6 @@ export default class Deploy {
           newTags.addTag(tag.name, tag.value);
         }
 
-        // Add/replace default tags
-        if (toIpfs) {
-          const ipfsHash = await this.ipfs.hash(data);
-          newTags.addTag('IPFS-Add', ipfsHash);
-        }
         newTags.addTag('User-Agent', `arkb`);
         newTags.addTag('User-Agent-Version', getPackageVersion());
         newTags.addTag('Type', 'file');
@@ -202,12 +194,6 @@ export default class Deploy {
 
     if (isFile && this.duplicates.length) {
       console.log(parseColor(colors, 'File already deployed:', 'red'));
-
-      if (toIpfs) {
-        const data = fs.readFileSync(files[0]);
-        const cid = await this.ipfs.hash(data);
-        console.log(`IPFS: ${parseColor(colors, cid, 'cyan')}`);
-      }
 
       console.log('Arweave: ' + parseColor(colors, `${this.blockweave.config.url}/${this.duplicates[0].id}`, 'cyan'));
       return;
