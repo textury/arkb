@@ -153,7 +153,6 @@ export default class CliCommands {
       license,
       index: partialArgs.argv.index,
       autoConfirm: partialArgs.argv['auto-confirm'],
-      ipfsPublish: partialArgs.argv['ipfs-publish'],
       commands: this.commands,
       options: this.options,
       bundler: this.bundler,
