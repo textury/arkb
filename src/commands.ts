@@ -138,6 +138,8 @@ export default class CliCommands {
       }
     }
 
+    const contentType = partialArgs.argv['content-type'];
+
     const args: ArgumentsInterface = {
       argv: partialArgs.argv,
       blockweave: partialArgs.blockweave,
@@ -157,6 +159,7 @@ export default class CliCommands {
       options: this.options,
       bundler: this.bundler,
       colors: partialArgs.argv.colors,
+      contentType,
     };
 
     if (this.commands.has(command)) {

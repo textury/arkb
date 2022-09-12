@@ -65,6 +65,7 @@ const command: CommandInterface = {
       bundle,
       bundler,
       colors,
+      contentType,
     } = args;
 
     // Get the wallet
@@ -108,6 +109,7 @@ const command: CommandInterface = {
       files,
       args.index,
       tags,
+      contentType,
       license,
       useBundler,
       feeMultiplier,
