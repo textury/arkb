@@ -83,6 +83,7 @@ export default class Deploy {
     files: string[],
     index: string = 'index.html',
     tags: Tags = new Tags(),
+    contentType: string,
     license?: string,
     useBundler?: string,
     feeMultiplier?: number,
@@ -151,7 +152,8 @@ export default class Deploy {
           }
         }
 
-        const type = mime.getType(filePath) || 'application/octet-stream';
+        const type = contentType || mime.getType(filePath) || 'application/octet-stream';
+
         const newTags = new Tags();
         for (const tag of tags.tags) {
           newTags.addTag(tag.name, tag.value);
