@@ -415,14 +415,14 @@ export default class Deploy {
       this.duplicates.forEach(duplicate=>{
       
       if(duplicate.filePath.endsWith("/index.html")){
-        duplicate.filePath=duplicate.filePath.slice(-("index.html").length)
+        duplicate.filePath=duplicate.filePath.slice(0,-(("index.html").length))
         this.duplicates.push(duplicate)
       }
       })
       this.txs.forEach(txD=>{
       
       if(txD.filePath.endsWith("/index.html")){
-        txD.filePath=txD.filePath.slice(-("index.html").length)
+        txD.filePath=txD.filePath.slice(0,-(("index.html").length))
         this.txs.push(txD)
       }
       })
