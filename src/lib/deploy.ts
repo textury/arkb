@@ -412,6 +412,20 @@ export default class Deploy {
     useBundler: string,
     feeMultiplier: number,
   ) {
+      this.duplicates.forEach(duplicate=>{
+      
+      if(duplicate.filePath.endsWith("/index.html")){
+        duplicate.filePath=duplicate.filePath.slice(-("index.html").length)
+        this.duplicates.push(duplicate)
+      }
+      })
+      this.txs.forEach(txD=>{
+      
+      if(txD.filePath.endsWith("/index.html")){
+        txD.filePath=txD.filePath.slice(-("index.html").length)
+        this.txs.push(txD)
+      }
+      })
     const { results: pDuplicates } = await PromisePool.for(this.duplicates)
       .withConcurrency(this.threads)
       .process(async (txD) => {
