@@ -415,15 +415,17 @@ export default class Deploy {
       this.duplicates.forEach(duplicate=>{
       
       if(duplicate.filePath.endsWith("/index.html")){
-        duplicate.filePath=duplicate.filePath.slice(0,-(("index.html").length))
-        this.duplicates.push(duplicate)
+        let rootPath={...duplicate,filePath:duplicate.filePath.slice(0,-(("/index.html").length)}
+
+        this.duplicates.push(rootPath)
       }
       })
       this.txs.forEach(txD=>{
       
       if(txD.filePath.endsWith("/index.html")){
-        txD.filePath=txD.filePath.slice(0,-(("index.html").length))
-        this.txs.push(txD)
+        let rootPath={...txD,filePath:txD.filePath.slice(0,-(("/index.html").length)}
+
+        this.txs.push(rootPath)
       }
       })
     const { results: pDuplicates } = await PromisePool.for(this.duplicates)
