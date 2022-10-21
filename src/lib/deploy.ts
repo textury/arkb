@@ -415,7 +415,7 @@ export default class Deploy {
       this.duplicates.forEach(duplicate=>{
       
       if(duplicate.filePath.endsWith("/index.html")){
-        let rootPath={...duplicate,filePath:duplicate.filePath.slice(0,-(("/index.html").length)}
+        let rootPath={...duplicate,filePath:duplicate.filePath.slice(0,-(("/index.html").length))}
 
         this.duplicates.push(rootPath)
       }
@@ -423,7 +423,7 @@ export default class Deploy {
       this.txs.forEach(txD=>{
       
       if(txD.filePath.endsWith("/index.html")){
-        let rootPath={...txD,filePath:txD.filePath.slice(0,-(("/index.html").length)}
+        let rootPath={...txD,filePath:txD.filePath.slice(0,-(("/index.html").length))}
 
         this.txs.push(rootPath)
       }
